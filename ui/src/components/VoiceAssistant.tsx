@@ -1,35 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Volume2, Sparkles, AudioWaveform, ArrowUpRight, RotateCcw } from "lucide-react";
+import { Mic, MicOff, Volume2, Sparkles, ArrowUpRight, RotateCcw, ShieldCheck } from "lucide-react";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { sendVoiceQuery } from "@/lib/api";
+import { AIParticleOrb, AIOrbState } from "./AIParticleOrb";
+import { SpecularButton } from "./ui/SpecularButton";
 
 const QUICK_PROMPTS = [
   "How much emergency fund should I keep for 6 months?",
   "Should I choose Old or New Tax Regime for 15 LPA salary?",
-  "How should I split ₹30,000 monthly SIP between index and flexicap funds?",
+  "How to split ₹30,000 monthly SIP between index and flexicap funds?",
   "What is the 50/30/20 personal budgeting rule?",
 ];
 
 export function VoiceAssistant() {
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
-  const [status, setStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
+  const [status, setStatus] = useState<AIOrbState>("idle");
   const [transcript, setTranscript] = useState<string>("");
   const [response, setResponse] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState("Maya (Financial Advisor)");
 
-  const handleMicClick = async () => {
+  const handleOrbToggle = async () => {
     if (isRecording) {
       setStatus("thinking");
       const audioB64 = await stopRecording();
-      
+
       try {
         const res = await sendVoiceQuery({
           audio_base64: audioB64 || undefined,
           text: transcript || "What is my emergency fund target and current savings rate?",
-          voice_id: selectedVoice,
         });
 
         setTranscript(res.transcript || "How should I structure my emergency fund for 6 months?");
@@ -54,7 +54,7 @@ export function VoiceAssistant() {
     setTranscript(promptText);
     setStatus("thinking");
     try {
-      const res = await sendVoiceQuery({ text: promptText, voice_id: selectedVoice });
+      const res = await sendVoiceQuery({ text: promptText });
       setResponse(
         res.reply_text ||
           `Based on your query: "${promptText}", under the New Tax Regime with standard deductions, you can save significant tax without locking funds into 80C instruments.`
@@ -72,9 +72,9 @@ export function VoiceAssistant() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center max-w-2xl mx-auto w-full py-6">
+    <div className="flex flex-col items-center justify-center max-w-xl mx-auto w-full px-2 sm:px-4 py-2 sm:py-6">
       {/* Voice Status Pill */}
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-sm mb-8">
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-2xs mb-4">
         <span
           className={`h-2 w-2 rounded-full ${
             status === "listening"
@@ -86,109 +86,104 @@ export function VoiceAssistant() {
               : "bg-emerald-500"
           }`}
         />
-        {status === "idle" && "Ready to Listen"}
+        {status === "idle" && "Tap 3D Sphere to Speak"}
         {status === "listening" && "Listening to your voice..."}
-        {status === "thinking" && "Analyzing financial intelligence..."}
-        {status === "speaking" && "Speaking response"}
+        {status === "thinking" && "Analyzing with AI intelligence..."}
+        {status === "speaking" && "Speaking response..."}
       </div>
 
-      {/* Center Interactive Glowing Audio Orb */}
-      <div className="relative flex items-center justify-center my-6">
-        {/* Animated Outer Rings */}
-        {isRecording && (
-          <>
-            <motion.div
-              animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.05, 0.3] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-              className="absolute w-56 h-56 rounded-full bg-emerald-500/20 pointer-events-none"
-            />
-            <motion.div
-              animate={{ scale: [1, 1.25, 1], opacity: [0.4, 0.1, 0.4] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-              className="absolute w-44 h-44 rounded-full bg-emerald-500/30 pointer-events-none"
-            />
-          </>
-        )}
+      {/* 3D Interactive AI Particle Orb (ChatGPT / Gemini style) */}
+      <div className="relative my-2 sm:my-4 flex items-center justify-center">
+        <AIParticleOrb
+          state={status}
+          size={270}
+          onClick={handleOrbToggle}
+          className="transition-transform active:scale-95 touch-manipulation"
+        />
 
-        {status === "speaking" && (
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-            className="absolute w-48 h-48 rounded-full bg-teal-400/20 pointer-events-none"
-          />
-        )}
-
-        {/* Main Microphone Button */}
-        <button
-          onClick={handleMicClick}
-          className={`relative z-10 w-28 h-28 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl ${
+        {/* Center Mic Icon Overlay Badge */}
+        <div
+          onClick={handleOrbToggle}
+          className={`absolute pointer-events-none w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${
             isRecording
-              ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/30 scale-105"
-              : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:scale-105"
+              ? "bg-red-500 text-white shadow-red-500/30 scale-110"
+              : status === "speaking"
+              ? "bg-teal-600 text-white shadow-teal-500/30"
+              : "bg-white/90 text-emerald-700 backdrop-blur-md border border-emerald-200 shadow-emerald-500/10"
           }`}
-          aria-label="Voice input trigger"
         >
           {isRecording ? (
-            <MicOff className="w-11 h-11 transition-transform" />
+            <MicOff className="w-6 h-6 animate-pulse" />
+          ) : status === "speaking" ? (
+            <Volume2 className="w-6 h-6 animate-bounce" />
           ) : (
-            <Mic className="w-11 h-11 transition-transform" />
+            <Mic className="w-6 h-6" />
           )}
-        </button>
+        </div>
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mt-2">
-        {isRecording ? "Tap to finish speaking" : "Tap microphone to talk"}
-      </p>
-
-      {/* Voice Waveform Activity Indicator */}
-      <div className="flex items-center justify-center gap-1.5 h-10 my-4">
-        {[40, 70, 95, 60, 85, 45, 80, 50, 65, 30].map((h, i) => (
-          <motion.div
-            key={i}
-            animate={{
-              height: isRecording || status === "speaking" ? `${Math.max(8, h * 0.35)}px` : "6px",
-              opacity: isRecording || status === "speaking" ? 1 : 0.25,
-            }}
-            transition={{ duration: 0.2, repeat: Infinity, repeatType: "reverse", delay: i * 0.05 }}
-            className="w-1.5 rounded-full bg-emerald-600"
-          />
-        ))}
+      {/* Primary Specular Trigger Button */}
+      <div className="mt-2 mb-4">
+        <SpecularButton
+          size="md"
+          radius={20}
+          tint={isRecording ? "#ef4444" : "#10b981"}
+          tintOpacity={0.08}
+          lineColor={isRecording ? "#ef4444" : "#10b981"}
+          textColor={isRecording ? "#dc2626" : "#047857"}
+          baseColor="#e2e8f0"
+          intensity={1.4}
+          onClick={handleOrbToggle}
+          className="shadow-sm font-semibold"
+        >
+          {isRecording ? (
+            <>
+              <MicOff className="w-4 h-4 text-red-500" />
+              <span>Tap to Finish Speaking</span>
+            </>
+          ) : (
+            <>
+              <Mic className="w-4 h-4 text-emerald-600" />
+              <span>Start Voice Conversation</span>
+            </>
+          )}
+        </SpecularButton>
       </div>
 
       {/* Transcript & Response Area */}
       <AnimatePresence>
         {(transcript || response) && (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            className="w-full mt-4 p-6 rounded-2xl bg-white border border-slate-200/90 shadow-[0_10px_30px_rgb(0,0,0,0.03)] text-left space-y-4"
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="w-full mt-4 p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-[0_8px_30px_rgb(0,0,0,0.03)] text-left space-y-3.5"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Voice Conversation
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Voice Output
               </span>
               <button
                 onClick={handleReset}
-                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+                className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors p-1"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Clear
+                <RotateCcw className="w-3 h-3" /> Clear
               </button>
             </div>
 
             {transcript && (
               <div>
-                <span className="text-[11px] font-bold uppercase text-slate-400">You</span>
-                <p className="text-sm font-semibold text-slate-900 mt-0.5">"{transcript}"</p>
+                <span className="text-[10px] font-bold uppercase text-slate-400">You asked</span>
+                <p className="text-xs sm:text-sm font-semibold text-slate-900 mt-0.5">"{transcript}"</p>
               </div>
             )}
 
             {response && (
-              <div className="pt-2">
-                <span className="text-[11px] font-bold uppercase text-emerald-600 flex items-center gap-1">
-                  <Volume2 className="w-3.5 h-3.5" /> DhanMITR
+              <div className="pt-2 border-t border-slate-50">
+                <span className="text-[10px] font-bold uppercase text-emerald-600 flex items-center gap-1">
+                  <Volume2 className="w-3.5 h-3.5" /> DhanMITR Guidance
                 </span>
-                <p className="text-sm text-slate-700 mt-1 leading-relaxed">{response}</p>
+                <p className="text-xs sm:text-sm text-slate-700 mt-1 leading-relaxed">{response}</p>
               </div>
             )}
           </motion.div>
@@ -196,19 +191,19 @@ export function VoiceAssistant() {
       </AnimatePresence>
 
       {/* Quick Suggested Voice Prompts */}
-      <div className="w-full mt-8">
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 text-center mb-3">
-          Suggested Financial Questions
+      <div className="w-full mt-6 sm:mt-8">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-2.5">
+          Suggested Financial Topics
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {QUICK_PROMPTS.map((prompt, idx) => (
             <button
               key={idx}
               onClick={() => handleSelectPrompt(prompt)}
-              className="flex items-center justify-between p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left text-xs font-medium text-slate-700 transition-all hover:border-emerald-500/40 hover:shadow-sm group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left text-xs font-medium text-slate-700 transition-all hover:border-emerald-500/40 hover:shadow-2xs active:scale-[0.98] group touch-manipulation"
             >
-              <span className="line-clamp-2">{prompt}</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 flex-shrink-0 ml-2" />
+              <span className="line-clamp-2 pr-1">{prompt}</span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 flex-shrink-0" />
             </button>
           ))}
         </div>
@@ -216,3 +211,5 @@ export function VoiceAssistant() {
     </div>
   );
 }
+
+export default VoiceAssistant;
