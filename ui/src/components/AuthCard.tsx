@@ -7,6 +7,7 @@ import { Eye, EyeOff, Sparkles } from "lucide-react";
 import { Logo } from "./Logo";
 import { AuthWaveVisual } from "./AuthWaveVisual";
 import { SpecularButton } from "./ui/SpecularButton";
+import { DEFAULT_DEMO_PROFILE, saveUserProfile } from "@/lib/userProfile";
 
 interface AuthCardProps {
   initialMode?: "signin" | "signup";
@@ -24,11 +25,18 @@ export function AuthCard({ initialMode = "signin" }: AuthCardProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Instant redirect without artificial delay
+    saveUserProfile({
+      ...DEFAULT_DEMO_PROFILE,
+      name: name.trim() || (email ? email.split("@")[0] : "Rahul Sharma"),
+      email: email || "user@dhanmitr.ai",
+      isLoggedIn: true,
+      isSetupComplete: true,
+    });
     router.push("/");
   };
 
   const handleGuestSignIn = () => {
+    saveUserProfile(DEFAULT_DEMO_PROFILE);
     router.push("/");
   };
 
@@ -53,7 +61,7 @@ export function AuthCard({ initialMode = "signin" }: AuthCardProps) {
             finance companion
           </h2>
           <p className="text-sm text-slate-300 mt-2.5 font-medium leading-relaxed">
-            AI-powered voice & chat advisory for savings, loans, and government schemes.
+            AI-powered cashflow optimization, subscription tracking, and expiry notifications.
           </p>
         </div>
       </div>

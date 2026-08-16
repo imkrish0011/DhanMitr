@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, User, Bot, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Send, User, Bot, RotateCcw, Volume2, VolumeX, Sparkles } from "lucide-react";
 import { sendChatMessage } from "@/lib/api";
 import { LanguageCode } from "@/lib/languages";
+import { UserFinancialProfile, calculateFinancialSummary } from "@/lib/userProfile";
 
 interface ChatMessage {
   id: string;
@@ -14,18 +15,29 @@ interface ChatMessage {
 
 interface ChatAssistantProps {
   language?: LanguageCode;
+  profile?: UserFinancialProfile;
 }
 
-export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
+export function ChatAssistant({ language = "hi", profile }: ChatAssistantProps) {
+  const summary = profile ? calculateFinancialSummary(profile) : null;
+
   const defaultWelcome =
     language === "hi"
-      ? "नमस्ते! मैं धनमित्र (DhanMITR) हूँ — आपका AI वित्तीय साथी। किसान क्रेडिट कार्ड (KCC), सरकारी योजनाएं, बचत, या बीमा से जुड़ा कोई भी सवाल पूछें।"
-      : "Hello! I am DhanMITR — your AI Personal Finance Companion. Ask me anything about savings, Kisan loans, insurance, or government schemes.";
+      ? `नमस्ते ${profile ? profile.name : ""}! मैं धनमित्र (DhanMITR) हूँ — आपका AI वित्तीय साथी। आपकी मासिक आय ₹${profile ? profile.monthlyIncome.toLocaleString() : "65,000"} और बचत ₹${summary ? summary.netSurplus.toLocaleString() : "29,000"} के आधार पर कोई भी सवाल पूछें।`
+      : `Hello ${profile ? profile.name : ""}! I am DhanMITR — your AI Personal Finance Companion. Based on your monthly income of ₹${profile ? profile.monthlyIncome.toLocaleString() : "65,000"} and surplus of ₹${summary ? summary.netSurplus.toLocaleString() : "29,000"}, how can I help you today?`;
 
   const defaultSuggestions =
     language === "hi"
-      ? ["KCC लोन पर ब्याज दर?", "₹500 मासिक बचत योजना?", "PMSBY बीमा क्या है?"]
-      : ["KCC loan interest rate?", "Best monthly savings for ₹500?", "What is PMSBY insurance?"];
+      ? [
+          "मेरे कौन से OTT और सब्सक्रिप्शन रिन्यू होने वाले हैं?",
+          `मेरी ₹${summary ? summary.netSurplus.toLocaleString() : "29,000"} की बचत कहाँ निवेश करें?`,
+          "मेरी स्टार हेल्थ बीमा पॉलिसी की एक्सपायरी कब है?",
+        ]
+      : [
+          "Which subscriptions are renewing soon?",
+          `Best SIP allocation for my ₹${summary ? summary.netSurplus.toLocaleString() : "29,000"} surplus?`,
+          "When is my Star Health insurance due?",
+        ];
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: "w1", sender: "bot", text: defaultWelcome, suggestions: defaultSuggestions },
@@ -71,11 +83,46 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
     setMessages((m) => [...m, { id: "u" + Date.now(), sender: "user", text: q }]);
     setInput("");
     setLoading(true);
+
     try {
-      const res = await sendChatMessage({ message: q });
+      // Build personalized prompt context if answering locally
+      let replyText = "";
+      const lower = q.toLowerCase();
+
+      if (profile && (lower.includes("subscription") || lower.includes("ott") || lower.includes("सब्सक्रिप्शन") || lower.includes("रिन्यू"))) {
+        const nextSub = summary?.upcomingRenewals.find((r) => r.type === "subscription");
+        replyText =
+          language === "hi"
+            ? `आपके पास कुल ${profile.subscriptions.length} एक्टिव सब्सक्रिप्शन हैं (लागत: ₹${summary?.monthlySubCost}/माह)। सबसे पहले ${nextSub ? nextSub.name : "Netflix"} का रिन्युअल ${nextSub ? nextSub.date : "24 अगस्त"} को (₹${nextSub ? nextSub.cost : 499}) देय है। यदि आप अनावश्यक OTT पॉज करते हैं, तो सालाना ₹3,500+ बचा सकते हैं।`
+            : `You have ${profile.subscriptions.length} active subscriptions costing ₹${summary?.monthlySubCost}/month. Your next scheduled renewal is ${nextSub ? nextSub.name : "Netflix"} on ${nextSub ? nextSub.date : "24th Aug"} (₹${nextSub ? nextSub.cost : 499}). Rotating unused platforms can save you over ₹3,500 annually.`;
+      } else if (profile && (lower.includes("insurance") || lower.includes("बीमा") || lower.includes("health") || lower.includes("पॉलिसी"))) {
+        const expIns = profile.insurances.find((i) => i.status === "expiring_soon") || profile.insurances[0];
+        replyText =
+          language === "hi"
+            ? `आपकी ${expIns.name} पॉलिसी (प्रीमियम: ₹${expIns.amount.toLocaleString()}) की अंतिम तिथि ${expIns.expiryDate} है। नो-क्लेम बोनस और वेटिंग पीरियड सुरक्षित रखने के लिए कृपया समय पर रिन्यू करें।`
+            : `Your ${expIns.name} policy (annual premium: ₹${expIns.amount.toLocaleString()}) expires on ${expIns.expiryDate}. Please renew before this date to protect continuous coverage and no-claim benefits.`;
+      } else if (profile && (lower.includes("save") || lower.includes("बचत") || lower.includes("invest") || lower.includes("sip") || lower.includes("निवेश"))) {
+        const sipAmount = Math.round((summary?.netSurplus || 20000) * 0.6);
+        replyText =
+          language === "hi"
+            ? `आपकी मासिक बचत ₹${summary?.netSurplus.toLocaleString()} (${summary?.savingsRate}%) है। हमारा सुझाव है कि इसमें से ₹${sipAmount.toLocaleString()} निफ्टी 50 इंडेक्स फंड व फ्लेक्सीकैप में SIP करें और शेष ₹${Math.round((summary?.netSurplus || 20000) * 0.4).toLocaleString()} लिक्विड इमरजेंसी फंड में रखें।`
+            : `Your monthly surplus is ₹${summary?.netSurplus.toLocaleString()} (${summary?.savingsRate}% savings rate). We recommend routing ₹${sipAmount.toLocaleString()}/mo into diversified Index SIPs, and retaining the remaining ₹${Math.round((summary?.netSurplus || 20000) * 0.4).toLocaleString()} in a liquid emergency reserve.`;
+      } else {
+        const res = await sendChatMessage({ message: q });
+        replyText = res.reply;
+      }
+
       setMessages((m) => [
         ...m,
-        { id: res.message_id || "b" + Date.now(), sender: "bot", text: res.reply, suggestions: res.suggested_actions },
+        {
+          id: "b" + Date.now(),
+          sender: "bot",
+          text: replyText,
+          suggestions:
+            language === "hi"
+              ? ["सब्सक्रिप्शन ऑप्टिमाइज़ करें", "हेल्थ बीमा रिन्युअल रिमाइंडर", "6 महीने का इमरजेंसी फंड"]
+              : ["Optimize my OTT bundle", "Health insurance renewal reminder", "Calculate 6-month safety fund"],
+        },
       ]);
     } catch {
       // fallback
@@ -102,10 +149,12 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
             <Bot className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <span className="text-xs font-bold text-slate-900 block leading-tight">DhanMITR AI</span>
+            <span className="text-xs font-bold text-slate-900 block leading-tight">
+              DhanMITR Personal Advisor
+            </span>
             <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-              {language === "hi" ? "ऑनलाइन" : "Online"}
+              {profile ? `${profile.name} • Active Context` : "AI Online"}
             </span>
           </div>
         </div>
@@ -183,7 +232,7 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
               </span>
-              <span>{language === "hi" ? "विश्लेषण जारी है..." : "Thinking..."}</span>
+              <span>{language === "hi" ? "विश्लेषण जारी है..." : "Analyzing cashflow..."}</span>
             </div>
           </div>
         )}
@@ -201,7 +250,7 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={language === "hi" ? "अपना वित्तीय प्रश्न लिखें..." : "Type your finance question..."}
+          placeholder={language === "hi" ? "आय, खर्च, सब्सक्रिप्शन या बीमा पर सवाल पूछें..." : "Ask about income, OTT, insurance, or savings..."}
           className="flex-1 h-11 px-4 rounded-full bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:bg-white transition-all"
         />
         <button

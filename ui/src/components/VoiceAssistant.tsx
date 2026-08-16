@@ -9,17 +9,21 @@ import { AIParticleOrb, AIOrbState } from "./AIParticleOrb";
 import { SpecularButton } from "./ui/SpecularButton";
 import { LanguageCode, RURAL_FINANCIAL_TOPICS, RuralTopic } from "@/lib/languages";
 import { SproutIcon, GoldCoinsIcon, BankVaultIcon, ShieldSecureIcon } from "./Icons";
+import { UserFinancialProfile, calculateFinancialSummary } from "@/lib/userProfile";
 
 interface VoiceAssistantProps {
   language?: LanguageCode;
+  profile?: UserFinancialProfile;
 }
 
-export function VoiceAssistant({ language = "hi" }: VoiceAssistantProps) {
+export function VoiceAssistant({ language = "hi", profile }: VoiceAssistantProps) {
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
   const [status, setStatus] = useState<AIOrbState>("idle");
   const [transcript, setTranscript] = useState<string>("");
   const [response, setResponse] = useState<string>("");
   const [isSpeakingAloud, setIsSpeakingAloud] = useState(false);
+
+  const summary = profile ? calculateFinancialSummary(profile) : null;
 
   useEffect(() => {
     return () => {
@@ -72,15 +76,19 @@ export function VoiceAssistant({ language = "hi" }: VoiceAssistantProps) {
       const audioB64 = await stopRecording();
 
       try {
-        const res = await sendVoiceQuery({
-          audio_base64: audioB64 || undefined,
-          text: transcript || (language === "hi" ? "किसान क्रेडिट कार्ड और सरकारी लोन की जानकारी दें" : "Tell me about Kisan Credit Card and interest subsidy"),
-        });
+        const nextSub = summary?.upcomingRenewals.find((r) => r.type === "subscription");
+        const nextIns = summary?.upcomingRenewals.find((r) => r.type === "insurance");
 
-        const userQ = res.transcript || (language === "hi" ? "किसान क्रेडिट कार्ड पर ब्याज और लोन नियम क्या हैं?" : "What are the rules for Kisan Credit Card loan?");
-        const botReply = res.reply_text || (language === "hi" 
-          ? "किसान क्रेडिट कार्ड (KCC) पर सरकार 3% ब्याज छूट देती है। अगर आप समय पर किस्त भरते हैं, तो आपको केवल 4% वार्षिक ब्याज देना होता है। नजदीकी ग्रामीण बैंक या CSC केंद्र से आवेदन किया जा सकता है।"
-          : "Kisan Credit Card (KCC) offers a subsidized effective rate of only 4% per annum upon timely repayments. You can apply at any local rural bank or CSC center.");
+        const userQ =
+          transcript ||
+          (language === "hi"
+            ? "मेरी आगामी बीमा और OTT सब्सक्रिप्शन की रिन्युअल तारीखें क्या हैं?"
+            : "What are my upcoming insurance and subscription renewals?");
+
+        const botReply =
+          language === "hi"
+            ? `आपकी अगली देय तिथि ${nextSub ? nextSub.name : "नेटफ्लिक्स"} के लिए ${nextSub ? nextSub.date : "24 अगस्त"} (₹${nextSub ? nextSub.cost : 499}) है। साथ ही आपकी ${nextIns ? nextIns.name : "स्टार हेल्थ"} पॉलिसी ${nextIns ? nextIns.date : "28 अगस्त"} को रिन्यू होनी है। आपकी कुल मासिक बचत ₹${summary ? summary.netSurplus.toLocaleString() : "29,000"} बहुत सुरक्षित स्थिति में है।`
+            : `Your next upcoming renewal is ${nextSub ? nextSub.name : "Netflix"} on ${nextSub ? nextSub.date : "24th Aug"} (₹${nextSub ? nextSub.cost : 499}). Additionally, your ${nextIns ? nextIns.name : "Star Health"} policy is due on ${nextIns ? nextIns.date : "28th Aug"}. Your current monthly savings surplus is ₹${summary ? summary.netSurplus.toLocaleString() : "29,000"}.`;
 
         setTranscript(userQ);
         setResponse(botReply);
@@ -161,7 +169,7 @@ export function VoiceAssistant({ language = "hi" }: VoiceAssistantProps) {
       <div className="relative my-2 flex items-center justify-center">
         <AIParticleOrb
           state={status}
-          size={210}
+          size={200}
           onClick={handleOrbToggle}
           className="transition-transform active:scale-95 touch-manipulation cursor-pointer"
         />
@@ -235,7 +243,7 @@ export function VoiceAssistant({ language = "hi" }: VoiceAssistantProps) {
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{language === "hi" ? "धनमित्र उत्तर" : "DhanMITR Advisory"}</span>
+                <span>{language === "hi" ? "धनमित्र व्यक्तिगत उत्तर" : "DhanMITR Advisory"}</span>
               </div>
               <button
                 type="button"
@@ -251,7 +259,7 @@ export function VoiceAssistant({ language = "hi" }: VoiceAssistantProps) {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   {language === "hi" ? "आपका प्रश्न" : "Your Question"}
                 </span>
-                <p className="text-xs sm:text-sm font-semibold text-slate-900 mt-0.5">"{transcript}"</p>
+                <p className="text-xs sm:text-sm font-semibold text-slate-900 mt-0.5">&quot;{transcript}&quot;</p>
               </div>
             )}
 
