@@ -49,7 +49,12 @@ export function VoiceAssistant({ language = "hi", profile }: VoiceAssistantProps
       setIsSpeakingAloud(false);
       setStatus("idle");
     };
-    utterance.onerror = () => {
+    utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
+      if (event.error === "canceled" || event.error === "interrupted") {
+        setIsSpeakingAloud(false);
+        setStatus("idle");
+        return;
+      }
       setIsSpeakingAloud(false);
       setStatus("idle");
     };

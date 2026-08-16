@@ -88,8 +88,13 @@ export function ChatAssistant({ language = "hi", profile }: ChatAssistantProps) 
     u.lang = language === "hi" ? "hi-IN" : "en-IN";
     u.rate = 0.95;
     u.onstart = () => setSpeakingId(id);
-    u.onend = () => setSpeakingId(null);
-    u.onerror = () => setSpeakingId(null);
+    u.onerror = (event: SpeechSynthesisErrorEvent) => {
+      if (event.error === "canceled" || event.error === "interrupted") {
+        setSpeakingId(null);
+        return;
+      }
+      setSpeakingId(null);
+    };
     window.speechSynthesis.speak(u);
   };
 
