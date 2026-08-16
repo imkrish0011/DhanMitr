@@ -17,6 +17,7 @@ interface DonutChartProps {
 
 export function DonutChart({ segments, total, size = 220, onSelectSegment }: DonutChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
 
@@ -124,6 +125,7 @@ export function DonutChart({ segments, total, size = 220, onSelectSegment }: Don
 
   return (
     <div
+      ref={containerRef}
       className="relative inline-flex items-center justify-center select-none cursor-pointer"
       style={{ width: size, height: size }}
     >
@@ -134,7 +136,7 @@ export function DonutChart({ segments, total, size = 220, onSelectSegment }: Don
         onMouseLeave={handleMouseLeave}
       />
 
-      {/* Center Label (Dynamic upon hover) */}
+      {/* Center Label */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
         {activeItem ? (
           <>
@@ -157,16 +159,6 @@ export function DonutChart({ segments, total, size = 220, onSelectSegment }: Don
           </>
         )}
       </div>
-
-      {/* Floating Tooltip */}
-      {activeItem && mousePos && (
-        <div
-          className="absolute z-20 pointer-events-none bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-lg -translate-x-1/2 -translate-y-full -mt-2 transition-transform"
-          style={{ left: mousePos.x, top: mousePos.y }}
-        >
-          {activeItem.label}: ₹{activeItem.value.toLocaleString()} ({((activeItem.value / total) * 100).toFixed(1)}%)
-        </div>
-      )}
     </div>
   );
 }
@@ -189,6 +181,7 @@ export function CashFlowLineChart({
   height = 220,
 }: LineChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
 
@@ -204,7 +197,8 @@ export function CashFlowLineChart({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
-    const padL = 44, padR = 64, padT = 20, padB = 30;
+    // Padding configured to give ample headroom for tooltips and badges
+    const padL = 44, padR = 68, padT = 32, padB = 30;
     const chartW = width - padL - padR;
     const chartH = height - padT - padB;
 
@@ -238,7 +232,7 @@ export function CashFlowLineChart({
       ctx.fillText(label, x, height - 8);
     });
 
-    // Helper to draw smooth curves
+    // Helper to calculate coordinates
     const getPoints = (data: number[]) => {
       return data.map((val, i) => ({
         x: padL + (i / (data.length - 1)) * chartW,
@@ -339,7 +333,7 @@ export function CashFlowLineChart({
 
     // Surplus Badge at top-right
     const lastP = incomePoints[incomePoints.length - 1];
-    const badgeW = 56, badgeH = 30;
+    const badgeW = 58, badgeH = 30;
     const bx = lastP.x + 8;
     const by = lastP.y - badgeH / 2;
 
@@ -372,7 +366,7 @@ export function CashFlowLineChart({
     const y = e.clientY - rect.top;
     setMousePos({ x, y });
 
-    const padL = 44, padR = 64;
+    const padL = 44, padR = 68;
     const chartW = width - padL - padR;
 
     if (x >= padL - 10 && x <= padL + chartW + 10) {
@@ -396,8 +390,21 @@ export function CashFlowLineChart({
   const activeExpense = hoveredIdx !== null ? expenseData[hoveredIdx] : null;
   const activeSurplus = activeIncome && activeExpense ? activeIncome - activeExpense : null;
 
+  // Smart Tooltip Positioning:
+  // If mouse Y is in upper half (y < 120), flip tooltip BELOW the point so it never overlaps or gets cut off!
+  const isUpperHalf = mousePos ? mousePos.y < 120 : false;
+  const tooltipX = mousePos ? Math.min(Math.max(mousePos.x, 90), width - 90) : 0;
+  const tooltipY = mousePos
+    ? isUpperHalf
+      ? mousePos.y + 16 // Render BELOW cursor
+      : mousePos.y - 12 // Render ABOVE cursor
+    : 0;
+
   return (
-    <div className="relative select-none cursor-crosshair w-full overflow-hidden flex justify-center">
+    <div
+      ref={containerRef}
+      className="relative select-none cursor-crosshair w-full flex justify-center pt-2"
+    >
       <canvas
         ref={canvasRef}
         style={{ width: "100%", maxWidth: width, height }}
@@ -405,24 +412,29 @@ export function CashFlowLineChart({
         onMouseLeave={handleMouseLeave}
       />
 
-      {/* Floating Interactive Cashflow Tooltip */}
+      {/* Floating Smart Tooltip with Auto-Flip and No Clipping */}
       {hoveredIdx !== null && activeMonth && activeIncome && activeExpense && mousePos && (
         <div
-          className="absolute z-20 pointer-events-none bg-slate-900 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-xl space-y-1 -translate-x-1/2 -translate-y-full -mt-2 transition-transform"
-          style={{ left: Math.min(Math.max(mousePos.x, 80), width - 80), top: Math.max(mousePos.y, 40) }}
+          className={`absolute z-30 pointer-events-none bg-slate-900/95 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-2xl space-y-1 backdrop-blur-md border border-slate-700/80 -translate-x-1/2 transition-transform duration-75 ${
+            isUpperHalf ? "translate-y-0" : "-translate-y-full"
+          }`}
+          style={{
+            left: tooltipX,
+            top: tooltipY,
+          }}
         >
           <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
             {activeMonth} 2026 Cash Flow
           </span>
           <div className="flex items-center justify-between gap-4 text-[11px]">
-            <span className="text-emerald-400">Income:</span>
-            <span className="font-extrabold">₹{activeIncome.toLocaleString()}</span>
+            <span className="text-emerald-400 font-medium">Income:</span>
+            <span className="font-extrabold text-white">₹{activeIncome.toLocaleString()}</span>
           </div>
           <div className="flex items-center justify-between gap-4 text-[11px]">
-            <span className="text-slate-400">Expense:</span>
-            <span className="font-extrabold">₹{activeExpense.toLocaleString()}</span>
+            <span className="text-slate-400 font-medium">Expense:</span>
+            <span className="font-extrabold text-slate-200">₹{activeExpense.toLocaleString()}</span>
           </div>
-          <div className="border-t border-slate-700 pt-1 flex items-center justify-between gap-4 text-[11px]">
+          <div className="border-t border-slate-700/80 pt-1 flex items-center justify-between gap-4 text-[11px]">
             <span className="text-emerald-300 font-bold">Surplus:</span>
             <span className="font-extrabold text-emerald-400">₹{activeSurplus?.toLocaleString()}</span>
           </div>
