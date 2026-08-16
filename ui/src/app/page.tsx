@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { ChatAssistant } from "@/components/ChatAssistant";
-import { Mic, MessageSquare, ShieldCheck } from "lucide-react";
+import { Mic, MessageSquare, ShieldCheck, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Home() {
@@ -46,10 +47,15 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Status Pill */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-slate-700 text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            AI Online
+          {/* Right Action: Sign In Link */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm active:scale-95"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Sign in</span>
+            </Link>
           </div>
         </div>
       </header>
