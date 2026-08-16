@@ -1,104 +1,80 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, MessageSquare, Mic, ShieldCheck, TrendingUp, ArrowRight, Zap, Target } from "lucide-react";
+import React, { useState } from "react";
+import { Logo } from "@/components/Logo";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { ChatAssistant } from "@/components/ChatAssistant";
+import { Mic, MessageSquare, Sparkles, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
 
-export default function LandingPage() {
+export default function Home() {
+  const [activeTab, setActiveTab] = useState<"voice" | "chat">("voice");
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 text-xs font-semibold mb-6">
-          <Sparkles className="h-3.5 w-3.5" />
-          Next-Gen AI Personal Finance Assistant
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900">
+      {/* Top Premium Minimalist Navigation Bar */}
+      <header className="w-full border-b border-slate-100/80 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+          {/* Custom SVG Logo */}
+          <Logo size={40} />
+
+          {/* Mode Switcher Tabs */}
+          <div className="flex items-center p-1 rounded-2xl bg-slate-100 border border-slate-200/60 shadow-inner">
+            <button
+              onClick={() => setActiveTab("voice")}
+              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                activeTab === "voice"
+                  ? "bg-white text-emerald-700 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              Voice Mode
+            </button>
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                activeTab === "chat"
+                  ? "bg-white text-emerald-700 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Chat Mode
+            </button>
+          </div>
+
+          {/* Status Pill */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50/80 border border-emerald-200/60 text-emerald-700 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            AI Ready
+          </div>
         </div>
+      </header>
 
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight sm:leading-none">
-          Master Your Wealth with <br className="hidden sm:inline" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
-            Intelligent AI Advisory
-          </span>
-        </h1>
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col justify-center">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="w-full"
+        >
+          {activeTab === "voice" ? <VoiceAssistant /> : <ChatAssistant />}
+        </motion.div>
+      </main>
 
-        <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          DhanMITR gives you real-time net worth tracking, automated tax optimization, budget insights, and conversational voice guidance tailored to your goals.
-        </p>
-
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/dashboard">
-            <Button size="lg" className="w-full sm:w-auto gap-2">
-              Launch Dashboard <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-
-          <Link href="/chat">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2">
-              <MessageSquare className="h-4 w-4 text-emerald-600" />
-              Try AI Chat
-            </Button>
-          </Link>
-
-          <Link href="/voice">
-            <Button variant="secondary" size="lg" className="w-full sm:w-auto gap-2">
-              <Mic className="h-4 w-4 text-amber-500" />
-              Voice Demo
-            </Button>
-          </Link>
+      {/* Minimalist Footer */}
+      <footer className="w-full border-t border-slate-100 py-6 text-center text-xs text-slate-400">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 font-medium text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Bank-Grade Encryption & AI Privacy</span>
+          </div>
+          <span>DhanMITR — Intelligent Personal Finance Advisory</span>
         </div>
-
-        {/* Feature Grid */}
-        <div className="mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
-          <Card className="hover:border-emerald-500/50 transition-all">
-            <CardContent className="p-6">
-              <div className="h-12 w-12 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 mb-4">
-                <TrendingUp className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold text-lg text-slate-900 dark:text-white">Net Worth & Cashflow</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Track assets, liabilities, and monthly surplus automatically categorized with health scores.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:border-emerald-500/50 transition-all">
-            <CardContent className="p-6">
-              <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 mb-4">
-                <Zap className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold text-lg text-slate-900 dark:text-white">Tax Optimization</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Compare Old vs New Tax Regime deductions, 80C/80D allowances, and tax-saving investments.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:border-emerald-500/50 transition-all">
-            <CardContent className="p-6">
-              <div className="h-12 w-12 rounded-xl bg-amber-100 dark:bg-amber-950 flex items-center justify-center text-amber-600 mb-4">
-                <Mic className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold text-lg text-slate-900 dark:text-white">Voice Financial Assistant</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Speak naturally with ultra low-latency STT/TTS pipeline for on-the-go financial inquiries.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:border-emerald-500/50 transition-all">
-            <CardContent className="p-6">
-              <div className="h-12 w-12 rounded-xl bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-purple-600 mb-4">
-                <Target className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold text-lg text-slate-900 dark:text-white">Goal Projections</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Automate monthly contributions toward emergency reserves, real estate, and retirement goals.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      </footer>
     </div>
   );
 }
