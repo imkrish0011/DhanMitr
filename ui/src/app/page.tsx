@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { Navbar } from "@/components/Navbar";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { ChatAssistant } from "@/components/ChatAssistant";
-import { LanguageSelector } from "@/components/LanguageSelector";
-import { Mic, MessageSquare, ShieldCheck } from "lucide-react";
+import { BottomNav } from "@/components/BottomNav";
+import { Mic, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import { LanguageCode } from "@/lib/languages";
 import { UserFinancialProfile } from "@/types";
-import { DEFAULT_DEMO_PROFILE, loadUserProfile } from "@/lib/userProfile";
+import { DEFAULT_DEMO_PROFILE, loadUserProfile, saveUserProfile } from "@/lib/userProfile";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"voice" | "chat">("voice");
@@ -22,36 +21,53 @@ export default function Home() {
     setProfile(saved);
   }, []);
 
+  const handleSyncReset = () => {
+    saveUserProfile(DEFAULT_DEMO_PROFILE);
+    setProfile(DEFAULT_DEMO_PROFILE);
+  };
+
   return (
-    <div className="min-h-[100dvh] bg-[#FFFFFF] text-slate-900 flex flex-col selection:bg-emerald-100 selection:text-emerald-950 overflow-x-hidden pb-[72px] sm:pb-[74px]">
-      {/* Top Header Navigation (Matching Mockup) */}
-      <header className="w-full bg-white/95 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100">
-        <div className="max-w-xl mx-auto px-4 h-14 flex items-center justify-between">
-          {/* Left: Brand Logo & Title */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <Logo size={28} showText={false} />
-            <span className="text-base font-extrabold tracking-tight text-slate-900">DhanMITR</span>
-          </Link>
-
-          {/* Right: Language Toggle + Finance Hub */}
-          <div className="flex items-center gap-2">
-            <LanguageSelector currentLang={language} onSelectLang={setLanguage} />
-
-            <Link
-              href="/admin"
-              prefetch={true}
-              className="h-8 px-3 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 touch-manipulation shadow-2xs"
-              title="Open Personal Finance Admin Hub"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Finance Hub</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] bg-[#FFFFFF] text-slate-900 flex flex-col selection:bg-emerald-100 selection:text-emerald-950 overflow-x-hidden pb-20 sm:pb-22">
+      {/* Universal Top Header (Identical across Home and Finance Hub) */}
+      <Navbar
+        language={language}
+        onSelectLang={setLanguage}
+        onSync={handleSyncReset}
+        userName={profile.name}
+        showBack={false}
+      />
 
       {/* Main Screen Content */}
-      <main className="flex-1 max-w-xl mx-auto w-full px-3 sm:px-4 py-3 flex flex-col justify-start">
+      <main className="flex-1 max-w-xl mx-auto w-full px-3 sm:px-4 py-4 flex flex-col justify-start">
+        {/* Top Talk / Type Mode Switcher Pill */}
+        <div className="flex items-center justify-center p-1 rounded-2xl bg-slate-100 border border-slate-200/80 mb-3 max-w-xs mx-auto w-full">
+          <button
+            type="button"
+            onClick={() => setActiveTab("voice")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "voice"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <Mic className={`w-3.5 h-3.5 ${activeTab === "voice" ? "text-emerald-600" : "text-slate-400"}`} />
+            <span>{language === "hi" ? "बोलें (Talk)" : "Talk Mode"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("chat")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "chat"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <MessageSquare className={`w-3.5 h-3.5 ${activeTab === "chat" ? "text-emerald-600" : "text-slate-400"}`} />
+            <span>{language === "hi" ? "लिखें (Type)" : "Type Mode"}</span>
+          </button>
+        </div>
+
         <motion.div
           key={activeTab + language}
           initial={{ opacity: 0, y: 6 }}
@@ -71,38 +87,13 @@ export default function Home() {
         </motion.div>
       </main>
 
-      {/* Bottom Floating Navigation Dock [ Talk | Type ] (Matching Mockup) */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80">
-        <div className="max-w-md mx-auto flex items-center p-2 gap-2">
-          {/* Talk Button */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("voice")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold transition-all active:scale-95 touch-manipulation ${
-              activeTab === "voice"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "bg-slate-50 text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Mic className={`w-4 h-4 ${activeTab === "voice" ? "text-emerald-400" : "text-slate-500"}`} />
-            <span>{language === "hi" ? "बोलें (Talk)" : "Talk"}</span>
-          </button>
-
-          {/* Type Button */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("chat")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold transition-all active:scale-95 touch-manipulation ${
-              activeTab === "chat"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "bg-slate-50 text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <MessageSquare className={`w-4 h-4 ${activeTab === "chat" ? "text-emerald-400" : "text-slate-500"}`} />
-            <span>{language === "hi" ? "लिखें (Type)" : "Type"}</span>
-          </button>
-        </div>
-      </div>
+      {/* Universal Mobile Bottom Navigation Bar */}
+      <BottomNav
+        activeTab="home"
+        onSelectTab={(tab) => {
+          if (tab === "home") setActiveTab("voice");
+        }}
+      />
     </div>
   );
 }
