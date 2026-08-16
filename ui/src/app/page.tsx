@@ -30,6 +30,7 @@ export default function Home() {
             <LanguageSelector currentLang={language} onSelectLang={setLanguage} />
             <Link
               href="/login"
+              prefetch={true}
               className="h-8 px-3 rounded-lg bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 transition-all hover:bg-slate-800 active:scale-95 touch-manipulation"
             >
               <User className="w-3.5 h-3.5" />

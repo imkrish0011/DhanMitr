@@ -21,13 +21,11 @@ export function AuthCard({ initialMode = "signin" }: AuthCardProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.push("/");
-    }, 600);
+    // Instant redirect without artificial delay
+    router.push("/");
   };
 
   const handleGuestSignIn = () => {
@@ -42,7 +40,7 @@ export function AuthCard({ initialMode = "signin" }: AuthCardProps) {
 
         {/* Brand Logo on dark bg */}
         <div className="relative z-10">
-          <Link href="/" className="inline-flex items-center gap-2 transition-transform hover:scale-105">
+          <Link href="/" prefetch={true} className="inline-flex items-center gap-2 transition-transform hover:scale-105">
             <Logo size={36} showText={false} />
             <span className="text-lg font-extrabold tracking-tight text-white">DhanMITR</span>
           </Link>
