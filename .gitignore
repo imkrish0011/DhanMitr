@@ -52,6 +52,8 @@ vector_store/
 *.index
 *.sqlite3
 *.db
+rag/vector_db/*
+!rag/vector_db/.gitkeep
 
 # Audio / Voice temporary files
 *.wav
