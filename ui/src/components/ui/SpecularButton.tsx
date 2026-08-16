@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, type CSSProperties, type ReactNode, type MouseEventHandler } from 'react';
+import React, { useRef, useEffect, useState, type CSSProperties, type ReactNode, type MouseEventHandler } from 'react';
 import { Renderer, Program, Mesh, Triangle, Color } from 'ogl';
 
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -94,12 +94,10 @@ void main() {
   float d = shapeSDF(p);
   vec2 L = vec2(cos(uAngle), sin(uAngle));
 
-  // Dark base stroke hugging the edge for a sense of thickness
+  // Dark base stroke hugging the edge
   float base = (1.0 - smoothstep(0.0, uBaseWidth, abs(d))) * 0.45;
 
-  // Symmetric specular: the edges facing toward/away from the light both
-  // catch a streak. The angular window (size + fade) is measured with an
-  // elliptical normal so it varies continuously along straight edges.
+  // Symmetric specular reflection
   vec2 nEll = normalize(p / (uHalfSize * uHalfSize) + 1e-6);
   float phi = acos(clamp(abs(dot(nEll, L)), 0.0, 1.0));
   float rim = 1.0 - smoothstep(uShineSize - uShineFade, uShineSize + uShineFade + 1e-4, phi);
@@ -139,10 +137,16 @@ export const SpecularButton = ({
   const btnRef = useRef<HTMLButtonElement>(null);
   const fxRef = useRef<HTMLSpanElement>(null);
   const propsRef = useRef<ShaderProps>({} as ShaderProps);
+  const [mounted, setMounted] = useState(false);
 
   propsRef.current = { radius, lineColor, baseColor, intensity, shineSize, shineFade, thickness, speed, followMouse, proximity, autoAnimate };
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const btn = btnRef.current;
     const fx = fxRef.current;
     if (!btn || !fx || typeof window === 'undefined') return;
@@ -275,7 +279,7 @@ export const SpecularButton = ({
       }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, []);
+  }, [mounted]);
 
   return (
     <button

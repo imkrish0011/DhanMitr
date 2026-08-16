@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Volume2, Sparkles, ArrowUpRight, RotateCcw, ShieldCheck } from "lucide-react";
+import { Mic, MicOff, Volume2, ArrowUpRight, RotateCcw } from "lucide-react";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { sendVoiceQuery } from "@/lib/api";
 import { AIParticleOrb, AIOrbState } from "./AIParticleOrb";
@@ -74,7 +74,7 @@ export function VoiceAssistant() {
   return (
     <div className="flex flex-col items-center justify-center max-w-xl mx-auto w-full px-2 sm:px-4 py-2 sm:py-6">
       {/* Voice Status Pill */}
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-2xs mb-4">
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-sm mb-4">
         <span
           className={`h-2 w-2 rounded-full ${
             status === "listening"
@@ -82,8 +82,8 @@ export function VoiceAssistant() {
               : status === "thinking"
               ? "bg-amber-500 animate-pulse"
               : status === "speaking"
-              ? "bg-emerald-500 animate-bounce"
-              : "bg-emerald-500"
+              ? "bg-slate-700 animate-bounce"
+              : "bg-slate-700"
           }`}
         />
         {status === "idle" && "Tap 3D Sphere to Speak"}
@@ -92,7 +92,7 @@ export function VoiceAssistant() {
         {status === "speaking" && "Speaking response..."}
       </div>
 
-      {/* 3D Interactive AI Particle Orb (ChatGPT / Gemini style) */}
+      {/* 3D Interactive AI Particle Orb in Silver & Black */}
       <div className="relative my-2 sm:my-4 flex items-center justify-center">
         <AIParticleOrb
           state={status}
@@ -108,8 +108,8 @@ export function VoiceAssistant() {
             isRecording
               ? "bg-red-500 text-white shadow-red-500/30 scale-110"
               : status === "speaking"
-              ? "bg-teal-600 text-white shadow-teal-500/30"
-              : "bg-white/90 text-emerald-700 backdrop-blur-md border border-emerald-200 shadow-emerald-500/10"
+              ? "bg-slate-900 text-white shadow-slate-900/30"
+              : "bg-white/95 text-slate-800 backdrop-blur-md border border-slate-200 shadow-slate-500/10"
           }`}
         >
           {isRecording ? (
@@ -127,12 +127,12 @@ export function VoiceAssistant() {
         <SpecularButton
           size="md"
           radius={20}
-          tint={isRecording ? "#ef4444" : "#10b981"}
-          tintOpacity={0.08}
-          lineColor={isRecording ? "#ef4444" : "#10b981"}
-          textColor={isRecording ? "#dc2626" : "#047857"}
+          tint={isRecording ? "#ef4444" : "#0f172a"}
+          tintOpacity={0.06}
+          lineColor={isRecording ? "#ef4444" : "#475569"}
+          textColor={isRecording ? "#dc2626" : "#0f172a"}
           baseColor="#e2e8f0"
-          intensity={1.4}
+          intensity={1.3}
           onClick={handleOrbToggle}
           className="shadow-sm font-semibold"
         >
@@ -143,7 +143,7 @@ export function VoiceAssistant() {
             </>
           ) : (
             <>
-              <Mic className="w-4 h-4 text-emerald-600" />
+              <Mic className="w-4 h-4 text-slate-700" />
               <span>Start Voice Conversation</span>
             </>
           )}
@@ -180,8 +180,8 @@ export function VoiceAssistant() {
 
             {response && (
               <div className="pt-2 border-t border-slate-50">
-                <span className="text-[10px] font-bold uppercase text-emerald-600 flex items-center gap-1">
-                  <Volume2 className="w-3.5 h-3.5" /> DhanMITR Guidance
+                <span className="text-[10px] font-bold uppercase text-slate-800 flex items-center gap-1">
+                  <Volume2 className="w-3.5 h-3.5 text-slate-600" /> DhanMITR Guidance
                 </span>
                 <p className="text-xs sm:text-sm text-slate-700 mt-1 leading-relaxed">{response}</p>
               </div>
@@ -200,10 +200,10 @@ export function VoiceAssistant() {
             <button
               key={idx}
               onClick={() => handleSelectPrompt(prompt)}
-              className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left text-xs font-medium text-slate-700 transition-all hover:border-emerald-500/40 hover:shadow-2xs active:scale-[0.98] group touch-manipulation"
+              className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left text-xs font-medium text-slate-700 transition-all hover:border-slate-400 hover:shadow-sm active:scale-[0.98] group touch-manipulation"
             >
               <span className="line-clamp-2 pr-1">{prompt}</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 flex-shrink-0" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 flex-shrink-0" />
             </button>
           ))}
         </div>

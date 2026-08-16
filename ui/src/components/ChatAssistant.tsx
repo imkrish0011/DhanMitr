@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, User, Bot, RotateCcw, ArrowRight, Sparkles } from "lucide-react";
+import { Send, User, Bot, RotateCcw, ArrowRight } from "lucide-react";
 import { Input } from "./ui/input";
 import { SpecularButton } from "./ui/SpecularButton";
 import { sendChatMessage } from "@/lib/api";
@@ -115,7 +115,7 @@ export function ChatAssistant() {
             className={`flex gap-2.5 sm:gap-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
           >
             {msg.sender === "bot" && (
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 mt-0.5 shadow-2xs">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800 flex-shrink-0 mt-0.5 shadow-sm">
                 <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             )}
@@ -124,7 +124,7 @@ export function ChatAssistant() {
               className={`max-w-[90%] sm:max-w-[85%] rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm leading-relaxed ${
                 msg.sender === "user"
                   ? "bg-slate-900 text-white rounded-tr-none shadow-sm"
-                  : "bg-slate-50/90 border border-slate-200/70 text-slate-800 rounded-tl-none shadow-2xs"
+                  : "bg-slate-50/90 border border-slate-200/70 text-slate-800 rounded-tl-none shadow-sm"
               }`}
             >
               <div className="whitespace-pre-line">{msg.text}</div>
@@ -148,9 +148,9 @@ export function ChatAssistant() {
                     <button
                       key={i}
                       onClick={() => handleSend(sug)}
-                      className="text-[11px] bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-emerald-700 rounded-lg px-2.5 py-1 transition-all flex items-center gap-1 shadow-2xs text-left"
+                      className="text-[11px] bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-lg px-2.5 py-1 transition-all flex items-center gap-1 shadow-sm text-left"
                     >
-                      <span>{sug}</span> <ArrowRight className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                      <span>{sug}</span> <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -167,7 +167,7 @@ export function ChatAssistant() {
 
         {loading && (
           <div className="flex items-center gap-2 text-xs text-slate-500 py-1">
-            <div className="w-7 h-7 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+            <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
               <Bot className="w-3.5 h-3.5 animate-spin" />
             </div>
             <span>DhanMITR is generating financial intelligence...</span>
@@ -194,10 +194,10 @@ export function ChatAssistant() {
           type="submit"
           size="sm"
           radius={12}
-          tint="#10b981"
-          tintOpacity={0.12}
-          lineColor="#10b981"
-          textColor="#047857"
+          tint="#0f172a"
+          tintOpacity={0.06}
+          lineColor="#475569"
+          textColor="#0f172a"
           disabled={loading || !input.trim()}
           className="h-11 px-4 font-bold"
         >

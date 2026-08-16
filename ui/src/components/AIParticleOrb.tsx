@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 export type AIOrbState = "idle" | "listening" | "thinking" | "speaking";
 
@@ -20,6 +20,7 @@ interface Particle {
   baseZ: number;
   radius: number;
   color: string;
+  specular: boolean;
   phase: number;
   speed: number;
 }
@@ -33,8 +34,14 @@ export function AIParticleOrb({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<AIOrbState>(state);
   stateRef.current = state;
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -42,30 +49,32 @@ export function AIParticleOrb({
     if (!ctx) return;
 
     let animationFrameId: number;
-    let width = size;
-    let height = size;
+    const width = size;
+    const height = size;
 
     const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Generate 3D Spherical Fibonacci Particle System
-    const numParticles = 420;
+    // 3D Spherical Fibonacci Particle System in Premium Silver & Black Palette
+    const numParticles = 460;
     const particles: Particle[] = [];
     const sphereRadius = size * 0.36;
 
-    const colorPalette = [
-      "rgba(16, 185, 129, ",   // Emerald
-      "rgba(5, 150, 105, ",    // Deep Emerald
-      "rgba(20, 184, 166, ",   // Teal
-      "rgba(52, 211, 153, ",   // Mint
-      "rgba(245, 158, 11, ",   // Warm Gold accent
-      "rgba(14, 165, 233, ",   // Cyan
+    // Monochrome Silver, Chrome, Platinum, and Obsidian Black palette
+    const silverBlackPalette = [
+      "rgba(15, 23, 42, ",     // Deep Obsidian Black
+      "rgba(30, 41, 59, ",     // Gunmetal Slate
+      "rgba(51, 65, 85, ",     // Charcoal Graphite
+      "rgba(100, 116, 139, ",   // Silver Slate
+      "rgba(148, 163, 184, ",  // Cool Platinum
+      "rgba(203, 213, 225, ",  // Bright Silver Chrome
+      "rgba(226, 232, 240, ",  // Luminous White Silver
+      "rgba(2, 6, 23, ",       // True Black
     ];
 
     for (let i = 0; i < numParticles; i++) {
-      // Golden Spiral distribution on sphere surface
       const phi = Math.acos(1 - (2 * (i + 0.5)) / numParticles);
       const theta = Math.PI * (1 + Math.sqrt(5)) * i;
 
@@ -80,8 +89,9 @@ export function AIParticleOrb({
         baseX: x,
         baseY: y,
         baseZ: z,
-        radius: Math.random() * 2.2 + 1.2,
-        color: colorPalette[i % colorPalette.length],
+        radius: Math.random() * 2.4 + 1.1,
+        color: silverBlackPalette[i % silverBlackPalette.length],
+        specular: i % 3 === 0,
         phase: Math.random() * Math.PI * 2,
         speed: Math.random() * 0.02 + 0.01,
       });
@@ -92,11 +102,10 @@ export function AIParticleOrb({
     let rotZ = 0;
     let waveTime = 0;
 
-    let targetRotSpeedX = 0.005;
-    let targetRotSpeedY = 0.008;
+    let targetRotSpeedX = 0.004;
+    let targetRotSpeedY = 0.007;
 
     let currentScale = 1;
-    let targetScale = 1;
 
     // Mouse / Touch interaction
     let mouseX = 0;
@@ -116,8 +125,8 @@ export function AIParticleOrb({
       mouseY = 0;
     };
 
-    canvas.addEventListener("pointermove", handlePointerMove);
-    canvas.addEventListener("pointerleave", handlePointerLeave);
+    canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
+    canvas.addEventListener("pointerleave", handlePointerLeave, { passive: true });
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
@@ -129,45 +138,45 @@ export function AIParticleOrb({
       let stateScale = 1;
       let waveAmplitude = 0;
       let turbulence = 0;
-      let glowColor = "rgba(16, 185, 129, 0.08)";
+      let glowColor = "rgba(15, 23, 42, 0.05)";
 
       if (currentState === "idle") {
-        targetRotSpeedX = 0.004;
-        targetRotSpeedY = 0.007;
-        stateScale = 1 + Math.sin(waveTime * 0.8) * 0.04;
-        waveAmplitude = 3;
-        glowColor = "rgba(16, 185, 129, 0.06)";
+        targetRotSpeedX = 0.003;
+        targetRotSpeedY = 0.006;
+        stateScale = 1 + Math.sin(waveTime * 0.8) * 0.035;
+        waveAmplitude = 2.5;
+        glowColor = "rgba(100, 116, 139, 0.06)";
       } else if (currentState === "listening") {
         // High reactive displacement & organic wave ripples
         targetRotSpeedX = 0.012;
         targetRotSpeedY = 0.018;
         stateScale = 1.12 + Math.sin(waveTime * 2.5) * 0.08;
-        waveAmplitude = 18;
+        waveAmplitude = 16;
         turbulence = Math.sin(waveTime * 4) * 8;
-        glowColor = "rgba(239, 68, 68, 0.12)"; // Vibrant listening ring
+        glowColor = "rgba(15, 23, 42, 0.12)"; // Deep obsidian pulse
       } else if (currentState === "thinking") {
         // Swirling vortex mode
         targetRotSpeedX = 0.035;
         targetRotSpeedY = 0.055;
         stateScale = 0.95 + Math.sin(waveTime * 3) * 0.06;
-        waveAmplitude = 8;
-        turbulence = Math.cos(waveTime * 5) * 12;
-        glowColor = "rgba(245, 158, 11, 0.14)"; // Golden vortex
+        waveAmplitude = 7;
+        turbulence = Math.cos(waveTime * 5) * 11;
+        glowColor = "rgba(71, 85, 105, 0.14)"; // Silver graphite vortex
       } else if (currentState === "speaking") {
         // Rhythmic pulsing harmonic waves
-        targetRotSpeedX = 0.008;
+        targetRotSpeedX = 0.007;
         targetRotSpeedY = 0.014;
-        stateScale = 1.15 + Math.abs(Math.sin(waveTime * 1.8)) * 0.12;
-        waveAmplitude = 14;
-        glowColor = "rgba(20, 184, 166, 0.15)"; // Teal speaking glow
+        stateScale = 1.14 + Math.abs(Math.sin(waveTime * 1.8)) * 0.1;
+        waveAmplitude = 12;
+        glowColor = "rgba(148, 163, 184, 0.15)"; // Luminous silver speaking glow
       }
 
       currentScale += (stateScale - currentScale) * 0.1;
 
       // Rotation matrix updates with pointer steer
-      rotX += targetRotSpeedX + (isHovered ? mouseY * 0.01 : 0);
-      rotY += targetRotSpeedY + (isHovered ? mouseX * 0.01 : 0);
-      rotZ += 0.002;
+      rotX += targetRotSpeedX + (isHovered ? mouseY * 0.008 : 0);
+      rotY += targetRotSpeedY + (isHovered ? mouseX * 0.008 : 0);
+      rotZ += 0.0015;
 
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
@@ -176,24 +185,24 @@ export function AIParticleOrb({
       const cosZ = Math.cos(rotZ);
       const sinZ = Math.sin(rotZ);
 
-      // Central Ambient Radial Glow
+      // Central Ambient Radial Silver/Obsidian Glow
       const centerGrad = ctx.createRadialGradient(
         width / 2,
         height / 2,
-        10,
+        8,
         width / 2,
         height / 2,
-        sphereRadius * currentScale * 1.3
+        sphereRadius * currentScale * 1.35
       );
       centerGrad.addColorStop(0, glowColor);
-      centerGrad.addColorStop(0.6, glowColor.replace(/[\d\.]+\)$/, "0.02)"));
+      centerGrad.addColorStop(0.6, "rgba(203, 213, 225, 0.04)");
       centerGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
       ctx.fillStyle = centerGrad;
       ctx.beginPath();
-      ctx.arc(width / 2, height / 2, sphereRadius * currentScale * 1.3, 0, Math.PI * 2);
+      ctx.arc(width / 2, height / 2, sphereRadius * currentScale * 1.35, 0, Math.PI * 2);
       ctx.fill();
 
-      // Transform & Project 3D particles onto 2D canvas
+      // Project 3D particles onto 2D canvas
       const projectedParticles: {
         x2d: number;
         y2d: number;
@@ -201,12 +210,12 @@ export function AIParticleOrb({
         radius: number;
         alpha: number;
         color: string;
+        specular: boolean;
       }[] = [];
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // Wave Displacement on surface
         const displacement =
           Math.sin(p.phase + waveTime * 2) * waveAmplitude +
           Math.cos(p.baseX * 0.05 + waveTime) * turbulence;
@@ -218,30 +227,25 @@ export function AIParticleOrb({
         const pz = (p.baseZ / norm) * currentRadius * currentScale;
 
         // 3D Rotations
-        // Y-axis
         const x1 = px * cosY + pz * sinY;
         const y1 = py;
         const z1 = -px * sinY + pz * cosY;
 
-        // X-axis
         const x2 = x1;
         const y2 = y1 * cosX - z1 * sinX;
         const z2 = y1 * sinX + z1 * cosX;
 
-        // Z-axis
         const x3 = x2 * cosZ - y2 * sinZ;
         const y3 = x2 * sinZ + y2 * cosZ;
         const z3 = z2;
 
-        // Perspective projection
         const fov = 340;
         const distance = fov / (fov + z3);
         const x2d = width / 2 + x3 * distance;
         const y2d = height / 2 + y3 * distance;
 
-        // Depth-based alpha & sizing (front particles are larger & brighter)
         const depthNorm = (z3 + sphereRadius * 1.4) / (sphereRadius * 2.8);
-        const alpha = Math.max(0.15, Math.min(1, depthNorm * 0.9 + 0.1));
+        const alpha = Math.max(0.18, Math.min(1, depthNorm * 0.88 + 0.12));
         const pRadius = Math.max(0.8, p.radius * distance * 1.1);
 
         projectedParticles.push({
@@ -251,13 +255,14 @@ export function AIParticleOrb({
           radius: pRadius,
           alpha,
           color: p.color,
+          specular: p.specular,
         });
       }
 
-      // Sort by Z for proper depth rendering
+      // Sort by Z for proper depth
       projectedParticles.sort((a, b) => a.z3d - b.z3d);
 
-      // Render Particles with Soft Luminous Halos
+      // Render Silver & Obsidian Particles
       for (let i = 0; i < projectedParticles.length; i++) {
         const p = projectedParticles[i];
 
@@ -266,29 +271,29 @@ export function AIParticleOrb({
         ctx.fillStyle = `${p.color}${p.alpha})`;
         ctx.fill();
 
-        // Extra specular glow on front-facing particles
-        if (p.z3d > sphereRadius * 0.3) {
+        // Extra specular platinum sheen on highlighted foreground particles
+        if (p.specular && p.z3d > sphereRadius * 0.2) {
           ctx.beginPath();
-          ctx.arc(p.x2d, p.y2d, p.radius * 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = `${p.color}${p.alpha * 0.25})`;
+          ctx.arc(p.x2d, p.y2d, p.radius * 2.0, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.4})`;
           ctx.fill();
         }
       }
 
-      // Draw delicate dynamic connection filaments between nearby foreground points
-      ctx.lineWidth = 0.6;
+      // Render delicate silver metallic filament lines
+      ctx.lineWidth = 0.5;
       for (let i = 0; i < projectedParticles.length; i += 3) {
         const p1 = projectedParticles[i];
-        if (p1.z3d < 0) continue;
+        if (p1.z3d < -10) continue;
 
         for (let j = i + 1; j < projectedParticles.length; j += 4) {
           const p2 = projectedParticles[j];
-          if (p2.z3d < 0) continue;
+          if (p2.z3d < -10) continue;
 
           const dist = Math.hypot(p1.x2d - p2.x2d, p1.y2d - p2.y2d);
-          if (dist < 28) {
-            const lineAlpha = (1 - dist / 28) * 0.18 * p1.alpha;
-            ctx.strokeStyle = `rgba(16, 185, 129, ${lineAlpha})`;
+          if (dist < 26) {
+            const lineAlpha = (1 - dist / 26) * 0.16 * p1.alpha;
+            ctx.strokeStyle = `rgba(100, 116, 139, ${lineAlpha})`;
             ctx.beginPath();
             ctx.moveTo(p1.x2d, p1.y2d);
             ctx.lineTo(p2.x2d, p2.y2d);
@@ -307,7 +312,7 @@ export function AIParticleOrb({
       canvas.removeEventListener("pointermove", handlePointerMove);
       canvas.removeEventListener("pointerleave", handlePointerLeave);
     };
-  }, [size]);
+  }, [mounted, size]);
 
   return (
     <div
