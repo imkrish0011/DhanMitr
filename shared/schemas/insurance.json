@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Insurance",
+  "description": "Insurance policy record (Health, Term Life, Vehicle, etc.).",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "policy_name": { "type": "string" },
+    "provider": { "type": "string" },
+    "policy_type": {
+      "type": "string",
+      "enum": ["health", "term_life", "motor", "home", "critical_illness", "other"]
+    },
+    "coverage_amount": { "type": "number" },
+    "premium_amount": { "type": "number" },
+    "premium_frequency": {
+      "type": "string",
+      "enum": ["monthly", "quarterly", "yearly"]
+    },
+    "renewal_date": { "type": "string", "format": "date" },
+    "policy_number": { "type": "string" }
+  },
+  "required": ["id", "policy_name", "policy_type", "coverage_amount", "premium_amount"]
+}

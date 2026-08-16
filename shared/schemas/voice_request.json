@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceRequest",
+  "description": "Payload containing audio input or text for voice synthesis/pipeline.",
+  "type": "object",
+  "properties": {
+    "audio_base64": {
+      "type": "string",
+      "description": "Base64-encoded audio payload (WAV, WebM, MP3)."
+    },
+    "text": {
+      "type": "string",
+      "description": "Text to synthesize when invoking standalone TTS."
+    },
+    "voice_id": {
+      "type": "string",
+      "description": "Selected voice persona or speaker ID."
+    },
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "Audio input/output language code."
+    },
+    "stream_output": {
+      "type": "boolean",
+      "default": false
+    },
+    "user_id": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChatResponse",
+  "description": "Response payload returned from backend/RAG to the client.",
+  "type": "object",
+  "properties": {
+    "message_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "conversation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "reply": {
+      "type": "string",
+      "description": "Markdown formatted AI response text."
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "source_type": { "type": "string" },
+          "snippet": { "type": "string" }
+        },
+        "required": ["title", "snippet"]
+      },
+      "description": "Retrieved financial knowledge documents or citations."
+    },
+    "suggested_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recommended next actions or follow-up prompt pills."
+    },
+    "metrics_snapshot": {
+      "type": "object",
+      "description": "Computed financial indicators related to the conversation topic."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["message_id", "reply", "created_at"]
+}

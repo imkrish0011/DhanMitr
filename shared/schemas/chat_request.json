@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChatRequest",
+  "description": "Payload sent from client to backend for conversational AI financial guidance.",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "User's query or prompt."
+    },
+    "conversation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Optional conversation session identifier."
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Authenticated user ID (null for anonymous/guest sessions)."
+    },
+    "stream": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to return Server-Sent Events (SSE) streaming output."
+    },
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "ISO-639-1 language code (e.g., 'en', 'hi', 'ta', 'te')."
+    },
+    "financial_context": {
+      "type": "object",
+      "description": "Optional client-supplied financial context snapshot."
+    }
+  },
+  "required": ["message"]
+}

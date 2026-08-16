@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Transaction",
+  "description": "Income, expense, or transfer transaction record.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "title": { "type": "string" },
+    "amount": { "type": "number" },
+    "currency": { "type": "string", "default": "INR" },
+    "type": {
+      "type": "string",
+      "enum": ["income", "expense", "transfer", "investment"]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "groceries",
+        "dining",
+        "utilities",
+        "rent",
+        "shopping",
+        "travel",
+        "healthcare",
+        "education",
+        "entertainment",
+        "salary",
+        "freelance",
+        "investment_return",
+        "other"
+      ]
+    },
+    "date": { "type": "string", "format": "date-time" },
+    "account_name": { "type": "string" },
+    "is_recurring": { "type": "boolean", "default": false },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["id", "title", "amount", "type", "category", "date"]
+}

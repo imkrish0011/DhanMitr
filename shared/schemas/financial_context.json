@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FinancialContext",
+  "description": "Aggregated user context provided to RAG/LLM for accurate financial reasoning.",
+  "type": "object",
+  "properties": {
+    "profile": {
+      "$ref": "./financial_profile.json"
+    },
+    "net_worth": { "type": "number" },
+    "savings_rate_percentage": { "type": "number" },
+    "runway_months": { "type": "number" },
+    "debt_to_income_ratio": { "type": "number" },
+    "top_spending_categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string" },
+          "amount": { "type": "number" },
+          "percentage": { "type": "number" }
+        }
+      }
+    },
+    "active_goals_count": { "type": "integer" },
+    "active_subscriptions_total": { "type": "number" },
+    "active_insurance_coverages": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

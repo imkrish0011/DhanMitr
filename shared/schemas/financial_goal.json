@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FinancialGoal",
+  "description": "Target financial goal (Emergency fund, home downpayment, retirement, vacation).",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "title": { "type": "string" },
+    "target_amount": { "type": "number", "minimum": 1 },
+    "current_amount": { "type": "number", "default": 0 },
+    "target_date": { "type": "string", "format": "date" },
+    "category": {
+      "type": "string",
+      "enum": ["emergency_fund", "home", "retirement", "vehicle", "education", "vacation", "wedding", "other"]
+    },
+    "monthly_contribution": { "type": "number", "default": 0 },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "default": "medium"
+    },
+    "is_completed": { "type": "boolean", "default": false }
+  },
+  "required": ["id", "title", "target_amount", "target_date"]
+}

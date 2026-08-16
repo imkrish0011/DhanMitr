@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceResponse",
+  "description": "Output returned from voice pipeline including transcript, AI response, and synthesized audio.",
+  "type": "object",
+  "properties": {
+    "transcript": {
+      "type": "string",
+      "description": "Speech-to-text recognized transcript."
+    },
+    "reply_text": {
+      "type": "string",
+      "description": "AI response generated from the transcript."
+    },
+    "audio_base64": {
+      "type": "string",
+      "description": "Base64-encoded audio waveform of the synthesized speech."
+    },
+    "audio_format": {
+      "type": "string",
+      "default": "audio/wav"
+    },
+    "duration_seconds": {
+      "type": "number"
+    },
+    "latency_ms": {
+      "type": "number"
+    }
+  },
+  "required": ["transcript"]
+}
