@@ -1,27 +1,85 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Volume2, ArrowUpRight, RotateCcw } from "lucide-react";
+import { Mic, MicOff, Volume2, VolumeX, RotateCcw, ArrowUpRight, Sparkles, CheckCircle2 } from "lucide-react";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { sendVoiceQuery } from "@/lib/api";
 import { AIParticleOrb, AIOrbState } from "./AIParticleOrb";
 import { SpecularButton } from "./ui/SpecularButton";
+import { LanguageCode, RURAL_FINANCIAL_TOPICS, RuralTopic } from "@/lib/languages";
 
-const QUICK_PROMPTS = [
-  "How much emergency fund should I keep for 6 months?",
-  "Should I choose Old or New Tax Regime for 15 LPA salary?",
-  "How to split ₹30,000 monthly SIP between index and flexicap funds?",
-  "What is the 50/30/20 personal budgeting rule?",
-];
+interface VoiceAssistantProps {
+  language?: LanguageCode;
+}
 
-export function VoiceAssistant() {
+export function VoiceAssistant({ language = "hi" }: VoiceAssistantProps) {
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
   const [status, setStatus] = useState<AIOrbState>("idle");
   const [transcript, setTranscript] = useState<string>("");
   const [response, setResponse] = useState<string>("");
+  const [isSpeakingAloud, setIsSpeakingAloud] = useState(false);
+
+  // Stop browser speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const speakTextAloud = (text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Choose appropriate voice/locale
+    if (language === "hi" || language === "hinglish") {
+      utterance.lang = "hi-IN";
+    } else if (language === "mr") {
+      utterance.lang = "mr-IN";
+    } else if (language === "bn") {
+      utterance.lang = "bn-IN";
+    } else if (language === "te") {
+      utterance.lang = "te-IN";
+    } else {
+      utterance.lang = "en-IN";
+    }
+
+    utterance.rate = 0.95; // Slightly slower for crisp clarity
+
+    utterance.onstart = () => {
+      setIsSpeakingAloud(true);
+      setStatus("speaking");
+    };
+    utterance.onend = () => {
+      setIsSpeakingAloud(false);
+      setStatus("idle");
+    };
+    utterance.onerror = () => {
+      setIsSpeakingAloud(false);
+      setStatus("idle");
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeakingAloud = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeakingAloud(false);
+      setStatus("idle");
+    }
+  };
 
   const handleOrbToggle = async () => {
+    if (isSpeakingAloud) {
+      stopSpeakingAloud();
+      return;
+    }
+
     if (isRecording) {
       setStatus("thinking");
       const audioB64 = await stopRecording();
@@ -29,15 +87,18 @@ export function VoiceAssistant() {
       try {
         const res = await sendVoiceQuery({
           audio_base64: audioB64 || undefined,
-          text: transcript || "What is my emergency fund target and current savings rate?",
+          text: transcript || (language === "hi" ? "किसान क्रेडिट कार्ड और सरकारी लोन की जानकारी दें" : "Tell me about Kisan Credit Card and interest subsidy"),
         });
 
-        setTranscript(res.transcript || "How should I structure my emergency fund for 6 months?");
-        setResponse(
-          res.reply_text ||
-            "Your target 6-month emergency fund should cover mandatory living expenses—typically around ₹3.6 Lakhs. We recommend allocating 70% in high-yield liquid funds and 30% in sweep-in bank deposits for instant liquidity."
-        );
+        const userQ = res.transcript || (language === "hi" ? "किसान क्रेडिट कार्ड पर ब्याज और लोन नियम क्या हैं?" : "What are the rules for Kisan Credit Card loan?");
+        const botReply = res.reply_text || (language === "hi" 
+          ? "किसान क्रेडिट कार्ड (KCC) पर सरकार 3% ब्याज छूट देती है। अगर आप समय पर किस्त भरते हैं, तो आपको केवल 4% वार्षिक ब्याज देना होता है। नजदीकी ग्रामीण बैंक या CSC केंद्र से आवेदन किया जा सकता है।"
+          : "Kisan Credit Card (KCC) offers a subsidized effective rate of only 4% per annum upon timely repayments. You can apply at any local rural bank or CSC center.");
+
+        setTranscript(userQ);
+        setResponse(botReply);
         setStatus("speaking");
+        speakTextAloud(botReply);
       } catch (err) {
         console.error(err);
         setStatus("idle");
@@ -50,160 +111,207 @@ export function VoiceAssistant() {
     }
   };
 
-  const handleSelectPrompt = async (promptText: string) => {
-    setTranscript(promptText);
+  const handleSelectTopic = (topic: RuralTopic) => {
+    const queryText = topic.query[language] || topic.query.hi;
+    const answerText = topic.sampleAnswer[language] || topic.sampleAnswer.hi;
+
+    setTranscript(queryText);
     setStatus("thinking");
-    try {
-      const res = await sendVoiceQuery({ text: promptText });
-      setResponse(
-        res.reply_text ||
-          `Based on your query: "${promptText}", under the New Tax Regime with standard deductions, you can save significant tax without locking funds into 80C instruments.`
-      );
+
+    setTimeout(() => {
+      setResponse(answerText);
       setStatus("speaking");
-    } catch (e) {
-      setStatus("idle");
-    }
+      speakTextAloud(answerText);
+    }, 400);
   };
 
   const handleReset = () => {
+    stopSpeakingAloud();
     setStatus("idle");
     setTranscript("");
     setResponse("");
   };
 
+  // Status Labels in selected language
+  const statusLabels: Record<AIOrbState, string> = {
+    idle: language === "hi" ? "माइक दबाकर बोलें" : language === "hinglish" ? "Mic dabakar bolein" : "Tap & Speak to DhanMITR",
+    listening: language === "hi" ? "बोलिए, मैं सुन रहा हूँ..." : language === "hinglish" ? "Boliye, sun raha hoon..." : "Listening to your voice...",
+    thinking: language === "hi" ? "जानकारी जांची जा रही है..." : language === "hinglish" ? "Janakari check ho rahi hai..." : "Analyzing financial data...",
+    speaking: language === "hi" ? "धनमित्र उत्तर दे रहा है..." : language === "hinglish" ? "DhanMITR jawab de raha hai..." : "DhanMITR is answering...",
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center max-w-xl mx-auto w-full px-2 sm:px-4 py-2 sm:py-6">
-      {/* Voice Status Pill */}
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-sm mb-4">
+    <div className="flex flex-col items-center justify-between w-full max-w-lg mx-auto px-2 sm:px-4 py-1 sm:py-4 select-none">
+      {/* Dynamic Status Badge */}
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200/90 text-xs font-bold text-slate-800 shadow-sm mb-2 touch-manipulation">
         <span
-          className={`h-2 w-2 rounded-full ${
+          className={`h-2.5 w-2.5 rounded-full ${
             status === "listening"
               ? "bg-red-500 animate-ping"
               : status === "thinking"
               ? "bg-amber-500 animate-pulse"
               : status === "speaking"
-              ? "bg-slate-700 animate-bounce"
-              : "bg-slate-700"
+              ? "bg-emerald-500 animate-bounce"
+              : "bg-slate-800"
           }`}
         />
-        {status === "idle" && "Tap 3D Sphere to Speak"}
-        {status === "listening" && "Listening to your voice..."}
-        {status === "thinking" && "Analyzing with AI intelligence..."}
-        {status === "speaking" && "Speaking response..."}
+        <span>{statusLabels[status]}</span>
       </div>
 
-      {/* 3D Interactive AI Particle Orb in Silver & Black */}
-      <div className="relative my-2 sm:my-4 flex items-center justify-center">
+      {/* 3D Interactive Silver & Black Particle Orb (Optimized for Mobile Screens) */}
+      <div className="relative my-2 sm:my-3 flex items-center justify-center">
         <AIParticleOrb
           state={status}
-          size={270}
+          size={210}
           onClick={handleOrbToggle}
-          className="transition-transform active:scale-95 touch-manipulation"
+          className="transition-transform active:scale-95 touch-manipulation cursor-pointer"
         />
 
-        {/* Center Mic Icon Overlay Badge */}
-        <div
+        {/* Center Mic Overlay Action Button */}
+        <button
+          type="button"
           onClick={handleOrbToggle}
-          className={`absolute pointer-events-none w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${
+          className={`absolute w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg active:scale-90 touch-manipulation ${
             isRecording
-              ? "bg-red-500 text-white shadow-red-500/30 scale-110"
-              : status === "speaking"
-              ? "bg-slate-900 text-white shadow-slate-900/30"
-              : "bg-white/95 text-slate-800 backdrop-blur-md border border-slate-200 shadow-slate-500/10"
+              ? "bg-red-500 text-white shadow-red-500/40 scale-110"
+              : isSpeakingAloud
+              ? "bg-emerald-600 text-white shadow-emerald-600/40 animate-pulse"
+              : status === "thinking"
+              ? "bg-amber-500 text-white shadow-amber-500/40 animate-spin"
+              : "bg-white text-slate-900 border-2 border-slate-200 shadow-slate-900/10"
           }`}
         >
           {isRecording ? (
             <MicOff className="w-6 h-6 animate-pulse" />
-          ) : status === "speaking" ? (
+          ) : isSpeakingAloud ? (
             <Volume2 className="w-6 h-6 animate-bounce" />
           ) : (
-            <Mic className="w-6 h-6" />
+            <Mic className="w-6 h-6 text-slate-900" />
           )}
-        </div>
+        </button>
       </div>
 
-      {/* Primary Specular Trigger Button */}
-      <div className="mt-2 mb-4">
+      {/* Primary Specular Trigger Button (Big Thumb Target) */}
+      <div className="w-full px-2 my-2">
         <SpecularButton
-          size="md"
-          radius={20}
+          size="lg"
+          radius={22}
           tint={isRecording ? "#ef4444" : "#0f172a"}
-          tintOpacity={0.06}
-          lineColor={isRecording ? "#ef4444" : "#475569"}
-          textColor={isRecording ? "#dc2626" : "#0f172a"}
-          baseColor="#e2e8f0"
-          intensity={1.3}
+          tintOpacity={1}
+          lineColor={isRecording ? "#ef4444" : "#cbd5e1"}
+          textColor="#ffffff"
+          baseColor="#334155"
+          intensity={1.5}
           onClick={handleOrbToggle}
-          className="shadow-sm font-semibold"
+          className="w-full h-13 sm:h-14 font-extrabold text-sm sm:text-base shadow-md active:scale-[0.97]"
         >
           {isRecording ? (
-            <>
-              <MicOff className="w-4 h-4 text-red-500" />
-              <span>Tap to Finish Speaking</span>
-            </>
+            <div className="flex items-center gap-2">
+              <MicOff className="w-5 h-5 text-red-300" />
+              <span>{language === "hi" ? "बात खत्म करें" : language === "hinglish" ? "Bat khatam karein" : "Tap to Finish Speaking"}</span>
+            </div>
+          ) : isSpeakingAloud ? (
+            <div className="flex items-center gap-2">
+              <VolumeX className="w-5 h-5 text-emerald-300" />
+              <span>{language === "hi" ? "आवाज़ रोकें (Stop Audio)" : "Stop Voice"}</span>
+            </div>
           ) : (
-            <>
-              <Mic className="w-4 h-4 text-slate-700" />
-              <span>Start Voice Conversation</span>
-            </>
+            <div className="flex items-center gap-2">
+              <Mic className="w-5 h-5 text-white" />
+              <span>{language === "hi" ? "बोलकर पूछें (Tap to Speak)" : language === "hinglish" ? "Bolkar Puchein" : "Ask Anything by Voice"}</span>
+            </div>
           )}
         </SpecularButton>
       </div>
 
-      {/* Transcript & Response Area */}
+      {/* Transcript & Spoken Answer Card */}
       <AnimatePresence>
         {(transcript || response) && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="w-full mt-4 p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-[0_8px_30px_rgb(0,0,0,0.03)] text-left space-y-3.5"
+            exit={{ opacity: 0, y: -8 }}
+            className="w-full my-2 p-4 rounded-2xl bg-white border border-slate-200/90 shadow-md text-left space-y-3"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Voice Output
-              </span>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{language === "hi" ? "धनमित्र उत्तर (DhanMITR)" : "DhanMITR Voice Answer"}</span>
+              </div>
               <button
+                type="button"
                 onClick={handleReset}
-                className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors p-1"
+                className="text-xs text-slate-400 hover:text-slate-700 flex items-center gap-1 p-1"
               >
-                <RotateCcw className="w-3 h-3" /> Clear
+                <RotateCcw className="w-3.5 h-3.5" /> <span>{language === "hi" ? "हटाएं" : "Clear"}</span>
               </button>
             </div>
 
             {transcript && (
-              <div>
-                <span className="text-[10px] font-bold uppercase text-slate-400">You asked</span>
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {language === "hi" ? "आपका प्रश्न" : "Your Question"}
+                </span>
                 <p className="text-xs sm:text-sm font-semibold text-slate-900 mt-0.5">"{transcript}"</p>
               </div>
             )}
 
             {response && (
-              <div className="pt-2 border-t border-slate-50">
-                <span className="text-[10px] font-bold uppercase text-slate-800 flex items-center gap-1">
-                  <Volume2 className="w-3.5 h-3.5 text-slate-600" /> DhanMITR Guidance
-                </span>
-                <p className="text-xs sm:text-sm text-slate-700 mt-1 leading-relaxed">{response}</p>
+              <div className="space-y-2">
+                <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+                  {response}
+                </p>
+
+                {/* Read aloud button */}
+                <div className="pt-1 flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => (isSpeakingAloud ? stopSpeakingAloud() : speakTextAloud(response))}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all active:scale-95"
+                  >
+                    {isSpeakingAloud ? (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>{language === "hi" ? "आवाज़ रोकें" : "Stop Audio"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>{language === "hi" ? "🔊 दोबारा सुनें" : "🔊 Listen Aloud"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Quick Suggested Voice Prompts */}
-      <div className="w-full mt-6 sm:mt-8">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-2.5">
-          Suggested Financial Topics
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {QUICK_PROMPTS.map((prompt, idx) => (
+      {/* 1-Tap Quick Rural Topic Cards (Carousel / Grid) */}
+      <div className="w-full mt-3">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            {language === "hi" ? "लोकप्रिय विषय (1-Tap Topics)" : language === "hinglish" ? "Zaroori Topics" : "Key Financial Topics"}
+          </span>
+          <span className="text-[10px] text-emerald-600 font-semibold">1-Tap Answer</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {RURAL_FINANCIAL_TOPICS.map((topic) => (
             <button
-              key={idx}
-              onClick={() => handleSelectPrompt(prompt)}
-              className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left text-xs font-medium text-slate-700 transition-all hover:border-slate-400 hover:shadow-sm active:scale-[0.98] group touch-manipulation"
+              key={topic.id}
+              type="button"
+              onClick={() => handleSelectTopic(topic)}
+              className="flex flex-col text-left p-3 rounded-2xl bg-slate-50/90 hover:bg-white border border-slate-200/80 hover:border-slate-400 text-slate-900 transition-all shadow-xs active:scale-[0.97] touch-manipulation group"
             >
-              <span className="line-clamp-2 pr-1">{prompt}</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 flex-shrink-0" />
+              <div className="flex items-center justify-between w-full mb-1">
+                <span className="text-xl">{topic.icon}</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900" />
+              </div>
+              <span className="text-xs font-bold leading-tight line-clamp-2">
+                {topic.title[language] || topic.title.hi}
+              </span>
             </button>
           ))}
         </div>
