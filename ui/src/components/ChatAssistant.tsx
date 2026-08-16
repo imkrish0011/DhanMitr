@@ -19,15 +19,13 @@ interface ChatAssistantProps {
 export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
   const defaultWelcome =
     language === "hi"
-      ? "नमस्ते! मैं धनमित्र (DhanMITR) हूँ — आपका AI वित्तीय साथी। किसान लोन, सरकारी योजनाएं, बचत, या बीमा से जुड़ा कोई भी सवाल पूछें।"
-      : language === "hinglish"
-      ? "Namaste! Main DhanMITR hoon — aapka AI finance saathi. KCC Loan, PM-Kisan, RD savings ya kuch bhi poochiye."
-      : "Hello! I'm DhanMITR — your AI Personal Finance Companion. Ask me anything about savings, loans, insurance, or government schemes.";
+      ? "नमस्ते! मैं धनमित्र (DhanMITR) हूँ — आपका AI वित्तीय साथी। किसान क्रेडिट कार्ड (KCC), सरकारी योजनाएं, बचत, या बीमा से जुड़ा कोई भी सवाल पूछें।"
+      : "Hello! I am DhanMITR — your AI Personal Finance Companion. Ask me anything about savings, Kisan loans, insurance, or government schemes.";
 
   const defaultSuggestions =
     language === "hi"
-      ? ["KCC लोन पर कितना ब्याज?", "₹500 बचत कैसे करें?", "PMSBY बीमा क्या है?"]
-      : ["KCC loan interest rate?", "Best ₹500/mo savings plan?", "What is PMSBY?"];
+      ? ["KCC लोन पर ब्याज दर?", "₹500 मासिक बचत योजना?", "PMSBY बीमा क्या है?"]
+      : ["KCC loan interest rate?", "Best monthly savings for ₹500?", "What is PMSBY insurance?"];
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: "w1", sender: "bot", text: defaultWelcome, suggestions: defaultSuggestions },
@@ -44,7 +42,9 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
 
   useEffect(() => {
     return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
 
@@ -57,7 +57,7 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
     }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text.replace(/\*\*/g, ""));
-    u.lang = language === "hi" || language === "hinglish" ? "hi-IN" : language === "mr" ? "mr-IN" : language === "bn" ? "bn-IN" : language === "te" ? "te-IN" : "en-IN";
+    u.lang = language === "hi" ? "hi-IN" : "en-IN";
     u.rate = 0.95;
     u.onstart = () => setSpeakingId(id);
     u.onend = () => setSpeakingId(null);
@@ -78,7 +78,7 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
         { id: res.message_id || "b" + Date.now(), sender: "bot", text: res.reply, suggestions: res.suggested_actions },
       ]);
     } catch {
-      // silent
+      // fallback
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -86,68 +86,75 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
   };
 
   const handleReset = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
     setSpeakingId(null);
     setMessages([{ id: "w1", sender: "bot", text: defaultWelcome, suggestions: defaultSuggestions }]);
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-136px)] sm:h-[calc(100dvh-140px)] w-full bg-white rounded-2xl overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-136px)] sm:h-[calc(100dvh-140px)] w-full bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-slate-50/70">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center">
             <Bot className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
             <span className="text-xs font-bold text-slate-900 block leading-tight">DhanMITR AI</span>
             <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Online
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+              {language === "hi" ? "ऑनलाइन" : "Online"}
             </span>
           </div>
         </div>
         <button
           type="button"
           onClick={handleReset}
-          className="text-xs text-slate-400 hover:text-slate-900 flex items-center gap-1 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+          className="text-xs text-slate-400 hover:text-slate-900 flex items-center gap-1 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+          title="Clear"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* Messages */}
+      {/* Messages Feed */}
       <div ref={feedRef} className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 space-y-3">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[88%] sm:max-w-[80%] ${msg.sender === "user" ? "" : ""}`}>
-              {/* Message bubble */}
+            <div className="max-w-[88%] sm:max-w-[80%]">
               <div
                 className={`px-3.5 py-2.5 text-[13px] sm:text-sm leading-relaxed ${
                   msg.sender === "user"
-                    ? "bg-slate-900 text-white rounded-2xl rounded-br-md"
+                    ? "bg-slate-900 text-white rounded-2xl rounded-br-md font-medium"
                     : "bg-slate-50 text-slate-900 border border-slate-100 rounded-2xl rounded-bl-md"
                 }`}
               >
                 <div className="whitespace-pre-line">{msg.text}</div>
               </div>
 
-              {/* Bot: listen button + suggestions */}
+              {/* Bot: Audio read-aloud + suggestions */}
               {msg.sender === "bot" && (
                 <div className="mt-1.5 flex flex-col gap-1.5">
-                  {/* Listen button */}
                   <button
                     type="button"
                     onClick={() => speak(msg.id, msg.text)}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-emerald-700 w-fit px-2 py-0.5 rounded transition-colors"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-900 w-fit px-2 py-0.5 rounded transition-colors"
                   >
                     {speakingId === msg.id ? (
-                      <><VolumeX className="w-3 h-3" /> {language === "hi" ? "रोकें" : "Stop"}</>
+                      <>
+                        <VolumeX className="w-3 h-3 text-slate-600" />
+                        <span>{language === "hi" ? "रोकें" : "Stop"}</span>
+                      </>
                     ) : (
-                      <><Volume2 className="w-3 h-3" /> {language === "hi" ? "सुनें" : "Listen"}</>
+                      <>
+                        <Volume2 className="w-3 h-3 text-slate-600" />
+                        <span>{language === "hi" ? "सुनें" : "Listen"}</span>
+                      </>
                     )}
                   </button>
 
-                  {/* Suggestion chips */}
                   {msg.suggestions && msg.suggestions.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {msg.suggestions.map((s, i) => (
@@ -155,7 +162,7 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
                           key={i}
                           type="button"
                           onClick={() => handleSend(s)}
-                          className="text-[11px] font-medium bg-white border border-slate-200 hover:border-slate-400 text-slate-700 rounded-full px-3 py-1 transition-all active:scale-95 touch-manipulation"
+                          className="text-[11px] font-medium bg-white border border-slate-200 hover:border-slate-400 text-slate-700 rounded-full px-3 py-1 transition-all active:scale-95 touch-manipulation shadow-2xs"
                         >
                           {s}
                         </button>
@@ -176,22 +183,25 @@ export function ChatAssistant({ language = "hi" }: ChatAssistantProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
               </span>
-              <span>{language === "hi" ? "जानकारी तैयार हो रही है..." : "Thinking..."}</span>
+              <span>{language === "hi" ? "विश्लेषण जारी है..." : "Thinking..."}</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Input */}
+      {/* Input Form */}
       <form
-        onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
         className="p-2.5 border-t border-slate-100 bg-white flex items-center gap-2"
       >
         <input
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={language === "hi" ? "अपना सवाल लिखें..." : "Type your question..."}
+          placeholder={language === "hi" ? "अपना वित्तीय प्रश्न लिखें..." : "Type your finance question..."}
           className="flex-1 h-11 px-4 rounded-full bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:bg-white transition-all"
         />
         <button
