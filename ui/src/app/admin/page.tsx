@@ -11,6 +11,7 @@ import {
   Film, 
   Plus, 
   Trash2, 
+  Edit3,
   Calendar, 
   Sparkles, 
   TrendingUp, 
@@ -18,19 +19,29 @@ import {
   Bell, 
   Zap,
   RotateCcw,
-  Sliders
+  Sliders,
+  X,
+  Check,
+  CreditCard,
+  Layers,
+  ChevronRight
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { UserFinancialProfile, SubscriptionItem, InsuranceItem } from "@/types";
 import { DEFAULT_DEMO_PROFILE, loadUserProfile, saveUserProfile, calculateFinancialSummary, generatePersonalizedInsights } from "@/lib/userProfile";
-import { SpecularButton } from "@/components/ui/SpecularButton";
 
 export default function AdminFinancePage() {
   const [profile, setProfile] = useState<UserFinancialProfile>(DEFAULT_DEMO_PROFILE);
   const [activeTab, setActiveTab] = useState<"overview" | "subscriptions" | "insurances" | "budget">("overview");
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Form states
+  // Edit Subscription Modal State
+  const [editingSub, setEditingSub] = useState<SubscriptionItem | null>(null);
+
+  // Edit Insurance Modal State
+  const [editingIns, setEditingIns] = useState<InsuranceItem | null>(null);
+
+  // Form states for Budget
   const [income, setIncome] = useState<number>(65000);
   const [food, setFood] = useState<number>(12000);
   const [rent, setRent] = useState<number>(16000);
@@ -100,6 +111,19 @@ export default function AdminFinancePage() {
     triggerSaveNotification();
   };
 
+  const handleSaveEditedSubscription = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSub) return;
+    const updated: UserFinancialProfile = {
+      ...profile,
+      subscriptions: profile.subscriptions.map((s) => (s.id === editingSub.id ? editingSub : s)),
+    };
+    setProfile(updated);
+    saveUserProfile(updated);
+    setEditingSub(null);
+    triggerSaveNotification();
+  };
+
   const handleDeleteSubscription = (id: string) => {
     const updated: UserFinancialProfile = {
       ...profile,
@@ -107,6 +131,7 @@ export default function AdminFinancePage() {
     };
     setProfile(updated);
     saveUserProfile(updated);
+    if (editingSub?.id === id) setEditingSub(null);
     triggerSaveNotification();
   };
 
@@ -145,6 +170,19 @@ export default function AdminFinancePage() {
     triggerSaveNotification();
   };
 
+  const handleSaveEditedInsurance = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingIns) return;
+    const updated: UserFinancialProfile = {
+      ...profile,
+      insurances: profile.insurances.map((i) => (i.id === editingIns.id ? editingIns : i)),
+    };
+    setProfile(updated);
+    saveUserProfile(updated);
+    setEditingIns(null);
+    triggerSaveNotification();
+  };
+
   const handleDeleteInsurance = (id: string) => {
     const updated: UserFinancialProfile = {
       ...profile,
@@ -152,6 +190,7 @@ export default function AdminFinancePage() {
     };
     setProfile(updated);
     saveUserProfile(updated);
+    if (editingIns?.id === id) setEditingIns(null);
     triggerSaveNotification();
   };
 
@@ -169,7 +208,7 @@ export default function AdminFinancePage() {
   const insights = generatePersonalizedInsights(profile);
 
   return (
-    <div className="min-h-screen bg-slate-50/50 text-slate-900 selection:bg-slate-100">
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 selection:bg-slate-100 pb-12">
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
@@ -180,18 +219,18 @@ export default function AdminFinancePage() {
               className="h-8 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>AI Assistant</span>
+              <span>AI Companion</span>
             </Link>
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
             <div className="flex items-center gap-2">
               <Logo size={24} showText={false} />
-              <span className="text-sm font-extrabold text-slate-900">Finance Admin Hub</span>
+              <span className="text-sm font-extrabold text-slate-900 tracking-tight">Finance Management Hub</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             {savedSuccess && (
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md flex items-center gap-1 animate-in fade-in">
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg flex items-center gap-1 animate-in fade-in">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Saved
               </span>
             )}
@@ -208,9 +247,9 @@ export default function AdminFinancePage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Container */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Navigation Tabs */}
+        {/* Navigation Switcher Tabs */}
         <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200/80 max-w-lg">
           <button
             type="button"
@@ -221,7 +260,7 @@ export default function AdminFinancePage() {
                 : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            Overview & Alerts
+            Overview
           </button>
           <button
             type="button"
@@ -232,7 +271,7 @@ export default function AdminFinancePage() {
                 : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            OTT & Subscriptions ({profile.subscriptions.length})
+            OTT & Subs ({profile.subscriptions.length})
           </button>
           <button
             type="button"
@@ -260,7 +299,7 @@ export default function AdminFinancePage() {
 
         {/* TAB 1: OVERVIEW & ALERTS */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-200">
             {/* Top Metric Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -387,13 +426,13 @@ export default function AdminFinancePage() {
 
         {/* TAB 2: SUBSCRIPTIONS & OTT */}
         {activeTab === "subscriptions" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Manage Subscriptions & OTT Services</h3>
                   <p className="text-xs text-slate-400">
-                    Total cost: ₹{summary.monthlySubCost.toLocaleString()}/month
+                    Total active monthly outflow: <strong className="text-slate-700">₹{summary.monthlySubCost.toLocaleString()}/mo</strong>
                   </p>
                 </div>
               </div>
@@ -442,7 +481,7 @@ export default function AdminFinancePage() {
                 </div>
               </form>
 
-              {/* List */}
+              {/* Subscriptions List with Edit / Delete */}
               <div className="space-y-2">
                 {profile.subscriptions.map((s) => (
                   <div
@@ -458,18 +497,19 @@ export default function AdminFinancePage() {
                         className={`w-5 h-5 rounded-md border flex items-center justify-center text-xs font-bold ${
                           s.active ? "bg-slate-900 text-white border-slate-900" : "border-slate-300 bg-white"
                         }`}
+                        title={s.active ? "Pause Subscription" : "Resume Subscription"}
                       >
                         {s.active && "✓"}
                       </button>
                       <div>
                         <span className="text-xs font-bold text-slate-900 block">{s.name}</span>
                         <span className="text-[11px] text-slate-400 font-medium">
-                          Next renewal: {s.renewalDate}
+                          Next renewal: <strong className="text-slate-600">{s.renewalDate}</strong>
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="text-right">
                         <span className="text-xs sm:text-sm font-extrabold text-slate-900">
                           ₹{s.cost.toLocaleString()}
@@ -478,10 +518,23 @@ export default function AdminFinancePage() {
                           /{s.billingCycle}
                         </span>
                       </div>
+
+                      {/* Edit Button */}
+                      <button
+                        type="button"
+                        onClick={() => setEditingSub(s)}
+                        className="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                        title="Edit Subscription"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+
+                      {/* Delete Button */}
                       <button
                         type="button"
                         onClick={() => handleDeleteSubscription(s.id)}
-                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50"
+                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Delete Subscription"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -495,13 +548,13 @@ export default function AdminFinancePage() {
 
         {/* TAB 3: INSURANCES */}
         {activeTab === "insurances" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Insurance & Protection Portfolio</h3>
                   <p className="text-xs text-slate-400">
-                    Health, Term Life, PMSBY & Vehicle policies
+                    Health, Term Life, PMSBY & Vehicle policies with expiry tracking
                   </p>
                 </div>
               </div>
@@ -542,7 +595,7 @@ export default function AdminFinancePage() {
                 </div>
               </form>
 
-              {/* List */}
+              {/* Insurance List with Edit / Delete */}
               <div className="space-y-2">
                 {profile.insurances.map((ins) => (
                   <div
@@ -556,12 +609,12 @@ export default function AdminFinancePage() {
                       <div>
                         <span className="text-xs font-bold text-slate-900 block">{ins.name}</span>
                         <span className="text-[11px] text-slate-400 font-medium">
-                          Expires: <strong>{ins.expiryDate}</strong> • {ins.policyNumber || "Standard Policy"}
+                          Expires: <strong className="text-slate-600">{ins.expiryDate}</strong> • {ins.policyNumber || "Policy Active"}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="text-right">
                         <span className="text-xs sm:text-sm font-extrabold text-slate-900">
                           ₹{ins.amount.toLocaleString()}
@@ -570,10 +623,23 @@ export default function AdminFinancePage() {
                           /{ins.frequency}
                         </span>
                       </div>
+
+                      {/* Edit Button */}
+                      <button
+                        type="button"
+                        onClick={() => setEditingIns(ins)}
+                        className="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                        title="Edit Insurance"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+
+                      {/* Delete Button */}
                       <button
                         type="button"
                         onClick={() => handleDeleteInsurance(ins.id)}
-                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50"
+                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Delete Insurance"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -587,7 +653,7 @@ export default function AdminFinancePage() {
 
         {/* TAB 4: BUDGET & INCOME */}
         {activeTab === "budget" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-200">
             <form onSubmit={handleUpdateBudget} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
               <div className="border-b border-slate-100 pb-3">
                 <h3 className="text-sm font-bold text-slate-900">Monthly Income & Living Budget</h3>
@@ -649,7 +715,7 @@ export default function AdminFinancePage() {
               <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  className="h-11 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all active:scale-95"
+                  className="h-11 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all active:scale-95 shadow-sm"
                 >
                   Save Budget Updates
                 </button>
@@ -658,6 +724,202 @@ export default function AdminFinancePage() {
           </div>
         )}
       </main>
+
+      {/* EDIT SUBSCRIPTION MODAL */}
+      {editingSub && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl p-5 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900">Edit Subscription</h3>
+              <button
+                type="button"
+                onClick={() => setEditingSub(null)}
+                className="text-slate-400 hover:text-slate-900 p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditedSubscription} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Service Name</label>
+                <input
+                  type="text"
+                  value={editingSub.name}
+                  onChange={(e) => setEditingSub({ ...editingSub, name: e.target.value })}
+                  required
+                  className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Cost (₹)</label>
+                  <input
+                    type="number"
+                    value={editingSub.cost}
+                    onChange={(e) => setEditingSub({ ...editingSub, cost: Number(e.target.value) })}
+                    required
+                    className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Cycle</label>
+                  <select
+                    value={editingSub.billingCycle}
+                    onChange={(e) =>
+                      setEditingSub({
+                        ...editingSub,
+                        billingCycle: e.target.value as "monthly" | "yearly",
+                      })
+                    }
+                    className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Renewal Date</label>
+                <input
+                  type="date"
+                  value={editingSub.renewalDate}
+                  onChange={(e) => setEditingSub({ ...editingSub, renewalDate: e.target.value })}
+                  required
+                  className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteSubscription(editingSub.id)}
+                  className="h-10 px-3 rounded-lg text-red-600 hover:bg-red-50 text-xs font-bold flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingSub(null)}
+                    className="h-10 px-4 rounded-lg text-slate-500 hover:text-slate-900 text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="h-10 px-4 rounded-lg bg-slate-900 text-white text-xs font-bold shadow-sm"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT INSURANCE MODAL */}
+      {editingIns && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl p-5 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900">Edit Insurance Policy</h3>
+              <button
+                type="button"
+                onClick={() => setEditingIns(null)}
+                className="text-slate-400 hover:text-slate-900 p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditedInsurance} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Policy Name</label>
+                <input
+                  type="text"
+                  value={editingIns.name}
+                  onChange={(e) => setEditingIns({ ...editingIns, name: e.target.value })}
+                  required
+                  className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Annual Premium (₹)</label>
+                  <input
+                    type="number"
+                    value={editingIns.amount}
+                    onChange={(e) => setEditingIns({ ...editingIns, amount: Number(e.target.value) })}
+                    required
+                    className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Category</label>
+                  <select
+                    value={editingIns.category}
+                    onChange={(e) =>
+                      setEditingIns({
+                        ...editingIns,
+                        category: e.target.value as InsuranceItem["category"],
+                      })
+                    }
+                    className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                  >
+                    <option value="health">Health</option>
+                    <option value="life">Term Life</option>
+                    <option value="government">Government Scheme</option>
+                    <option value="vehicle">Vehicle</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Expiry Date</label>
+                <input
+                  type="date"
+                  value={editingIns.expiryDate}
+                  onChange={(e) => setEditingIns({ ...editingIns, expiryDate: e.target.value })}
+                  required
+                  className="w-full h-10 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteInsurance(editingIns.id)}
+                  className="h-10 px-3 rounded-lg text-red-600 hover:bg-red-50 text-xs font-bold flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingIns(null)}
+                    className="h-10 px-4 rounded-lg text-slate-500 hover:text-slate-900 text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="h-10 px-4 rounded-lg bg-slate-900 text-white text-xs font-bold shadow-sm"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
