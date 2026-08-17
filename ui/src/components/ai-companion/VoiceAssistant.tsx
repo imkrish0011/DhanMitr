@@ -170,47 +170,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           {getStatusSubtitle()}
         </p>
 
-        {/* Animation State Test / Preview Pills */}
-        <div className="flex items-center gap-2 mb-6">
-          <button
-            onClick={() => setVoiceState('listening')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
-              voiceState === 'listening'
-                ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            1. Listening
-          </button>
-          <button
-            onClick={() => setVoiceState('processing')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
-              voiceState === 'processing'
-                ? 'bg-cyan-950 border-cyan-500 text-cyan-300'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            2. Processing
-          </button>
-          <button
-            onClick={() => setVoiceState('speaking')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
-              voiceState === 'speaking'
-                ? 'bg-emerald-950 border-emerald-400 text-emerald-300'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            3. Speaking
-          </button>
-          {voiceState !== 'idle' && (
-            <button
-              onClick={() => setVoiceState('idle')}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-400 hover:text-red-400"
-            >
-              Reset
-            </button>
-          )}
-        </div>
+
 
         {/* The Audio Visualizer Glowing Orb */}
         <div className="mb-6">

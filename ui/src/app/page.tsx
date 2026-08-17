@@ -122,6 +122,13 @@ const AppContent: React.FC = () => {
           />
         ) : currentTab === 'ai_companion' && aiMode === 'chat' ? (
           <div className="h-screen flex flex-col">
+            <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B] shrink-0">
+              <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
+                ← Back
+              </button>
+              <h1 className="text-sm font-bold">AI Chat</h1>
+              <div className="w-8" />
+            </div>
             <ChatAssistant
               onSwitchToVoice={() => setAiMode('voice')}
               onNavigateToHub={() => setCurrentTab('finance_hub')}

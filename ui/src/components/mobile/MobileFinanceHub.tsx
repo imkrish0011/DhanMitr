@@ -55,17 +55,6 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
     <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] pb-28 text-slate-900 dark:text-white transition-colors duration-200">
       {/* Top Mobile App Bar */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shadow-2xs">
-        <button
-          onClick={() => alert('Menu opened')}
-          className="p-1.5 text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-
         <div className="flex items-center gap-2">
           <DhanMitrLogo className="w-6 h-6" />
           <span className="font-extrabold tracking-tight text-base">
