@@ -25,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
     activeSubscriptionsCount,
     activeInsurancesCount,
     subscriptions,
+    insurances,
     netSurplus,
   } = useFinance();
 
@@ -39,20 +40,24 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
     { id: 'budget', label: 'Budget & Income' },
   ];
 
-  // Dynamic alerts from user's actual database
+  // Dynamic alerts strictly from user's actual database records
   const activeAlerts = [
-    ...subscriptions.filter((s) => s.is_active && (s.is_urgent || s.days_remaining <= 10)).map((s) => ({
-      id: s.id,
-      title: `${s.name} Renewal`,
-      sub: `₹${s.amount} due (${s.next_renewal_date})`,
-      type: 'warning' as const,
-    })),
-    ...(netSurplus > 0 ? [{
-      id: 'surplus_active',
-      title: 'Net Surplus Positive',
-      sub: `₹${netSurplus.toLocaleString('en-IN')} net savings recorded`,
-      type: 'success' as const,
-    }] : []),
+    ...subscriptions
+      .filter((s) => s.is_active && (s.is_urgent || (s.days_remaining !== undefined && s.days_remaining <= 10)))
+      .map((s) => ({
+        id: s.id,
+        title: `${s.name} Renewal`,
+        sub: `₹${s.amount.toLocaleString('en-IN')} due (${s.next_renewal_date})`,
+        type: 'warning' as const,
+      })),
+    ...insurances
+      .filter((i) => i.is_active && (i.is_urgent || (i.days_remaining !== undefined && i.days_remaining <= 10)))
+      .map((i) => ({
+        id: i.id,
+        title: `${i.policy_name} Due`,
+        sub: `₹${i.premium_amount.toLocaleString('en-IN')} premium due (${i.renewal_date})`,
+        type: 'warning' as const,
+      })),
   ];
 
   return (

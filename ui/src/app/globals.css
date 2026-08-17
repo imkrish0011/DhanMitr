@@ -34,6 +34,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Cool Emerald Selection Everywhere on the Website */
+::selection {
+  background: rgba(16, 185, 129, 0.35);
+  color: #10B981;
+}
+::-moz-selection {
+  background: rgba(16, 185, 129, 0.35);
+  color: #10B981;
+}
+
+/* Styled Native Select Fallback */
+select option {
+  background-color: #0F172A;
+  color: #F8FAFC;
+  padding: 8px 12px;
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -143,3 +160,222 @@ body {
 .animate-breathe {
   animation: breathe 3s ease-in-out infinite;
 }
+
+/* ==========================================================================
+   NEUMORPHISM (SOFT UI) DESIGN SYSTEM UTILITIES
+   ========================================================================== */
+
+/* Neumorphic Canvas / Backgrounds */
+.neumorph-bg {
+  background-color: #EBF0F7;
+}
+.dark .neumorph-bg {
+  background-color: #0B101D;
+}
+
+/* Neumorphic Extruded Cards */
+.neumorph-card {
+  background: #EBF0F7;
+  box-shadow: 8px 8px 18px #C5D2E3, -8px -8px 18px #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.dark .neumorph-card {
+  background: #0F1626;
+  box-shadow: 8px 8px 20px #060910, -8px -8px 20px #172239;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Neumorphic Subtle Flat Raised */
+.neumorph-flat {
+  background: #EBF0F7;
+  box-shadow: 4px 4px 10px #C7D4E4, -4px -4px 10px #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.dark .neumorph-flat {
+  background: #0E1524;
+  box-shadow: 4px 4px 12px #060910, -4px -4px 12px #162035;
+  border: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+/* Neumorphic Inset / Sunken Wells */
+.neumorph-inset {
+  background: #E5ECF5;
+  box-shadow: inset 3px 3px 7px #C4D1E2, inset -3px -3px 7px #FFFFFF;
+}
+.dark .neumorph-inset {
+  background: #0A0E1A;
+  box-shadow: inset 3px 3px 7px #05070D, inset -3px -3px 7px rgba(255, 255, 255, 0.035);
+}
+
+/* Deep Sunken Well (For Chat Stream & Live Transcripts) */
+.neumorph-inset-deep {
+  background: #E2EAF4;
+  box-shadow: inset 5px 5px 12px #BFCDE0, inset -5px -5px 12px #FFFFFF;
+}
+.dark .neumorph-inset-deep {
+  background: #080C16;
+  box-shadow: inset 5px 5px 14px #04060B, inset -5px -5px 14px #141C2E;
+}
+
+/* Tactile Buttons */
+.neumorph-btn {
+  background: linear-gradient(145deg, #F5FAFF, #DFE7F2);
+  box-shadow: 4px 4px 9px #C7D4E4, -4px -4px 9px #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.neumorph-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 5px 5px 12px #C1CFDF, -5px -5px 12px #FFFFFF;
+}
+.neumorph-btn:active {
+  transform: translateY(1px);
+  background: linear-gradient(145deg, #DFE7F2, #F5FAFF);
+  box-shadow: inset 3px 3px 6px #CAD5E4, inset -3px -3px 6px #FFFFFF;
+}
+
+.dark .neumorph-btn {
+  background: linear-gradient(145deg, #131D30, #0C1220);
+  box-shadow: 4px 4px 10px #060910, -4px -4px 10px #172238;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.dark .neumorph-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 5px 5px 14px #05070D, -5px -5px 14px #1A2740;
+}
+.dark .neumorph-btn:active {
+  transform: translateY(1px);
+  background: linear-gradient(145deg, #0C1220, #131D30);
+  box-shadow: inset 3px 3px 7px #05080E, inset -3px -3px 7px rgba(255, 255, 255, 0.035);
+}
+
+/* Tactile Emerald Action Buttons */
+.neumorph-btn-emerald {
+  background: linear-gradient(145deg, #10B981, #059669);
+  box-shadow: 4px 4px 12px #C5D2E3, -4px -4px 12px #FFFFFF, 0 0 16px rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.neumorph-btn-emerald:hover {
+  background: linear-gradient(145deg, #34D399, #059669);
+  box-shadow: 5px 5px 14px #C0CCE0, -5px -5px 14px #FFFFFF, 0 0 22px rgba(16, 185, 129, 0.45);
+  transform: translateY(-1px);
+}
+.neumorph-btn-emerald:active {
+  transform: translateY(1px);
+  box-shadow: inset 3px 3px 6px #047857, inset -3px -3px 6px #34D399, 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.dark .neumorph-btn-emerald {
+  background: linear-gradient(145deg, #10B981, #047857);
+  box-shadow: 4px 4px 14px #060910, -4px -4px 14px #172238, 0 0 20px rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.dark .neumorph-btn-emerald:hover {
+  background: linear-gradient(145deg, #34D399, #059669);
+  box-shadow: 5px 5px 16px #05070D, -5px -5px 16px #1A2842, 0 0 26px rgba(16, 185, 129, 0.55);
+}
+.dark .neumorph-btn-emerald:active {
+  box-shadow: inset 3px 3px 7px #024734, inset -3px -3px 7px #10B981, 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+/* Tactile Chips / Pill Tags */
+.neumorph-chip {
+  background: #EBF0F7;
+  box-shadow: 3px 3px 7px #C7D4E4, -3px -3px 7px #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.15s ease-in-out;
+}
+.neumorph-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 9px #C1CFDF, -4px -4px 9px #FFFFFF;
+}
+.neumorph-chip:active {
+  transform: translateY(1px);
+  background: #E3EAF4;
+  box-shadow: inset 2px 2px 5px #CAD5E4, inset -2px -2px 5px #FFFFFF;
+}
+
+.dark .neumorph-chip {
+  background: #0E1524;
+  box-shadow: 3px 3px 8px #060910, -3px -3px 8px #151F33;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.dark .neumorph-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 10px #05070D, -4px -4px 10px #18243B;
+}
+.dark .neumorph-chip:active {
+  transform: translateY(1px);
+  background: #0B101C;
+  box-shadow: inset 2px 2px 5px #05080E, inset -2px -2px 5px rgba(255, 255, 255, 0.03);
+}
+
+/* User Chat Bubble (Convex Emerald with Sleek Neumorphic Drop) */
+.neumorph-bubble-user {
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 2px 3px 8px #C5D2E3, -2px -2px 6px #FFFFFF, 0 1px 4px rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.dark .neumorph-bubble-user {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 2px 3px 8px #060910, -2px -2px 8px #162238, 0 1px 6px rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+/* Assistant Chat Bubble (Extruded Compact Neumorphic Card) */
+.neumorph-bubble-assistant {
+  background: linear-gradient(145deg, #F6FAFF, #E7EFF8);
+  box-shadow: 3px 3px 9px #C7D4E4, -3px -3px 9px #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+.dark .neumorph-bubble-assistant {
+  background: linear-gradient(145deg, #121B2D, #0D1322);
+  box-shadow: 3px 3px 10px #060910, -3px -3px 10px #172238;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Neumorphic Visualizer Acoustic Housing */
+.neumorph-orb-housing {
+  background: linear-gradient(145deg, #F3F8FE, #DEE7F3);
+  box-shadow: 12px 12px 28px #BAC7D8, -12px -12px 28px #FFFFFF;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+}
+.dark .neumorph-orb-housing {
+  background: linear-gradient(145deg, #131C2E, #090E19);
+  box-shadow: 14px 14px 32px #04060B, -14px -14px 32px #18243B;
+  border: 2px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Visualizer Inner Chamber (Recessed) */
+.neumorph-orb-dish {
+  background: #E2EAF4;
+  box-shadow: inset 6px 6px 14px #BDCBDD, inset -6px -6px 14px #FFFFFF;
+}
+.dark .neumorph-orb-dish {
+  background: #070B13;
+  box-shadow: inset 6px 6px 16px #030509, inset -6px -6px 16px #121A2B;
+}
+
+/* Visualizer Central Tactile Mic Button */
+.neumorph-mic-core {
+  background: linear-gradient(145deg, #10B981, #059669);
+  box-shadow: 6px 6px 14px #B8C7D8, -6px -6px 14px #FFFFFF, 0 0 20px rgba(16, 185, 129, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+.dark .neumorph-mic-core {
+  background: linear-gradient(145deg, #10B981, #047857);
+  box-shadow: 6px 6px 16px #030509, -6px -6px 16px #19263E, 0 0 25px rgba(16, 185, 129, 0.5);
+  border: 2px solid rgba(52, 211, 153, 0.35);
+}
+
+/* No Scrollbar Utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+

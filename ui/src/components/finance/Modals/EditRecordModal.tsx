@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { Subscription, Insurance, IncomeSource, BudgetItem, BillingCycle, InsuranceType } from '@/types';
 import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 export type EditableItem =
   | { type: 'subscription'; data: Subscription }
@@ -171,14 +172,14 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({ item, isOpen, 
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Billing Cycle
                   </label>
-                  <select
+                  <CustomSelect
+                    options={[
+                      { value: 'monthly', label: 'Monthly' },
+                      { value: 'yearly', label: 'Yearly' },
+                    ]}
                     value={subCycle}
-                    onChange={(e) => setSubCycle(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
+                    onChange={(val) => setSubCycle(val as any)}
+                  />
                 </div>
               </div>
 

@@ -5,6 +5,20 @@ import { useAuth } from '@/context/AuthContext';
 import { DhanMitrLogo, SparkleSmallIcon } from '@/components/icons/CustomIcons';
 import { EmploymentType, RiskTolerance, TaxRegime } from '@/types';
 import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
+import { CustomSelect, SelectOption } from '@/components/ui/CustomSelect';
+import {
+  Briefcase,
+  Building,
+  Laptop,
+  GraduationCap,
+  Palmtree,
+  ShieldCheck,
+  Scale,
+  Rocket,
+  Sparkles,
+  FileText,
+  XSquare,
+} from 'lucide-react';
 
 export const OnboardingModal: React.FC = () => {
   const { isOnboardingOpen, profile, saveOnboardingProfile, closeOnboarding } = useAuth();
@@ -141,32 +155,32 @@ export const OnboardingModal: React.FC = () => {
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Employment Type <span className="text-slate-400 text-[10px]">(Optional)</span>
                 </label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: 'salaried', label: 'Salaried Employee', icon: <Briefcase className="w-3.5 h-3.5 text-blue-500" /> },
+                    { value: 'self_employed', label: 'Self Employed', icon: <Building className="w-3.5 h-3.5 text-emerald-500" /> },
+                    { value: 'freelancer', label: 'Freelancer', icon: <Laptop className="w-3.5 h-3.5 text-purple-500" /> },
+                    { value: 'student', label: 'Student', icon: <GraduationCap className="w-3.5 h-3.5 text-amber-500" /> },
+                    { value: 'retired', label: 'Retired', icon: <Palmtree className="w-3.5 h-3.5 text-teal-500" /> },
+                  ]}
                   value={employmentType}
-                  onChange={(e) => setEmploymentType(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                >
-                  <option value="salaried">Salaried Employee</option>
-                  <option value="self_employed">Self Employed / Business</option>
-                  <option value="freelancer">Freelancer</option>
-                  <option value="student">Student</option>
-                  <option value="retired">Retired</option>
-                </select>
+                  onChange={(val) => setEmploymentType(val as any)}
+                />
               </div>
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Risk Tolerance <span className="text-slate-400 text-[10px]">(Optional)</span>
                 </label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: 'conservative', label: 'Conservative (Low)', icon: <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> },
+                    { value: 'moderate', label: 'Moderate (Balanced)', icon: <Scale className="w-3.5 h-3.5 text-blue-500" /> },
+                    { value: 'aggressive', label: 'Aggressive (Growth)', icon: <Rocket className="w-3.5 h-3.5 text-rose-500" /> },
+                  ]}
                   value={riskTolerance}
-                  onChange={(e) => setRiskTolerance(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                >
-                  <option value="conservative">Conservative (Low Risk)</option>
-                  <option value="moderate">Moderate (Balanced)</option>
-                  <option value="aggressive">Aggressive (High Growth)</option>
-                </select>
+                  onChange={(val) => setRiskTolerance(val as any)}
+                />
               </div>
             </div>
 
@@ -175,15 +189,15 @@ export const OnboardingModal: React.FC = () => {
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Tax Regime <span className="text-slate-400 text-[10px]">(Optional)</span>
                 </label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: 'new', label: 'New Tax Regime', icon: <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> },
+                    { value: 'old', label: 'Old Tax Regime', icon: <FileText className="w-3.5 h-3.5 text-amber-500" /> },
+                    { value: 'not_applicable', label: 'Not Applicable', icon: <XSquare className="w-3.5 h-3.5 text-slate-400" /> },
+                  ]}
                   value={taxRegime}
-                  onChange={(e) => setTaxRegime(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                >
-                  <option value="new">New Tax Regime</option>
-                  <option value="old">Old Tax Regime</option>
-                  <option value="not_applicable">Not Applicable</option>
-                </select>
+                  onChange={(val) => setTaxRegime(val as any)}
+                />
               </div>
 
               <div>

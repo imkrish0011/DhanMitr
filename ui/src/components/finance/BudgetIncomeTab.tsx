@@ -2,11 +2,35 @@
 
 import React, { useState } from 'react';
 import { useFinance } from '@/context/FinanceContext';
-import { WalletIcon, TrendingUpIcon, ArrowDownOutflowIcon } from '@/components/icons/CustomIcons';
 import { EditRecordModal, EditableItem } from '@/components/finance/Modals/EditRecordModal';
+import {
+  Wallet,
+  ArrowDownRight,
+  TrendingUp,
+  Plus,
+  Pencil,
+  Trash2,
+  PieChart,
+  Sparkles,
+  Briefcase,
+  Laptop,
+  Building,
+  Coins,
+  ShieldCheck,
+  CheckCircle2,
+  Utensils,
+  Home,
+  ShoppingCart,
+  Zap,
+  Car,
+  HeartPulse,
+  Scale,
+  Calendar,
+  AlertCircle,
+} from 'lucide-react';
 
 interface BudgetIncomeTabProps {
-  onOpenAddModal: () => void;
+  onOpenAddModal: (type?: any) => void;
 }
 
 export const BudgetIncomeTab: React.FC<BudgetIncomeTabProps> = ({ onOpenAddModal }) => {
@@ -22,198 +46,375 @@ export const BudgetIncomeTab: React.FC<BudgetIncomeTabProps> = ({ onOpenAddModal
 
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
 
+  const formatCurrency = (val: number) => `₹${val.toLocaleString('en-IN')}`;
+
+  const annualSurplus = Math.max(0, netSurplus * 12);
+  const totalBudgetAllocated = budgetItems.reduce((sum, b) => sum + (b.allocated || 0), 0);
+  const totalBudgetSpent = budgetItems.reduce((sum, b) => sum + (b.spent || 0), 0);
+
+  const getCategoryIcon = (category: string) => {
+    const c = category.toLowerCase();
+    if (c.includes('food') || c.includes('dine') || c.includes('grocer'))
+      return <Utensils className="w-4 h-4 text-amber-500" />;
+    if (c.includes('house') || c.includes('rent') || c.includes('home'))
+      return <Home className="w-4 h-4 text-blue-500" />;
+    if (c.includes('shop') || c.includes('cloth') || c.includes('e-comm'))
+      return <ShoppingCart className="w-4 h-4 text-purple-500" />;
+    if (c.includes('util') || c.includes('bill') || c.includes('elect'))
+      return <Zap className="w-4 h-4 text-yellow-500" />;
+    if (c.includes('travel') || c.includes('fuel') || c.includes('transport'))
+      return <Car className="w-4 h-4 text-indigo-500" />;
+    if (c.includes('health') || c.includes('med') || c.includes('insur'))
+      return <HeartPulse className="w-4 h-4 text-rose-500" />;
+    return <PieChart className="w-4 h-4 text-emerald-500" />;
+  };
+
+  const getIncomeIcon = (title: string) => {
+    const t = title.toLowerCase();
+    if (t.includes('salary') || t.includes('job') || t.includes('corp'))
+      return <Briefcase className="w-4 h-4 text-blue-500" />;
+    if (t.includes('free') || t.includes('client') || t.includes('consult'))
+      return <Laptop className="w-4 h-4 text-purple-500" />;
+    if (t.includes('rent') || t.includes('property') || t.includes('asset'))
+      return <Building className="w-4 h-4 text-amber-500" />;
+    return <Coins className="w-4 h-4 text-emerald-500" />;
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Top Banner: Income vs Budget Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-2xs hover:shadow-sm transition-all duration-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900/50 flex items-center justify-center">
-              <WalletIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+    <div className="space-y-6 pb-2">
+      {/* Executive Obsidian Cash Flow Matrix & Telemetry Hero */}
+      <div className="rounded-3xl bg-[#0F172A] dark:bg-[#0B101D] border border-slate-200/80 dark:border-slate-800/90 text-white p-5 sm:p-7 shadow-xl relative overflow-hidden space-y-5">
+        {/* Ambient subtle lighting */}
+        <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+
+        {/* Top Header Row */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[10px] sm:text-xs uppercase font-extrabold text-emerald-400 tracking-wider">
+                Monthly Cash Flow Matrix
+              </span>
             </div>
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Total Monthly Inflows</p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                ₹{totalIncome.toLocaleString('en-IN')}
-              </h3>
+            <div className="flex items-baseline gap-3">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+                {formatCurrency(netSurplus)}
+              </h2>
+              <span className="text-xs sm:text-sm font-bold text-slate-400">
+                Net Monthly Surplus
+              </span>
             </div>
+          </div>
+
+          {/* Action & Rate Cluster */}
+          <div className="flex items-center gap-3 self-start lg:self-auto">
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/90 dark:bg-slate-950/90 border border-slate-800 text-center shrink-0">
+              <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                Savings Ratio
+              </span>
+              <span className="text-sm sm:text-base font-black text-emerald-400 block mt-0.5">
+                {savingsRate}%
+              </span>
+            </div>
+
+            <button
+              onClick={() => onOpenAddModal('income')}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-2xl shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Income Source</span>
+            </button>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-2xs hover:shadow-sm transition-all duration-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center">
-              <ArrowDownOutflowIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        {/* 3-Column Responsive Telemetry Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-900/70 dark:bg-slate-950/70 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 relative z-10">
+          {/* Inflow Card */}
+          <div className="flex items-center gap-3.5 p-2 rounded-xl">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-xs">
+              <Wallet className="w-5 h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Planned Monthly Outflow</p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                ₹{totalOutflow.toLocaleString('en-IN')}
-              </h3>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block truncate">
+                  Total Monthly Inflow
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-400">
+                  {incomeSources.length} Streams
+                </span>
+              </div>
+              <span className="text-base sm:text-lg font-black text-white truncate block mt-0.5">
+                {formatCurrency(totalIncome)}
+              </span>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-2xs hover:shadow-sm transition-all duration-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900/50 flex items-center justify-center">
-              <TrendingUpIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          {/* Outflow Card */}
+          <div className="flex items-center gap-3.5 p-2 rounded-xl border-t sm:border-t-0 sm:border-l border-slate-800 sm:pl-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0 shadow-xs">
+              <ArrowDownRight className="w-5 h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Monthly Net Surplus</p>
-              <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                ₹{netSurplus.toLocaleString('en-IN')} ({savingsRate}%)
-              </h3>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block truncate">
+                  Planned Monthly Outflow
+                </span>
+                <span className="text-[10px] font-semibold text-rose-400">
+                  Living + Caps
+                </span>
+              </div>
+              <span className="text-base sm:text-lg font-black text-white truncate block mt-0.5">
+                {formatCurrency(totalOutflow)}
+              </span>
+            </div>
+          </div>
+
+          {/* Annualized Compounding Runway */}
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1 flex items-center gap-3.5 p-2 rounded-xl border-t lg:border-t-0 lg:border-l border-slate-800 lg:pl-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-xs">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block truncate">
+                  Annual Wealth Potential
+                </span>
+                <span className="text-[10px] font-semibold text-blue-400">
+                  Compounding / yr
+                </span>
+              </div>
+              <span className="text-base sm:text-lg font-black text-emerald-400 truncate block mt-0.5">
+                {formatCurrency(annualSurplus)}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
+      {/* 2-Column Desktop Grid for Incomes & Budgets */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Monthly Income Streams */}
-        <div className="lg:col-span-5 bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Income Streams
-            </h3>
+        {/* ===================== LEFT: INCOME STREAMS ===================== */}
+        <div className="lg:col-span-5 bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <Coins className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                  Income Streams
+                </h3>
+                <p className="text-[10px] sm:text-[11px] text-slate-400">
+                  {incomeSources.length} registered earning channels
+                </p>
+              </div>
+            </div>
+
             <button
-              onClick={onOpenAddModal}
-              className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1"
+              onClick={() => onOpenAddModal('income')}
+              className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <span>+ Add Income</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Stream</span>
             </button>
           </div>
 
           <div className="space-y-3">
             {incomeSources.length === 0 ? (
-              <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 space-y-2">
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Income Sources Added</p>
-                <p className="text-[11px] text-slate-400">Log your primary salary, freelance earnings, or secondary inflows.</p>
+              <div className="p-8 text-center bg-slate-50 dark:bg-[#0B101D] rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                  <Coins className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                    No Income Sources Added
+                  </p>
+                  <p className="text-[11px] text-slate-400 leading-relaxed max-w-xs mx-auto mt-1">
+                    Log your salary, freelance client payments, or dividends to track your cash inflows.
+                  </p>
+                </div>
                 <button
-                  onClick={onOpenAddModal}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer inline-block"
+                  onClick={() => onOpenAddModal('income')}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  + Add Income
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add First Inflow</span>
                 </button>
               </div>
             ) : (
-              incomeSources.map((inc) => (
-                <div
-                  key={inc.id}
-                  className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 rounded-xl flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all"
-                >
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                      {inc.title}
-                    </h4>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      Credit Date: {inc.date}
-                    </p>
+              incomeSources.map((inc) => {
+                const percentOfTotal = totalIncome > 0 ? Math.round((inc.amount / totalIncome) * 100) : 100;
+
+                return (
+                  <div
+                    key={inc.id}
+                    className="p-4 bg-slate-50 dark:bg-[#0B101D] border border-slate-200/80 dark:border-slate-800/80 rounded-2xl flex items-center justify-between hover:border-emerald-500/40 hover:shadow-xs transition-all group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                        {getIncomeIcon(inc.title)}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                          {inc.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <Calendar className="w-2.5 h-2.5 text-slate-400" />
+                            {inc.date || 'Monthly'}
+                          </span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                            {percentOfTotal}% of total
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400">
+                        +{formatCurrency(inc.amount)}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setEditingItem({ type: 'income', data: inc })}
+                          className="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                          title="Edit"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deleteIncomeSource(inc.id)}
+                          className="w-7 h-7 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/60 text-slate-400 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                      +₹{inc.amount.toLocaleString('en-IN')}
-                    </span>
-                    <button
-                      onClick={() => setEditingItem({ type: 'income', data: inc })}
-                      className="text-slate-400 hover:text-emerald-600 text-xs p-1"
-                      title="Edit Income"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      onClick={() => deleteIncomeSource(inc.id)}
-                      className="text-slate-400 hover:text-red-500 text-xs"
-                      title="Delete"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
 
-        {/* Right: Category Budget Allocations & Progress Bars */}
-        <div className="lg:col-span-7 bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Monthly Category Budgets
-              </h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                Track how close you are to your monthly budget caps. Click edit to adjust caps.
-              </p>
+        {/* ===================== RIGHT: CATEGORY BUDGET CAPS ===================== */}
+        <div className="lg:col-span-7 bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <PieChart className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                  Category Budgets & Expense Caps
+                </h3>
+                <p className="text-[10px] sm:text-[11px] text-slate-400">
+                  {budgetItems.length} active spending caps
+                </p>
+              </div>
             </div>
+
             <button
-              onClick={onOpenAddModal}
-              className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+              onClick={() => onOpenAddModal('expense')}
+              className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              + Add Budget
+              <Plus className="w-3.5 h-3.5" />
+              <span>Set Cap</span>
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {budgetItems.length === 0 ? (
-              <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 space-y-2">
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Category Budgets Set</p>
-                <p className="text-[11px] text-slate-400">Set monthly spend limits on housing, investments, food, or shopping.</p>
+              <div className="p-8 text-center bg-slate-50 dark:bg-[#0B101D] rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                  <PieChart className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                    No Category Budgets Set
+                  </p>
+                  <p className="text-[11px] text-slate-400 leading-relaxed max-w-xs mx-auto mt-1">
+                    Set spend thresholds on Housing, Dining, Shopping, and Utilities to avoid overshooting.
+                  </p>
+                </div>
                 <button
-                  onClick={onOpenAddModal}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer inline-block"
+                  onClick={() => onOpenAddModal('expense')}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  + Add Budget Cap
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Set Spend Cap</span>
                 </button>
               </div>
             ) : (
               budgetItems.map((item) => {
                 const percentUsed = Math.min(100, Math.round((item.spent / (item.allocated || 1)) * 100));
                 const isExceeded = item.spent > item.allocated;
+                const remaining = Math.max(0, (item.allocated || 0) - (item.spent || 0));
 
                 return (
-                  <div key={item.id} className="space-y-1.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <div
+                    key={item.id}
+                    className="p-4 bg-slate-50 dark:bg-[#0B101D] border border-slate-200/80 dark:border-slate-800/80 rounded-2xl space-y-2.5 hover:border-blue-500/40 hover:shadow-xs transition-all"
+                  >
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          {item.category}
-                        </span>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-2xs">
+                          {getCategoryIcon(item.category)}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm truncate block">
+                            {item.category}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block truncate">
+                            {isExceeded ? '⚠️ Cap exceeded' : `₹${remaining.toLocaleString('en-IN')} headroom`}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          ₹{item.spent.toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-slate-400 dark:text-slate-500">
-                          / ₹{item.allocated.toLocaleString('en-IN')}
-                        </span>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <div className="text-right">
+                          <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm block">
+                            {formatCurrency(item.spent)}
+                          </span>
+                          <span className="text-slate-400 dark:text-slate-500 text-[10px] block">
+                            of {formatCurrency(item.allocated)}
+                          </span>
+                        </div>
+
                         <span
-                          className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                          className={`text-[10px] font-extrabold px-2 py-0.5 rounded-lg border ${
                             isExceeded
-                              ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-400 border-red-500/30'
+                              : percentUsed > 80
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-400 border-amber-500/30'
+                              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400 border-emerald-500/30'
                           }`}
                         >
                           {percentUsed}%
                         </span>
+
                         <button
                           onClick={() => setEditingItem({ type: 'budget', data: item })}
-                          className="text-slate-400 hover:text-emerald-600 text-xs ml-1"
-                          title="Edit Budget Cap"
+                          className="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                          title="Edit"
                         >
-                          ✎
+                          <Pencil className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Progress bar */}
-                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    {/* Progress Bar */}
+                    <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{
-                          width: `${percentUsed}%`,
-                          backgroundColor: isExceeded ? '#EF4444' : item.color,
-                        }}
+                        className={`h-full rounded-full transition-all ${
+                          isExceeded
+                            ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
+                            : percentUsed > 80
+                            ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+                            : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'
+                        }`}
+                        style={{ width: `${percentUsed}%` }}
                       />
                     </div>
                   </div>
@@ -224,12 +425,14 @@ export const BudgetIncomeTab: React.FC<BudgetIncomeTabProps> = ({ onOpenAddModal
         </div>
       </div>
 
-      {/* Edit Record Modal */}
-      <EditRecordModal
-        item={editingItem}
-        isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
-      />
+      {/* Edit Record Modal Trigger */}
+      {editingItem && (
+        <EditRecordModal
+          isOpen={true}
+          onClose={() => setEditingItem(null)}
+          item={editingItem}
+        />
+      )}
     </div>
   );
 };

@@ -42,17 +42,40 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
     activeSubscriptionsCount,
     activeInsurancesCount,
     subscriptions,
+    insurances,
   } = useFinance();
 
+  const [showNotifications, setShowNotifications] = React.useState(false);
+
+  // Dynamic alerts strictly from user's actual database
+  const activeAlerts = [
+    ...subscriptions
+      .filter((s) => s.is_active && (s.is_urgent || (s.days_remaining !== undefined && s.days_remaining <= 10)))
+      .map((s) => ({
+        id: s.id,
+        title: `${s.name} Renewal`,
+        sub: `₹${s.amount.toLocaleString('en-IN')} due (${s.next_renewal_date})`,
+        type: 'warning' as const,
+      })),
+    ...insurances
+      .filter((i) => i.is_active && (i.is_urgent || (i.days_remaining !== undefined && i.days_remaining <= 10)))
+      .map((i) => ({
+        id: i.id,
+        title: `${i.policy_name} Due`,
+        sub: `₹${i.premium_amount.toLocaleString('en-IN')} due (${i.renewal_date})`,
+        type: 'warning' as const,
+      })),
+  ];
+
   const tabs = [
-    { id: 'overview' as const, label: 'Overview' },
-    { id: 'subscriptions' as const, label: `OTT & Subs (${activeSubscriptionsCount})` },
-    { id: 'insurances' as const, label: `Insurances (${activeInsurancesCount})` },
-    { id: 'budget' as const, label: 'Budget' },
+    { id: 'overview' as const, label: 'Overview', shortLabel: 'Overview' },
+    { id: 'subscriptions' as const, label: `OTT & Subs (${activeSubscriptionsCount})`, shortLabel: `Subs (${activeSubscriptionsCount})` },
+    { id: 'insurances' as const, label: `Insurances (${activeInsurancesCount})`, shortLabel: `Ins. (${activeInsurancesCount})` },
+    { id: 'budget' as const, label: 'Budget', shortLabel: 'Budget' },
   ];
 
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] pb-28 text-slate-900 dark:text-white transition-colors duration-200">
+    <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] pb-16 text-slate-900 dark:text-white transition-colors duration-200">
       {/* Top Mobile App Bar */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-2">
@@ -65,7 +88,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenAddModal}
-            className="p-1.5 bg-emerald-600 active:scale-95 text-white rounded-lg shadow-xs"
+            className="p-1.5 bg-emerald-600 active:scale-95 text-white rounded-lg shadow-xs cursor-pointer"
             title="Add Record"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
@@ -73,19 +96,50 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
             </svg>
           </button>
 
-          <button
-            onClick={() => alert('Notifications: Netflix renewal due in 8 days!')}
-            className="relative p-1.5 text-slate-600 dark:text-slate-300"
-          >
-            <BellIcon className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-1.5 text-slate-600 dark:text-slate-300 cursor-pointer"
+            >
+              <BellIcon className="w-5 h-5" />
+              {activeAlerts.length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0B101B]" />
+              )}
+            </button>
+
+            {/* Mobile Notification Popover */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-2 text-xs">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="font-bold text-slate-800 dark:text-white">Alerts & Reminders</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                    {activeAlerts.length} Active
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {activeAlerts.length === 0 ? (
+                    <p className="text-slate-400 text-center py-2 text-[11px]">No pending alerts</p>
+                  ) : (
+                    activeAlerts.map((alt) => (
+                      <div
+                        key={alt.id}
+                        className="p-2.5 rounded-xl border bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/50"
+                      >
+                        <p className="font-bold text-amber-900 dark:text-amber-300 text-xs">{alt.title}</p>
+                        <p className="text-[10px] text-amber-700 dark:text-amber-400">{alt.sub}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Title & Subtitle */}
-      <div className="px-4 pt-4 pb-1">
-        <h1 className="text-xl font-extrabold flex items-center gap-1.5 text-slate-900 dark:text-white">
+      <div className="px-4 pt-3 pb-1">
+        <h1 className="text-lg font-extrabold flex items-center gap-1.5 text-slate-900 dark:text-white">
           Finance Hub
           <SparkleSmallIcon className="w-4 h-4 text-emerald-500 fill-emerald-400" />
         </h1>
@@ -94,24 +148,26 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
         </p>
       </div>
 
-      {/* Navigation Segment Tabs */}
-      <div className="px-4 flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5">
-        {tabs.map((tab) => {
-          const isActive = activeSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
+      {/* Strict 4-Column Navigation Segment Tabs */}
+      <div className="px-4 py-2 select-none">
+        <div className="grid grid-cols-4 p-1 bg-slate-200/80 dark:bg-[#0B101D] rounded-2xl gap-1 border border-slate-200 dark:border-slate-800/80">
+          {tabs.map((tab) => {
+            const isActive = activeSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSubTab(tab.id)}
+                className={`py-1.5 px-1 rounded-xl text-[11px] font-bold transition-all text-center truncate cursor-pointer ${
+                  isActive
+                    ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500/30'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {tab.shortLabel}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab Contents */}

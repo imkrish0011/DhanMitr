@@ -5,6 +5,7 @@ import { useFinance } from '@/context/FinanceContext';
 import { ProviderLogo } from '@/components/icons/CustomIcons';
 import { Subscription } from '@/types';
 import { EditRecordModal, EditableItem } from '@/components/finance/Modals/EditRecordModal';
+import { Tv, Plus, Sparkles, Filter, CreditCard, TrendingUp, ShieldCheck } from 'lucide-react';
 
 interface SubscriptionsTabProps {
   onOpenAddModal: () => void;
@@ -21,53 +22,104 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({ onOpenAddMod
     ? subscriptions
     : subscriptions.filter((s) => s.category.toLowerCase().includes(filterCategory.toLowerCase()));
 
-  const totalMonthlyCost = subscriptions
-    .filter((s) => s.is_active)
-    .reduce((sum, s) => sum + (s.billing_cycle === 'monthly' ? s.amount : Math.round(s.amount / 12)), 0);
+  const activeSubs = subscriptions.filter((s) => s.is_active);
+  const totalMonthlyCost = activeSubs.reduce(
+    (sum, s) => sum + (s.billing_cycle === 'monthly' ? s.amount : Math.round(s.amount / 12)),
+    0
+  );
+  const totalAnnualCost = totalMonthlyCost * 12;
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner & Metrics */}
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Active Subscriptions & Recurring Plans
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Monitor, edit, pause, or optimize your recurring monthly and annual memberships.
-          </p>
-        </div>
+    <div className="space-y-4 sm:space-y-6 pb-2">
+      {/* Luxury Obsidian Header & Metrics Card */}
+      <div className="rounded-2xl sm:rounded-3xl bg-[#0F172A] dark:bg-[#0B101D] border border-slate-200/80 dark:border-slate-800/90 text-white p-4 sm:p-6 shadow-xl relative overflow-hidden space-y-4">
+        {/* Subtle background glow */}
+        <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
 
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <span className="text-xs text-slate-400 dark:text-slate-500 block">Total Monthly Cost</span>
-            <span className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
-              ₹{totalMonthlyCost.toLocaleString('en-IN')}/mo
-            </span>
+        {/* Top Header Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <Tv className="w-4 h-4" />
+              </div>
+              <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                Active Subscriptions & Recurring Plans
+              </h2>
+            </div>
+            <p className="text-[11px] sm:text-xs text-slate-400">
+              Monitor, pause, or optimize your recurring monthly and annual memberships.
+            </p>
           </div>
 
           <button
             onClick={onOpenAddModal}
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow-md transition-all"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <Plus className="w-3.5 h-3.5" />
             <span>Add Subscription</span>
           </button>
+        </div>
+
+        {/* Responsive Balanced Metrics Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 bg-slate-900/70 dark:bg-slate-950/70 p-3 rounded-xl sm:rounded-2xl border border-slate-800/80 relative z-10">
+          {/* Monthly Outlay */}
+          <div className="flex items-center gap-3 px-2 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <CreditCard className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block truncate">
+                Monthly Outlay
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-emerald-400 truncate block">
+                ₹{totalMonthlyCost.toLocaleString('en-IN')}/mo
+              </span>
+            </div>
+          </div>
+
+          {/* Annualized Cost */}
+          <div className="flex items-center gap-3 px-2 min-w-0 border-l border-slate-800 pl-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block truncate">
+                Annual Run-Rate
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-white truncate block">
+                ₹{totalAnnualCost.toLocaleString('en-IN')}/yr
+              </span>
+            </div>
+          </div>
+
+          {/* Active Count */}
+          <div className="col-span-2 md:col-span-1 flex items-center gap-3 px-2 min-w-0 border-t md:border-t-0 md:border-l border-slate-800 pt-2 md:pt-0 md:pl-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+              <Tv className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block truncate">
+                Tracked Services
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-emerald-400 truncate block">
+                {activeSubs.length} Active Plans
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar select-none">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setFilterCategory(cat)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
               filterCategory === cat
-                ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-xs'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-white dark:bg-[#0F172A] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60'
             }`}
           >
             {cat}
@@ -77,9 +129,9 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({ onOpenAddMod
 
       {/* Subscriptions Grid or Empty State */}
       {filteredSubs.length === 0 ? (
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-3xl p-12 text-center shadow-2xs space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 text-xl font-bold">
-            📺
+        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center shadow-2xs space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
+            <Tv className="w-6 h-6" />
           </div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">No Active Subscriptions Tracked</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
@@ -93,118 +145,99 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({ onOpenAddMod
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
           {filteredSubs.map((sub) => (
-          <div
-            key={sub.id}
-            className={`bg-white dark:bg-[#0F172A] border rounded-2xl p-5 shadow-2xs hover:shadow-sm hover:border-emerald-500/20 transition-all duration-300 flex flex-col justify-between group ${
-              sub.is_active
-                ? 'border-slate-200/80 dark:border-slate-800'
-                : 'border-dashed border-slate-300 dark:border-slate-700 opacity-60'
-            }`}
-          >
-            <div>
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3">
-                  <ProviderLogo logoKey={sub.logoKey} className="w-11 h-11 shrink-0 transition-transform" />
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      {sub.name}
-                      {sub.is_urgent && (
-                        <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded">
-                          Urgent
-                        </span>
-                      )}
-                    </h3>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                      {sub.planName}
+            <div
+              key={sub.id}
+              className={`bg-white dark:bg-[#0F172A] border rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-sm hover:border-emerald-500/20 transition-all duration-300 flex flex-col justify-between group ${
+                sub.is_active
+                  ? 'border-slate-200/80 dark:border-slate-800'
+                  : 'border-dashed border-slate-300 dark:border-slate-700 opacity-60'
+              }`}
+            >
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ProviderLogo logoKey={sub.logoKey} className="w-10 h-10 shrink-0 transition-transform group-hover:scale-105" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                          {sub.name}
+                        </h3>
+                        {sub.is_urgent && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded shrink-0">
+                            Due Soon
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-400 capitalize block truncate">
+                        {sub.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className="text-sm font-extrabold text-slate-900 dark:text-white shrink-0">
+                    ₹{sub.amount.toLocaleString('en-IN')}
+                    <span className="text-[10px] text-slate-400 font-normal">/{sub.billing_cycle === 'monthly' ? 'mo' : 'yr'}</span>
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                  <div className="flex justify-between">
+                    <span>Renewal Date:</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">{sub.next_renewal_date}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Status:</span>
+                    <span className={`font-semibold ${sub.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+                      {sub.is_active ? `Active (in ${sub.days_remaining}d)` : 'Paused'}
                     </span>
                   </div>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/60 text-xs">
+                <button
+                  onClick={() => toggleSubscriptionActive(sub.id)}
+                  className={`text-[11px] font-semibold cursor-pointer ${
+                    sub.is_active
+                      ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400'
+                      : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
+                  }`}
+                >
+                  {sub.is_active ? 'Pause Plan' : 'Resume'}
+                </button>
 
                 <div className="flex items-center gap-2">
-                  {/* Edit Pencil Button */}
                   <button
                     onClick={() => setEditingItem({ type: 'subscription', data: sub })}
-                    className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="text-slate-400 hover:text-emerald-600 p-1"
                     title="Edit Subscription"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                    </svg>
+                    ✎
                   </button>
-
-                  {/* Active Toggle */}
                   <button
-                    onClick={() => toggleSubscriptionActive(sub.id)}
-                    title={sub.is_active ? 'Pause Subscription' : 'Resume Subscription'}
-                    className={`w-9 h-5 rounded-full transition-colors relative ${
-                      sub.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                    }`}
+                    onClick={() => deleteSubscription(sub.id)}
+                    className="text-slate-400 hover:text-red-500 p-1"
+                    title="Delete Subscription"
                   >
-                    <span
-                      className={`block w-4 h-4 bg-white rounded-full transition-transform transform ${
-                        sub.is_active ? 'translate-x-4.5' : 'translate-x-0.5'
-                      }`}
-                    />
+                    ✕
                   </button>
                 </div>
               </div>
-
-              <div className="space-y-1.5 text-xs py-2.5 border-y border-slate-100 dark:border-slate-800/60 my-2">
-                <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Billing:</span>
-                  <span className="font-medium capitalize text-slate-700 dark:text-slate-300">{sub.billing_cycle}</span>
-                </div>
-                <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Category:</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">{sub.category}</span>
-                </div>
-                <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Next Renewal:</span>
-                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                    {sub.next_renewal_date} (in {sub.days_remaining}d)
-                  </span>
-                </div>
-              </div>
             </div>
-
-            <div className="flex items-center justify-between pt-1">
-              <div>
-                <span className="text-base font-extrabold text-slate-900 dark:text-white">
-                  ₹{sub.amount.toLocaleString('en-IN')}
-                </span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">
-                  /{sub.billing_cycle === 'monthly' ? 'mo' : 'yr'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setEditingItem({ type: 'subscription', data: sub })}
-                  className="text-[11px] text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 font-semibold"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteSubscription(sub.id)}
-                  className="text-[11px] text-red-500 hover:text-red-700 dark:hover:text-red-400 font-semibold transition-colors"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
+          ))}
+        </div>
+      )}
 
       {/* Edit Record Modal */}
-      <EditRecordModal
-        item={editingItem}
-        isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
-      />
+      {editingItem && (
+        <EditRecordModal
+          isOpen={true}
+          onClose={() => setEditingItem(null)}
+          item={editingItem}
+        />
+      )}
     </div>
   );
 };

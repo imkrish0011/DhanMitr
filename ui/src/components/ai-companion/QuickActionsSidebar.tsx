@@ -59,42 +59,42 @@ export const QuickActionsSidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-72 shrink-0 bg-white dark:bg-[#0B101B] border-l border-slate-200/80 dark:border-slate-800/80 p-5 flex flex-col justify-between hidden lg:flex select-none">
+    <aside className="w-72 shrink-0 bg-[#EBF0F7] dark:bg-[#0B101D] border-l border-slate-200/60 dark:border-slate-800/60 p-5 flex flex-col justify-between hidden lg:flex select-none transition-colors duration-300">
       <div className="space-y-6">
         {/* Quick Actions */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+            <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">
               Quick Actions
             </h3>
             {!isAuthenticated && (
-              <span className="text-[11px] text-amber-500/90 font-semibold flex items-center gap-1.5 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1.5 neumorph-chip px-2 py-0.5 rounded-md">
                 <LockIcon className="w-3 h-3 text-amber-500 shrink-0" />
-                <span>Login Required</span>
+                <span>Locked</span>
               </span>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {quickActions.map((action) => (
               <button
                 key={action.id}
                 onClick={() => handleActionClick(action)}
                 className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all text-left group cursor-pointer ${
                   isAuthenticated
-                    ? 'bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/70 dark:border-slate-700/60 hover:border-emerald-200 dark:hover:border-emerald-800 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300'
-                    : 'bg-slate-50/60 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-800 text-slate-500 hover:border-emerald-500/40 hover:text-slate-700 dark:hover:text-slate-300'
+                    ? 'neumorph-chip text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400'
+                    : 'neumorph-chip text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 opacity-80'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-2xs transition-transform">
+                  <div className="w-7 h-7 rounded-lg neumorph-btn flex items-center justify-center">
                     {action.icon}
                   </div>
                   <span>{action.label}</span>
                 </div>
 
                 {!isAuthenticated && (
-                  <div className="p-1 rounded-md bg-slate-200/60 dark:bg-slate-800/80 text-slate-400 dark:text-slate-400 group-hover:text-emerald-500 transition-colors" title="Sign in to unlock">
+                  <div className="p-1 rounded-md neumorph-inset text-slate-400 group-hover:text-emerald-500 transition-colors" title="Sign in to unlock">
                     <LockIcon className="w-3.5 h-3.5" />
                   </div>
                 )}
@@ -105,21 +105,21 @@ export const QuickActionsSidebar: React.FC = () => {
 
         {/* Recent Conversations / Chat History */}
         <div>
-          <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-3">
+          <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider mb-3">
             Chat History
           </h3>
 
           {!isAuthenticated ? (
             <div
               onClick={() => openAuthModal('signup', 'Sign in to save and synchronize your conversation history.')}
-              className="p-4 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-2.5 cursor-pointer hover:border-emerald-500/40 transition-colors"
+              className="p-4 neumorph-inset rounded-2xl text-center space-y-2.5 cursor-pointer border border-slate-200/50 dark:border-slate-800/50 transition-colors"
             >
-              <div className="w-9 h-9 rounded-full bg-slate-200/60 dark:bg-slate-800 border border-slate-300/50 dark:border-slate-700/50 flex items-center justify-center mx-auto text-slate-400">
+              <div className="w-9 h-9 rounded-full neumorph-btn flex items-center justify-center mx-auto text-slate-400">
                 <LockIcon className="w-4 h-4 text-slate-400" />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300">History Disabled</p>
-                <p className="text-[11px] text-slate-400 leading-relaxed mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
                   Sign in to save, sync, and resume your financial discussions across devices.
                 </p>
               </div>
@@ -128,22 +128,22 @@ export const QuickActionsSidebar: React.FC = () => {
                   e.stopPropagation();
                   openAuthModal('login');
                 }}
-                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-block"
+                className="px-3.5 py-1.5 neumorph-btn-emerald text-white rounded-xl text-[11px] font-bold cursor-pointer inline-block"
               >
                 Sign In to Save
               </button>
             </div>
           ) : (
-            <div className="p-4 bg-slate-50/50 dark:bg-slate-800/20 border border-slate-200/60 dark:border-slate-800 rounded-2xl text-center">
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Current session active</p>
-              <p className="text-[10px] text-slate-400 mt-1">Your questions and AI responses are automatically preserved.</p>
+            <div className="p-4 neumorph-inset rounded-2xl text-center border border-slate-200/50 dark:border-slate-800/50">
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Current session active</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Your questions and AI responses are automatically preserved.</p>
             </div>
           )}
         </div>
       </div>
 
-      <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-        <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+      <div className="pt-4 border-t border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between">
+        <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-semibold">
           <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
           DhanMITR AI Engine
         </span>

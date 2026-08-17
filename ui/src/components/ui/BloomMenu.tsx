@@ -75,11 +75,11 @@ export function BloomMenu({
 
   return (
     <div ref={ref} className={cn('relative inline-flex', className)}>
-      {/* spacer fixes the anchor to the trigger size */}
+      {/* Spacer maintaining layout footprint */}
       <div className="h-10 w-28 sm:w-32" aria-hidden />
 
-      {/* Centering box sized to the OPEN panel */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-50 grid h-[320px] w-[min(88vw,420px)] -translate-x-1/2 -translate-y-1/2 place-items-center [&>*]:pointer-events-auto">
+      {/* Popover container anchored to the top-right of the trigger without overflow */}
+      <div className="pointer-events-none absolute top-0 right-0 z-50 [&>*]:pointer-events-auto">
         <AnimatePresence initial={false} mode="popLayout">
           {open ? (
             <motion.div
@@ -87,17 +87,18 @@ export function BloomMenu({
               layoutId={layoutId}
               transition={morph}
               style={{ borderRadius: 20 }}
-              className="w-[min(88vw,420px)] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] shadow-2xl"
+              className="w-[min(90vw,360px)] sm:w-[380px] overflow-hidden border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0F172A] shadow-2xl origin-top-right"
             >
               <motion.div
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: reduce ? 0 : 0.12, duration: 0.2 }}
+                transition={{ delay: reduce ? 0 : 0.1, duration: 0.18 }}
               >
-                {/* header */}
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 px-4 py-3 bg-slate-50/50 dark:bg-slate-900/40">
-                  <span className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 px-4 py-3 bg-slate-50/80 dark:bg-slate-900/60">
+                  <span className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     Add Financial Record
                   </span>
                   <button
@@ -110,15 +111,15 @@ export function BloomMenu({
                   </button>
                 </div>
 
-                {/* grid */}
+                {/* Grid of Finance Categories */}
                 <motion.div
                   initial={
-                    reduce ? false : { clipPath: 'inset(45% 34% 45% 34%)' }
+                    reduce ? false : { clipPath: 'inset(25% 25% 25% 25%)' }
                   }
                   animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
                   transition={{
-                    delay: reduce ? 0 : 0.08,
-                    duration: 0.45,
+                    delay: reduce ? 0 : 0.05,
+                    duration: 0.35,
                     ease: EASE_OUT as any,
                   }}
                   className="grid grid-cols-3 bg-white dark:bg-[#0F172A]"
@@ -141,7 +142,7 @@ export function BloomMenu({
                           setOpen(false);
                         }}
                         className={cn(
-                          'flex items-center justify-center p-3.5 sm:p-4 text-slate-600 dark:text-slate-300 transition-colors hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer',
+                          'flex items-center justify-center p-3 sm:p-3.5 text-slate-600 dark:text-slate-300 transition-colors hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer group',
                           i % 3 !== 2 && 'border-r border-slate-100 dark:border-slate-800/80',
                           i < 3 && 'border-b border-slate-100 dark:border-slate-800/80'
                         )}
@@ -150,18 +151,18 @@ export function BloomMenu({
                           initial={
                             reduce
                               ? { opacity: 0 }
-                              : { opacity: 0, scale: 0.85, filter: 'blur(6px)' }
+                              : { opacity: 0, scale: 0.88, filter: 'blur(4px)' }
                           }
                           animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                           transition={{
-                            delay: reduce ? 0 : 0.1 + dist * 0.07,
+                            delay: reduce ? 0 : 0.08 + dist * 0.05,
                             type: 'spring',
                             stiffness: 440,
                             damping: 34,
                           }}
                           className="flex flex-col items-center gap-1.5 text-center"
                         >
-                          <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800/90 flex items-center justify-center text-slate-700 dark:text-slate-200">
+                          <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800/90 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex items-center justify-center text-slate-700 dark:text-slate-200 transition-colors">
                             <item.icon className="h-4 w-4" />
                           </div>
                           <span className="text-[11px] font-semibold tracking-tight">{item.label}</span>
