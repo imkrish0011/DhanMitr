@@ -84,71 +84,79 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   };
 
   return (
-    <div className={`w-full ${isAuthenticated ? 'h-[calc(100dvh-5.75rem)] md:min-h-screen' : 'h-[100dvh] md:h-screen'} bg-[#070B14] text-white flex flex-col justify-between px-4 sm:px-8 pt-3 pb-3 select-none transition-colors duration-200`}>
+    <div className={`w-full ${isAuthenticated ? 'h-[calc(100dvh-5.75rem)] md:min-h-screen' : 'h-[100dvh] md:h-screen'} bg-[#070B14] text-white flex flex-col justify-between px-3 sm:px-6 pt-3 pb-3 select-none transition-colors duration-200`}>
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto w-full shrink-0">
+      <div className="flex items-center justify-between gap-2 max-w-5xl mx-auto w-full shrink-0">
         {/* Brand: Always visible on mobile, and visible on desktop in free/guest mode */}
         <div
-          className={`flex ${isAuthenticated ? 'md:hidden' : 'flex'} items-center gap-2.5 cursor-pointer`}
+          className={`flex ${isAuthenticated ? 'md:hidden' : 'flex'} items-center gap-2 cursor-pointer shrink-0`}
           onClick={isAuthenticated ? onNavigateToHub : undefined}
         >
-          <DhanMitrLogo className="w-7 h-7 sm:w-8 sm:h-8" />
-          <span className="text-base sm:text-lg font-bold tracking-tight text-white">
+          <DhanMitrLogo className="w-6 h-6 sm:w-7 sm:h-7" />
+          <span className="text-sm sm:text-base font-bold tracking-tight text-white">
             Dhan<span className="text-emerald-400 font-extrabold">MITR</span>
           </span>
         </div>
 
-        {/* Controls on Right: Sign In, Free Chat Badge & Language Selector */}
-        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+        {/* Controls on Right: Sleek, compact pill cluster */}
+        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
           {!isAuthenticated && (
             <>
+              {/* Compact Free Chat Quota Pill */}
+              <button
+                onClick={() => openAuthModal('signup', 'Sign in or create an account for unlimited AI assistance and full financial hub.')}
+                className="flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+                title="Free trial chats remaining. Click to unlock unlimited."
+              >
+                <SparkleSmallIcon className="w-3 h-3 text-emerald-400 fill-emerald-400" />
+                <span>{remainingFreeChats}/3 Free</span>
+              </button>
+
+              {/* Compact Sign In Button */}
               <button
                 onClick={() => openAuthModal('login')}
-                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-slate-200 transition-all cursor-pointer"
+                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-full text-[11px] sm:text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shadow-xs"
               >
                 Sign In
               </button>
-              <button
-                onClick={() => openAuthModal('signup', 'Sign in or create an account for unlimited AI assistance and full financial hub.')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800/80 rounded-xl text-xs font-semibold text-emerald-300 transition-all cursor-pointer shadow-xs"
-              >
-                <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{remainingFreeChats}/3 Free Chats</span>
-                <span className="hidden sm:inline text-[10px] text-emerald-400 underline ml-1">Unlock All</span>
-              </button>
             </>
           )}
-          {/* Language Selector */}
+
+          {/* Compact Language Selector */}
           <div className="relative">
             <button
               onClick={() => setShowLangMenu(!showLangMenu)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all"
+              className="flex items-center gap-1 px-2.5 py-1 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full text-[11px] font-semibold text-slate-300 hover:text-white transition-all whitespace-nowrap"
             >
-              <span>{selectedLanguage === 'hi' ? 'हिंदी (Hindi)' : 'English'}</span>
-              <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <span>{selectedLanguage === 'hi' ? '🇮🇳 HI' : '🌐 EN'}</span>
+              <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
 
             {showLangMenu && (
-              <div className="absolute right-0 mt-1.5 w-36 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1 z-30">
+              <div className="absolute right-0 mt-1.5 w-32 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-1 z-30 overflow-hidden text-xs">
                 <button
                   onClick={() => {
                     setSelectedLanguage('en');
                     setShowLangMenu(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-emerald-400"
+                  className={`w-full text-left px-3 py-1.5 font-medium transition-colors ${
+                    selectedLanguage === 'en' ? 'text-emerald-400 bg-emerald-950/50 font-bold' : 'text-slate-300 hover:bg-slate-800'
+                  }`}
                 >
-                  English
+                  🌐 English
                 </button>
                 <button
                   onClick={() => {
                     setSelectedLanguage('hi');
                     setShowLangMenu(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-emerald-400"
+                  className={`w-full text-left px-3 py-1.5 font-medium transition-colors ${
+                    selectedLanguage === 'hi' ? 'text-emerald-400 bg-emerald-950/50 font-bold' : 'text-slate-300 hover:bg-slate-800'
+                  }`}
                 >
-                  हिंदी (Hindi)
+                  🇮🇳 हिंदी (Hindi)
                 </button>
               </div>
             )}
