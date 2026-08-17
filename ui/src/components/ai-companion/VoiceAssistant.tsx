@@ -6,7 +6,6 @@ import { AudioVisualizerOrb } from './AudioVisualizerOrb';
 import {
   DhanMitrLogo,
   SparklesIcon,
-  ShieldCheckIcon,
   MicIcon,
   SendIcon,
   StopIcon,
@@ -93,7 +92,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           </span>
         </div>
 
-        {/* Controls on Right */}
+        {/* Controls on Right: Language Selector Only */}
         <div className="flex items-center gap-3">
           {/* Language Selector */}
           <div className="relative">
@@ -130,24 +129,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
               </div>
             )}
           </div>
-
-          {/* Switch to Chat Button */}
-          <button
-            onClick={onSwitchToChat}
-            className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 hover:text-emerald-400 transition-colors"
-            title="Open Chat Assistant"
-          >
-            <SparklesIcon className="w-4 h-4" />
-          </button>
-
-          {/* Jump to Finance Hub Button */}
-          <button
-            onClick={onNavigateToHub}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/60 border border-emerald-800 text-emerald-400 text-xs font-semibold rounded-xl hover:bg-emerald-900/80 transition-all"
-          >
-            <ShieldCheckIcon className="w-3.5 h-3.5" />
-            <span>Finance Hub</span>
-          </button>
         </div>
       </div>
 
