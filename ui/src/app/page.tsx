@@ -139,25 +139,11 @@ const AppContent: React.FC = () => {
             />
           </div>
         ) : currentTab === 'ai_companion' && aiMode === 'chat' ? (
-          <div className="min-h-screen flex flex-col">
-            <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B] shrink-0">
-              <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
-                ← Back to Hub
-              </button>
-              <h1 className="text-sm font-bold">AI Chat Assistant</h1>
-              <button
-                onClick={() => setAiMode('voice')}
-                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400"
-              >
-                Voice Mode
-              </button>
-            </div>
-            <div className="flex-1">
-              <ChatAssistant
-                onSwitchToVoice={() => setAiMode('voice')}
-                onNavigateToHub={() => setCurrentTab('finance_hub')}
-              />
-            </div>
+          <div className="h-[calc(100dvh-4.5rem)] flex flex-col overflow-hidden">
+            <ChatAssistant
+              onSwitchToVoice={() => setAiMode('voice')}
+              onNavigateToHub={() => setCurrentTab('finance_hub')}
+            />
           </div>
         ) : currentTab === 'transactions' ? (
           <div>
