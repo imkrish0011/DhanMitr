@@ -81,7 +81,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   };
 
   return (
-    <div className="w-full h-[calc(100dvh-4.25rem)] md:min-h-screen bg-[#070B14] text-white flex flex-col justify-between px-4 sm:px-8 pt-3 pb-2 select-none transition-colors duration-200">
+    <div className="w-full h-[calc(100dvh-5.75rem)] md:min-h-screen bg-[#070B14] text-white flex flex-col justify-between px-4 sm:px-8 pt-3 pb-3 select-none transition-colors duration-200">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto w-full shrink-0">
         {/* Brand */}
@@ -133,8 +133,8 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       </div>
 
       {/* Main Center Area: Perfectly Centered in Available Space */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto py-3 text-center max-w-xl mx-auto w-full">
-        <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-1.5 flex items-center justify-center gap-2">
+      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2 text-center max-w-xl mx-auto w-full">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-1 flex items-center justify-center gap-2">
           {getStatusHeadline()}
           {voiceState === 'listening' && (
             <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
@@ -147,12 +147,12 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           )}
         </h2>
 
-        <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-4 px-4">
+        <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-3.5 px-4">
           {getStatusSubtitle()}
         </p>
 
         {/* The Audio Visualizer Glowing Orb */}
-        <div className="mb-4">
+        <div className="mb-3.5">
           <AudioVisualizerOrb
             state={voiceState}
             frequencies={audioFrequencyData}
@@ -198,8 +198,8 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         )}
       </div>
 
-      {/* Bottom Area: Suggested Prompts & Chat Input Box Anchored at Bottom */}
-      <div className="shrink-0 max-w-2xl mx-auto w-full space-y-2.5 sm:space-y-3 pb-1">
+      {/* Bottom Area: Suggested Prompts & Chat Input Box Lifted with bottom clearance */}
+      <div className="shrink-0 max-w-2xl mx-auto w-full space-y-2 sm:space-y-3 pb-2 sm:pb-3">
         {/* Suggested Prompts Header & Chips */}
         <div>
           <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-semibold mb-1.5">
