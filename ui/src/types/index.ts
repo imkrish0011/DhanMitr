@@ -1,50 +1,154 @@
-export interface InsuranceItem {
-  id: string;
-  name: string;
-  category: "health" | "life" | "vehicle" | "government";
-  amount: number;
-  frequency: "monthly" | "yearly";
-  expiryDate: string; // YYYY-MM-DD
-  policyNumber?: string;
-  status: "active" | "expiring_soon" | "expired";
-}
+export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP';
 
-export interface SubscriptionItem {
-  id: string;
-  name: string;
-  category: "ott" | "music" | "fitness" | "utility" | "other";
-  cost: number;
-  billingCycle: "monthly" | "yearly";
-  renewalDate: string; // YYYY-MM-DD
-  active: boolean;
-}
+export type RiskTolerance = 'conservative' | 'moderate' | 'aggressive';
 
-export interface LoanItem {
-  id: string;
-  name: string;
-  monthlyEmi: number;
-  totalBalance?: number;
-  interestRate?: number;
-}
+export type EmploymentType = 'salaried' | 'self_employed' | 'freelancer' | 'student' | 'retired';
+
+export type TaxRegime = 'new' | 'old' | 'not_applicable';
+
+export type TransactionType = 'income' | 'expense' | 'transfer' | 'investment';
+
+export type TransactionCategory =
+  | 'housing'
+  | 'investments'
+  | 'utilities'
+  | 'subscriptions'
+  | 'insurance'
+  | 'dining'
+  | 'groceries'
+  | 'shopping'
+  | 'travel'
+  | 'healthcare'
+  | 'education'
+  | 'entertainment'
+  | 'salary'
+  | 'freelance'
+  | 'other';
+
+export type BillingCycle = 'monthly' | 'quarterly' | 'yearly' | 'weekly';
+
+export type InsuranceType = 'health' | 'term_life' | 'motor' | 'home' | 'critical_illness' | 'other';
+
+export type GoalCategory =
+  | 'emergency_fund'
+  | 'home'
+  | 'retirement'
+  | 'vehicle'
+  | 'education'
+  | 'vacation'
+  | 'wedding'
+  | 'other';
+
+export type GoalPriority = 'low' | 'medium' | 'high';
 
 export interface UserFinancialProfile {
+  user_id: string;
   name: string;
-  email: string;
-  isLoggedIn: boolean;
-  isSetupComplete: boolean;
-  monthlyIncome: number;
-  foodGroceries: number;
-  rentUtilities: number;
-  otherDailyExpenses: number;
-  insurances: InsuranceItem[];
-  subscriptions: SubscriptionItem[];
-  loans: LoanItem[];
+  email?: string;
+  avatar_initial: string;
+  is_premium: boolean;
+  currency: CurrencyCode;
+  monthly_income: number;
+  monthly_expenses: number;
+  emergency_fund_balance: number;
+  total_investments: number;
+  total_liabilities: number;
+  risk_tolerance: RiskTolerance;
+  employment_type: EmploymentType;
+  tax_regime: TaxRegime;
+}
+
+export interface SpendingCategorySummary {
+  id: string;
+  category: string;
+  categoryKey: TransactionCategory;
+  amount: number;
+  percentage: number;
+  color: string;
+}
+
+export interface Transaction {
+  id: string;
+  title: string;
+  amount: number;
+  currency: CurrencyCode;
+  type: TransactionType;
+  category: TransactionCategory;
+  date: string;
+  account_name?: string;
+  is_recurring?: boolean;
+  note?: string;
+}
+
+export interface Subscription {
+  id: string;
+  name: string;
+  provider: string;
+  logoKey: 'netflix' | 'amazon_prime' | 'spotify' | 'hotstar' | 'youtube' | 'apple' | 'chatgpt' | 'claude' | 'sonyliv' | 'google' | 'other';
+  planName: string;
+  amount: number;
+  currency: CurrencyCode;
+  billing_cycle: BillingCycle;
+  category: string;
+  next_renewal_date: string;
+  days_remaining: number;
+  is_urgent?: boolean;
+  is_active: boolean;
+}
+
+export interface Insurance {
+  id: string;
+  policy_name: string;
+  provider: string;
+  logoKey: 'hdfc_life' | 'star_health' | 'icici_lombard' | 'lic' | 'sbi_life' | 'other';
+  policy_type: InsuranceType;
+  policy_number: string;
+  coverage_amount: number;
+  premium_amount: number;
+  premium_frequency: 'monthly' | 'quarterly' | 'yearly';
+  renewal_date: string;
+  days_remaining: number;
+  is_urgent?: boolean;
+  is_active: boolean;
+}
+
+export interface BudgetItem {
+  id: string;
+  category: string;
+  categoryKey: TransactionCategory;
+  allocated: number;
+  spent: number;
+  color: string;
+}
+
+export interface IncomeSource {
+  id: string;
+  title: string;
+  amount: number;
+  frequency: 'monthly' | 'one_time' | 'yearly';
+  category: 'salary' | 'freelance' | 'dividend' | 'rental' | 'other';
+  date: string;
+}
+
+export interface MonthlyCashFlowPoint {
+  month: string;
+  income: number;
+  expense: number;
+  surplus: number;
 }
 
 export interface ChatMessage {
   id: string;
-  sender: "user" | "bot";
+  sender: 'user' | 'assistant';
   text: string;
-  timestamp?: string;
-  suggestions?: string[];
+  timestamp: string;
+  language?: 'en' | 'hi' | 'hinglish';
+  widgetType?: 'expense_summary' | 'subscription_alert' | 'investment_tip' | 'none';
+  widgetData?: any;
 }
+
+export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
+
+export type NavTab = 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings';
+
+export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget';
