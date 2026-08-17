@@ -6,6 +6,7 @@ import { FinanceProvider, useFinance } from '@/context/FinanceContext';
 import { VoiceChatProvider } from '@/context/VoiceChatContext';
 import { NavTab } from '@/types';
 import { SparkleSmallIcon } from '@/components/icons/CustomIcons';
+import { motion } from 'framer-motion';
 
 // Layout Components
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -195,36 +196,58 @@ const AppContent: React.FC = () => {
           />
         )}
 
-        {/* ALWAYS-PERSISTENT Bottom 5-Tab Navigation Bar on Mobile */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 px-6 py-2 flex items-center justify-between shadow-lg">
+        {/* ALWAYS-PERSISTENT Bottom 5-Tab Navigation Bar on Mobile with Transitional Light Indicator */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-2 flex items-center justify-between shadow-lg">
+          {/* Home Tab */}
           <button
             onClick={() => {
               setCurrentTab('finance_hub');
               setActiveSubTab('overview');
             }}
-            className={`flex flex-col items-center gap-1 ${
+            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
               isHomeActive
                 ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
             }`}
           >
+            {isHomeActive && (
+              <motion.div
+                layoutId="mobileNavActiveLight"
+                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+              >
+                {/* Top ambient glowing light beam */}
+                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+              </motion.div>
+            )}
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
             </svg>
             <span className="text-[10px]">Home</span>
           </button>
 
+          {/* Insights Tab */}
           <button
             onClick={() => {
               setCurrentTab('finance_hub');
               setActiveSubTab('budget');
             }}
-            className={`flex flex-col items-center gap-1 ${
+            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
               isInsightsActive
                 ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
             }`}
           >
+            {isInsightsActive && (
+              <motion.div
+                layoutId="mobileNavActiveLight"
+                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+              >
+                {/* Top ambient glowing light beam */}
+                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+              </motion.div>
+            )}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
               <path d="M18 20V10M12 20V4M6 20v-6" />
             </svg>
@@ -239,7 +262,7 @@ const AppContent: React.FC = () => {
             }}
             className={`relative -top-5 w-13 h-13 rounded-full flex items-center justify-center transition-all ${
               isAiActive
-                ? 'bg-emerald-500 text-white border-2 border-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.7)]'
+                ? 'bg-emerald-500 text-white border-2 border-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.85)] scale-105'
                 : 'bg-[#064E3B] text-emerald-300 border-2 border-emerald-400/80 shadow-[0_0_20px_rgba(16,185,129,0.45)] active:scale-90'
             }`}
             title="Open AI Companion"
@@ -247,14 +270,25 @@ const AppContent: React.FC = () => {
             <SparkleSmallIcon className="w-7 h-7 fill-current" />
           </button>
 
+          {/* Transactions Tab */}
           <button
             onClick={() => setCurrentTab('transactions')}
-            className={`flex flex-col items-center gap-1 ${
+            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
               isTransactionsActive
                 ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
             }`}
           >
+            {isTransactionsActive && (
+              <motion.div
+                layoutId="mobileNavActiveLight"
+                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+              >
+                {/* Top ambient glowing light beam */}
+                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+              </motion.div>
+            )}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
               <line x1="8" y1="6" x2="21" y2="6" />
               <line x1="8" y1="12" x2="21" y2="12" />
@@ -263,14 +297,25 @@ const AppContent: React.FC = () => {
             <span className="text-[10px]">Transactions</span>
           </button>
 
+          {/* Profile / Settings Tab */}
           <button
             onClick={() => setCurrentTab('settings')}
-            className={`flex flex-col items-center gap-1 ${
+            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
               isSettingsActive
                 ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
             }`}
           >
+            {isSettingsActive && (
+              <motion.div
+                layoutId="mobileNavActiveLight"
+                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+              >
+                {/* Top ambient glowing light beam */}
+                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+              </motion.div>
+            )}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
