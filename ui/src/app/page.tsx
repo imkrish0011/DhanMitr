@@ -212,7 +212,7 @@ const AppContent: React.FC = () => {
       {/* ========================================================================= */}
       {/* MOBILE NATIVE VIEW (Visible on mobile screen widths < 768px)               */}
       {/* ========================================================================= */}
-      <div className="block md:hidden min-h-screen relative pb-16">
+      <div className={`block md:hidden min-h-screen relative ${isAuthenticated ? 'pb-16' : ''}`}>
         {currentTab === 'ai_companion' && aiMode === 'voice' ? (
           <div>
             <VoiceAssistant
@@ -221,192 +221,189 @@ const AppContent: React.FC = () => {
             />
           </div>
         ) : currentTab === 'ai_companion' && aiMode === 'chat' ? (
-          <div className="h-[calc(100dvh-4.5rem)] flex flex-col overflow-hidden">
+          <div className={`${isAuthenticated ? 'h-[calc(100dvh-4.5rem)]' : 'h-[100dvh]'} flex flex-col overflow-hidden`}>
             <ChatAssistant
               onSwitchToVoice={() => setAiMode('voice')}
               onNavigateToHub={() => handleNavSelection('finance_hub')}
             />
           </div>
-        ) : currentTab === 'transactions' ? (
-          isAuthenticated ? (
-            <div>
-              <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B]">
-                <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
-                  ← Back
-                </button>
-                <h1 className="text-sm font-bold">Transactions</h1>
-                <div className="w-8" />
-              </div>
-              <TransactionsView onOpenAddModal={handleOpenAddModal} />
+        ) : currentTab === 'transactions' && isAuthenticated ? (
+          <div>
+            <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B]">
+              <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
+                ← Back
+              </button>
+              <h1 className="text-sm font-bold">Transactions</h1>
+              <div className="w-8" />
             </div>
-          ) : (
-            <LockedFeatureView featureName="Recent Transactions Ledger" />
-          )
-        ) : currentTab === 'settings' ? (
-          isAuthenticated ? (
-            <div>
-              <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B]">
-                <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
-                  ← Back
-                </button>
-                <h1 className="text-sm font-bold">Settings</h1>
-                <div className="w-8" />
-              </div>
-              <SettingsView />
+            <TransactionsView onOpenAddModal={handleOpenAddModal} />
+          </div>
+        ) : currentTab === 'settings' && isAuthenticated ? (
+          <div>
+            <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B]">
+              <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
+                ← Back
+              </button>
+              <h1 className="text-sm font-bold">Settings</h1>
+              <div className="w-8" />
             </div>
-          ) : (
-            <LockedFeatureView featureName="Account Settings" />
-          )
-        ) : (
-          isAuthenticated ? (
-            <MobileFinanceHub
-              onOpenVoice={() => {
-                setCurrentTab('ai_companion');
-                setAiMode('voice');
-              }}
-              onOpenChat={() => {
-                setCurrentTab('ai_companion');
-                setAiMode('chat');
-              }}
-              onOpenAddModal={() => handleOpenAddModal('subscription')}
-              onOpenTransactions={() => setCurrentTab('transactions')}
-            />
-          ) : (
-            <LockedFeatureView featureName="Personal Finance Hub" />
-          )
-        )}
-
-        {/* ALWAYS-PERSISTENT Bottom 5-Tab Navigation Bar on Mobile with Transitional Light Indicator */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-2 flex items-center justify-between shadow-lg">
-          {/* Home Tab */}
-          <button
-            onClick={() => {
-              handleNavSelection('finance_hub');
-              if (isAuthenticated) setActiveSubTab('overview');
-            }}
-            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
-              isHomeActive
-                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-            }`}
-          >
-            {isHomeActive && (
-              <motion.div
-                layoutId="mobileNavActiveLight"
-                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
-                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-              >
-                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
-              </motion.div>
-            )}
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-            </svg>
-            <span className="text-[10px]">Home {!isAuthenticated && '🔒'}</span>
-          </button>
-
-          {/* Insights Tab */}
-          <button
-            onClick={() => {
-              handleNavSelection('finance_hub');
-              if (isAuthenticated) setActiveSubTab('budget');
-            }}
-            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
-              isInsightsActive
-                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-            }`}
-          >
-            {isInsightsActive && (
-              <motion.div
-                layoutId="mobileNavActiveLight"
-                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
-                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-              >
-                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
-              </motion.div>
-            )}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <path d="M18 20V10M12 20V4M6 20v-6" />
-            </svg>
-            <span className="text-[10px]">Insights</span>
-          </button>
-
-          {/* Center Elevated Glowing AI Companion FAB */}
-          <button
-            onClick={() => {
+            <SettingsView />
+          </div>
+        ) : isAuthenticated ? (
+          <MobileFinanceHub
+            onOpenVoice={() => {
               setCurrentTab('ai_companion');
               setAiMode('voice');
             }}
-            className={`relative -top-5 w-13 h-13 rounded-full flex items-center justify-center transition-all ${
-              isAiActive
-                ? 'bg-emerald-500 text-white border-2 border-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.85)] scale-105'
-                : 'bg-[#064E3B] text-emerald-300 border-2 border-emerald-400/80 shadow-[0_0_20px_rgba(16,185,129,0.45)] active:scale-90'
-            }`}
-            title="Open AI Companion"
-          >
-            <SparkleSmallIcon className="w-7 h-7 fill-current" />
-          </button>
+            onOpenChat={() => {
+              setCurrentTab('ai_companion');
+              setAiMode('chat');
+            }}
+            onOpenAddModal={() => handleOpenAddModal('subscription')}
+            onOpenTransactions={() => setCurrentTab('transactions')}
+          />
+        ) : (
+          <VoiceAssistant
+            onSwitchToChat={() => setAiMode('chat')}
+            onNavigateToHub={() => handleNavSelection('finance_hub')}
+          />
+        )}
 
-          {/* Transactions Tab */}
-          <button
-            onClick={() => handleNavSelection('transactions')}
-            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
-              isTransactionsActive
-                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-            }`}
-          >
-            {isTransactionsActive && (
-              <motion.div
-                layoutId="mobileNavActiveLight"
-                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
-                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-              >
-                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
-              </motion.div>
-            )}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <line x1="8" y1="6" x2="21" y2="6" />
-              <line x1="8" y1="12" x2="21" y2="12" />
-              <line x1="8" y1="18" x2="21" y2="18" />
-            </svg>
-            <span className="text-[10px]">Ledger {!isAuthenticated && '🔒'}</span>
-          </button>
+        {/* ONLY SHOW Bottom 5-Tab Navigation Bar on Mobile after Login */}
+        {isAuthenticated && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-2 flex items-center justify-between shadow-lg">
+            {/* Home Tab */}
+            <button
+              onClick={() => {
+                setCurrentTab('finance_hub');
+                setActiveSubTab('overview');
+              }}
+              className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
+                isHomeActive
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+            >
+              {isHomeActive && (
+                <motion.div
+                  layoutId="mobileNavActiveLight"
+                  className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                >
+                  <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+                </motion.div>
+              )}
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+              </svg>
+              <span className="text-[10px]">Home</span>
+            </button>
 
-          {/* Profile / Settings Tab */}
-          <button
-            onClick={() => handleNavSelection('settings')}
-            className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
-              isSettingsActive
-                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-            }`}
-          >
-            {isSettingsActive && (
-              <motion.div
-                layoutId="mobileNavActiveLight"
-                className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
-                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-              >
-                <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
-              </motion.div>
-            )}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span className="text-[10px]">Profile</span>
-          </button>
-        </div>
+            {/* Insights Tab */}
+            <button
+              onClick={() => {
+                setCurrentTab('finance_hub');
+                setActiveSubTab('budget');
+              }}
+              className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
+                isInsightsActive
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+            >
+              {isInsightsActive && (
+                <motion.div
+                  layoutId="mobileNavActiveLight"
+                  className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                >
+                  <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+                </motion.div>
+              )}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+              </svg>
+              <span className="text-[10px]">Insights</span>
+            </button>
+
+            {/* Center Elevated Glowing AI Companion FAB */}
+            <button
+              onClick={() => {
+                setCurrentTab('ai_companion');
+                setAiMode('voice');
+              }}
+              className={`relative -top-5 w-13 h-13 rounded-full flex items-center justify-center transition-all ${
+                isAiActive
+                  ? 'bg-emerald-500 text-white border-2 border-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.85)] scale-105'
+                  : 'bg-[#064E3B] text-emerald-300 border-2 border-emerald-400/80 shadow-[0_0_20px_rgba(16,185,129,0.45)] active:scale-90'
+              }`}
+              title="Open AI Companion"
+            >
+              <SparkleSmallIcon className="w-7 h-7 fill-current" />
+            </button>
+
+            {/* Transactions Tab */}
+            <button
+              onClick={() => setCurrentTab('transactions')}
+              className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
+                isTransactionsActive
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+            >
+              {isTransactionsActive && (
+                <motion.div
+                  layoutId="mobileNavActiveLight"
+                  className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                >
+                  <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+                </motion.div>
+              )}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+              </svg>
+              <span className="text-[10px]">Ledger</span>
+            </button>
+
+            {/* Profile / Settings Tab */}
+            <button
+              onClick={() => setCurrentTab('settings')}
+              className={`relative px-3 py-1.5 rounded-xl flex flex-col items-center gap-1 transition-colors cursor-pointer select-none ${
+                isSettingsActive
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+            >
+              {isSettingsActive && (
+                <motion.div
+                  layoutId="mobileNavActiveLight"
+                  className="absolute inset-0 rounded-xl bg-emerald-500/10 dark:bg-emerald-400/15 border border-emerald-500/25 -z-10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                >
+                  <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]" />
+                </motion.div>
+              )}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span className="text-[10px]">Profile</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}
       {/* DESKTOP VIEW (Visible on screens >= 768px md: breakpoint)                 */}
       {/* ========================================================================= */}
       <div className="hidden md:flex h-screen overflow-hidden">
-        {/* Desktop Left Sidebar */}
-        <Sidebar currentTab={currentTab} onSelectTab={handleNavSelection} />
+        {/* Desktop Left Sidebar: Only rendered after login */}
+        {isAuthenticated && (
+          <Sidebar currentTab={currentTab} onSelectTab={handleNavSelection} />
+        )}
 
         {/* AI Voice Assistant Desktop Canvas */}
         {currentTab === 'ai_companion' && aiMode === 'voice' && (
@@ -429,75 +426,61 @@ const AppContent: React.FC = () => {
         )}
 
         {/* Transactions Tab Canvas */}
-        {currentTab === 'transactions' && (
+        {isAuthenticated && currentTab === 'transactions' && (
           <main className="flex-1 h-screen overflow-y-auto">
-            {isAuthenticated ? (
-              <TransactionsView onOpenAddModal={handleOpenAddModal} />
-            ) : (
-              <LockedFeatureView featureName="Recent Transactions Ledger" />
-            )}
+            <TransactionsView onOpenAddModal={handleOpenAddModal} />
           </main>
         )}
 
         {/* Settings Tab Canvas */}
-        {currentTab === 'settings' && (
+        {isAuthenticated && currentTab === 'settings' && (
           <main className="flex-1 h-screen overflow-y-auto">
-            {isAuthenticated ? (
-              <SettingsView />
-            ) : (
-              <LockedFeatureView featureName="Account Settings" />
-            )}
+            <SettingsView />
           </main>
         )}
 
         {/* Finance Hub Dashboard Canvas */}
-        {currentTab === 'finance_hub' && (
+        {isAuthenticated && currentTab === 'finance_hub' && (
           <main className="flex-1 flex flex-col h-screen overflow-y-auto">
-            {isAuthenticated ? (
-              <>
-                <Header onOpenAddModal={handleOpenAddModal} />
+            <Header onOpenAddModal={handleOpenAddModal} />
 
-                <div className="px-8 sm:px-10 py-8 space-y-8">
-                  {/* Overview Tab */}
-                  {activeSubTab === 'overview' && (
-                    <>
-                      {/* Top 4 KPI Metrics */}
-                      <KpiCards />
+            <div className="px-8 sm:px-10 py-8 space-y-8">
+              {/* Overview Tab */}
+              {activeSubTab === 'overview' && (
+                <>
+                  {/* Top 4 KPI Metrics */}
+                  <KpiCards />
 
-                      {/* Middle 2 Charts */}
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-6">
-                          <SpendingOverviewChart />
-                        </div>
-                        <div className="lg:col-span-6">
-                          <CashFlowTrendChart />
-                        </div>
-                      </div>
+                  {/* Middle 2 Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-6">
+                      <SpendingOverviewChart />
+                    </div>
+                    <div className="lg:col-span-6">
+                      <CashFlowTrendChart />
+                    </div>
+                  </div>
 
-                      {/* Upcoming Renewals & Alerts */}
-                      <UpcomingRenewals />
-                    </>
-                  )}
+                  {/* Upcoming Renewals & Alerts */}
+                  <UpcomingRenewals />
+                </>
+              )}
 
-                  {/* Subscriptions Tab */}
-                  {activeSubTab === 'subscriptions' && (
-                    <SubscriptionsTab onOpenAddModal={() => handleOpenAddModal('subscription')} />
-                  )}
+              {/* Subscriptions Tab */}
+              {activeSubTab === 'subscriptions' && (
+                <SubscriptionsTab onOpenAddModal={() => handleOpenAddModal('subscription')} />
+              )}
 
-                  {/* Insurances Tab */}
-                  {activeSubTab === 'insurances' && (
-                    <InsurancesTab onOpenAddModal={() => handleOpenAddModal('insurance')} />
-                  )}
+              {/* Insurances Tab */}
+              {activeSubTab === 'insurances' && (
+                <InsurancesTab onOpenAddModal={() => handleOpenAddModal('insurance')} />
+              )}
 
-                  {/* Budget Tab */}
-                  {activeSubTab === 'budget' && (
-                    <BudgetIncomeTab onOpenAddModal={() => handleOpenAddModal('income')} />
-                  )}
-                </div>
-              </>
-            ) : (
-              <LockedFeatureView featureName="Personal Finance Hub" />
-            )}
+              {/* Budget Tab */}
+              {activeSubTab === 'budget' && (
+                <BudgetIncomeTab onOpenAddModal={() => handleOpenAddModal('income')} />
+              )}
+            </div>
           </main>
         )}
       </div>
