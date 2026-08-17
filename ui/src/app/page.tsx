@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { FinanceProvider, useFinance } from '@/context/FinanceContext';
 import { VoiceChatProvider } from '@/context/VoiceChatContext';
 import { NavTab } from '@/types';
+import { SparkleSmallIcon } from '@/components/icons/CustomIcons';
 
 // Layout Components
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -106,36 +107,59 @@ const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('finance_hub');
   const [aiMode, setAiMode] = useState<'voice' | 'chat'>('voice');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addModalType, setAddModalType] = useState<any>('subscription');
 
-  const { activeSubTab } = useFinance();
+  const { activeSubTab, setActiveSubTab } = useFinance();
+
+  const handleOpenAddModal = (type?: any) => {
+    if (type && ['subscription', 'insurance', 'income', 'expense'].includes(type)) {
+      setAddModalType(type);
+    }
+    setIsAddModalOpen(true);
+  };
+
+  const isHomeActive = currentTab === 'finance_hub' && activeSubTab === 'overview';
+  const isInsightsActive = currentTab === 'finance_hub' && activeSubTab === 'budget';
+  const isAiActive = currentTab === 'ai_companion';
+  const isTransactionsActive = currentTab === 'transactions';
+  const isSettingsActive = currentTab === 'settings';
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] transition-colors duration-200">
       {/* ========================================================================= */}
       {/* MOBILE NATIVE VIEW (Visible on mobile screen widths < 768px)               */}
       {/* ========================================================================= */}
-      <div className="block md:hidden min-h-screen">
+      <div className="block md:hidden min-h-screen relative pb-24">
         {currentTab === 'ai_companion' && aiMode === 'voice' ? (
-          <VoiceAssistant
-            onSwitchToChat={() => setAiMode('chat')}
-            onNavigateToHub={() => setCurrentTab('finance_hub')}
-          />
-        ) : currentTab === 'ai_companion' && aiMode === 'chat' ? (
-          <div className="h-screen flex flex-col">
-            <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B] shrink-0">
-              <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
-                ← Back
-              </button>
-              <h1 className="text-sm font-bold">AI Chat</h1>
-              <div className="w-8" />
-            </div>
-            <ChatAssistant
-              onSwitchToVoice={() => setAiMode('voice')}
+          <div>
+            <VoiceAssistant
+              onSwitchToChat={() => setAiMode('chat')}
               onNavigateToHub={() => setCurrentTab('finance_hub')}
             />
           </div>
+        ) : currentTab === 'ai_companion' && aiMode === 'chat' ? (
+          <div className="min-h-screen flex flex-col">
+            <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B] shrink-0">
+              <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
+                ← Back to Hub
+              </button>
+              <h1 className="text-sm font-bold">AI Chat Assistant</h1>
+              <button
+                onClick={() => setAiMode('voice')}
+                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+              >
+                Voice Mode
+              </button>
+            </div>
+            <div className="flex-1">
+              <ChatAssistant
+                onSwitchToVoice={() => setAiMode('voice')}
+                onNavigateToHub={() => setCurrentTab('finance_hub')}
+              />
+            </div>
+          </div>
         ) : currentTab === 'transactions' ? (
-          <div className="pb-24">
+          <div>
             <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B]">
               <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
                 ← Back
@@ -146,7 +170,7 @@ const AppContent: React.FC = () => {
             <TransactionsView />
           </div>
         ) : currentTab === 'settings' ? (
-          <div className="pb-24">
+          <div>
             <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B101B]">
               <button onClick={() => setCurrentTab('finance_hub')} className="text-xs font-bold text-emerald-600">
                 ← Back
@@ -166,10 +190,94 @@ const AppContent: React.FC = () => {
               setCurrentTab('ai_companion');
               setAiMode('chat');
             }}
-            onOpenAddModal={() => setIsAddModalOpen(true)}
+            onOpenAddModal={() => handleOpenAddModal('subscription')}
             onOpenTransactions={() => setCurrentTab('transactions')}
           />
         )}
+
+        {/* ALWAYS-PERSISTENT Bottom 5-Tab Navigation Bar on Mobile */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 px-6 py-2 flex items-center justify-between shadow-lg">
+          <button
+            onClick={() => {
+              setCurrentTab('finance_hub');
+              setActiveSubTab('overview');
+            }}
+            className={`flex flex-col items-center gap-1 ${
+              isHomeActive
+                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            </svg>
+            <span className="text-[10px]">Home</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentTab('finance_hub');
+              setActiveSubTab('budget');
+            }}
+            className={`flex flex-col items-center gap-1 ${
+              isInsightsActive
+                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+            <span className="text-[10px]">Insights</span>
+          </button>
+
+          {/* Center Elevated Glowing AI Companion FAB */}
+          <button
+            onClick={() => {
+              setCurrentTab('ai_companion');
+              setAiMode('voice');
+            }}
+            className={`relative -top-5 w-13 h-13 rounded-full flex items-center justify-center transition-all ${
+              isAiActive
+                ? 'bg-emerald-500 text-white border-2 border-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.7)]'
+                : 'bg-[#064E3B] text-emerald-300 border-2 border-emerald-400/80 shadow-[0_0_20px_rgba(16,185,129,0.45)] active:scale-90'
+            }`}
+            title="Open AI Companion"
+          >
+            <SparkleSmallIcon className="w-7 h-7 fill-current" />
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('transactions')}
+            className={`flex flex-col items-center gap-1 ${
+              isTransactionsActive
+                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+            </svg>
+            <span className="text-[10px]">Transactions</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('settings')}
+            className={`flex flex-col items-center gap-1 ${
+              isSettingsActive
+                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span className="text-[10px]">Profile</span>
+          </button>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -216,7 +324,7 @@ const AppContent: React.FC = () => {
         {/* Finance Hub Dashboard Canvas */}
         {currentTab === 'finance_hub' && (
           <main className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-            <Header onOpenAddModal={() => setIsAddModalOpen(true)} />
+            <Header onOpenAddModal={handleOpenAddModal} />
 
             <div className="px-8 sm:px-10 py-8 space-y-8">
               {/* Overview Tab */}
@@ -242,17 +350,17 @@ const AppContent: React.FC = () => {
 
               {/* Subscriptions Tab */}
               {activeSubTab === 'subscriptions' && (
-                <SubscriptionsTab onOpenAddModal={() => setIsAddModalOpen(true)} />
+                <SubscriptionsTab onOpenAddModal={() => handleOpenAddModal('subscription')} />
               )}
 
               {/* Insurances Tab */}
               {activeSubTab === 'insurances' && (
-                <InsurancesTab onOpenAddModal={() => setIsAddModalOpen(true)} />
+                <InsurancesTab onOpenAddModal={() => handleOpenAddModal('insurance')} />
               )}
 
               {/* Budget Tab */}
               {activeSubTab === 'budget' && (
-                <BudgetIncomeTab onOpenAddModal={() => setIsAddModalOpen(true)} />
+                <BudgetIncomeTab onOpenAddModal={() => handleOpenAddModal('income')} />
               )}
             </div>
           </main>
@@ -262,6 +370,7 @@ const AppContent: React.FC = () => {
       {/* Dynamic Modal to Add Financial Info */}
       <AddFinanceModal
         isOpen={isAddModalOpen}
+        initialType={addModalType}
         onClose={() => setIsAddModalOpen(false)}
       />
     </div>

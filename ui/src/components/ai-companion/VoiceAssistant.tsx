@@ -82,7 +82,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-white flex flex-col justify-between p-6 sm:p-10 select-none transition-colors duration-200">
+    <div className="min-h-screen bg-[#070B14] text-white flex flex-col justify-between p-5 sm:p-8 pb-32 sm:pb-10 select-none transition-colors duration-200">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto w-full">
         {/* Brand */}
@@ -181,24 +181,35 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           />
         </div>
 
-        {/* Primary Voice Action Button */}
-        {voiceState === 'listening' ? (
+        {/* Primary Voice Action and Switch to Chat Controls */}
+        <div className="flex items-center gap-3">
+          {voiceState === 'listening' ? (
+            <button
+              onClick={stopVoiceListening}
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-full text-xs font-semibold shadow-lg hover:border-slate-500 active:scale-95 transition-all"
+            >
+              <StopIcon className="w-3.5 h-3.5 text-red-400" />
+              <span>Tap to stop</span>
+            </button>
+          ) : (
+            <button
+              onClick={startVoiceListening}
+              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold shadow-lg shadow-emerald-900/40 active:scale-95 transition-all"
+            >
+              <MicIcon className="w-4 h-4" />
+              <span>Tap to Speak</span>
+            </button>
+          )}
+
           <button
-            onClick={stopVoiceListening}
-            className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-full text-xs font-semibold shadow-lg hover:border-slate-500 active:scale-95 transition-all"
+            onClick={onSwitchToChat}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 rounded-full text-xs font-semibold transition-all shadow-xs"
+            title="Switch to Chat Mode"
           >
-            <StopIcon className="w-3.5 h-3.5 text-red-400" />
-            <span>Tap to stop</span>
+            <SparklesIcon className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Chat Mode</span>
           </button>
-        ) : (
-          <button
-            onClick={startVoiceListening}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold shadow-lg shadow-emerald-900/40 active:scale-95 transition-all"
-          >
-            <MicIcon className="w-4 h-4" />
-            <span>Tap to Speak</span>
-          </button>
-        )}
+        </div>
 
         {/* Live Audio Transcript Display */}
         {activeTranscript && (

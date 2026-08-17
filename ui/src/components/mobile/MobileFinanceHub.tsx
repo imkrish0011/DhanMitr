@@ -292,69 +292,6 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
           <BudgetIncomeTab onOpenAddModal={onOpenAddModal} />
         </div>
       )}
-
-      {/* Bottom 5-Tab Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 px-6 py-2 flex items-center justify-between shadow-lg">
-        <button
-          onClick={() => setActiveSubTab('overview')}
-          className={`flex flex-col items-center gap-1 ${
-            activeSubTab === 'overview'
-              ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-          </svg>
-          <span className="text-[10px]">Home</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('budget')}
-          className={`flex flex-col items-center gap-1 ${
-            activeSubTab === 'budget'
-              ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-            <path d="M18 20V10M12 20V4M6 20v-6" />
-          </svg>
-          <span className="text-[10px]">Insights</span>
-        </button>
-
-        {/* Center Elevated Glowing AI Companion FAB */}
-        <button
-          onClick={onOpenVoice}
-          className="relative -top-5 w-13 h-13 rounded-full bg-[#064E3B] text-emerald-300 border-2 border-emerald-400/80 flex items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.55)] active:scale-90 transition-transform"
-          title="Open AI Companion"
-        >
-          <SparkleSmallIcon className="w-7 h-7 text-emerald-300 fill-emerald-300" />
-        </button>
-
-        <button
-          onClick={onOpenTransactions || (() => setActiveSubTab('subscriptions'))}
-          className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-            <line x1="8" y1="6" x2="21" y2="6" />
-            <line x1="8" y1="12" x2="21" y2="12" />
-            <line x1="8" y1="18" x2="21" y2="18" />
-          </svg>
-          <span className="text-[10px]">Transactions</span>
-        </button>
-
-        <button
-          onClick={onOpenChat}
-          className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <span className="text-[10px]">Profile</span>
-        </button>
-      </div>
     </div>
   );
 };

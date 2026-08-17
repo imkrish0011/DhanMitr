@@ -9,8 +9,10 @@ import {
   SparkleSmallIcon,
 } from '@/components/icons/CustomIcons';
 
+import { BloomMenu } from '@/components/ui/BloomMenu';
+
 interface HeaderProps {
-  onOpenAddModal: () => void;
+  onOpenAddModal: (type?: any) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
@@ -50,16 +52,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          {/* Add Info Button */}
-          <button
-            onClick={onOpenAddModal}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition-all"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            <span>Add Info</span>
-          </button>
+          {/* Bloom Menu to Add Record */}
+          <BloomMenu
+            triggerLabel="Add Record"
+            onSelect={(id) => onOpenAddModal(id)}
+          />
 
           {/* Sync Button */}
           <button

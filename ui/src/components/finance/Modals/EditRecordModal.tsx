@@ -1,8 +1,7 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { Subscription, Insurance, IncomeSource, BudgetItem, BillingCycle, InsuranceType } from '@/types';
+import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
 
 export type EditableItem =
   | { type: 'subscription'; data: Subscription }
@@ -18,6 +17,7 @@ interface EditRecordModalProps {
 
 export const EditRecordModal: React.FC<EditRecordModalProps> = ({ item, isOpen, onClose }) => {
   const { updateSubscription, updateInsurance, updateIncomeSource, updateBudgetItem } = useFinance();
+  const [buttonState, setButtonState] = useState<ButtonState>('idle');
 
   // Subscription state
   const [subName, setSubName] = useState('');
@@ -77,41 +77,47 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({ item, isOpen, 
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    setButtonState('loading');
 
-    if (item.type === 'subscription') {
-      updateSubscription(item.data.id, {
-        name: subName,
-        amount: Number(subAmount),
-        billing_cycle: subCycle,
-        category: subCategory,
-        next_renewal_date: subDate,
-        logoKey: subLogoKey,
-      });
-    } else if (item.type === 'insurance') {
-      updateInsurance(item.data.id, {
-        policy_name: insName,
-        provider: insProvider,
-        coverage_amount: Number(insCoverage),
-        premium_amount: Number(insPremium),
-        premium_frequency: insFreq,
-        policy_type: insType,
-        renewal_date: insDate,
-      });
-    } else if (item.type === 'income') {
-      // Income update via replace
-      updateIncomeSource?.(item.data.id, {
-        title: incTitle,
-        amount: Number(incAmount),
-        date: incDate,
-      } as any);
-    } else if (item.type === 'budget') {
-      updateBudgetItem(item.data.id, {
-        allocated: Number(budAllocated),
-        spent: Number(budSpent),
-      });
-    }
+    setTimeout(() => {
+      if (item.type === 'subscription') {
+        updateSubscription(item.data.id, {
+          name: subName,
+          amount: Number(subAmount),
+          billing_cycle: subCycle,
+          category: subCategory,
+          next_renewal_date: subDate,
+          logoKey: subLogoKey,
+        });
+      } else if (item.type === 'insurance') {
+        updateInsurance(item.data.id, {
+          policy_name: insName,
+          provider: insProvider,
+          coverage_amount: Number(insCoverage),
+          premium_amount: Number(insPremium),
+          premium_frequency: insFreq,
+          policy_type: insType,
+          renewal_date: insDate,
+        });
+      } else if (item.type === 'income') {
+        updateIncomeSource?.(item.data.id, {
+          title: incTitle,
+          amount: Number(incAmount),
+          date: incDate,
+        } as any);
+      } else if (item.type === 'budget') {
+        updateBudgetItem(item.data.id, {
+          allocated: Number(budAllocated),
+          spent: Number(budSpent),
+        });
+      }
 
-    onClose();
+      setButtonState('success');
+      setTimeout(() => {
+        setButtonState('idle');
+        onClose();
+      }, 500);
+    }, 400);
   };
 
   return (
@@ -321,12 +327,15 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({ item, isOpen, 
             >
               Cancel
             </button>
-            <button
+            <StatefulButton
               type="submit"
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold rounded-xl shadow-xs transition-all"
+              state={buttonState}
+              loadingText="Saving..."
+              successText="Updated!"
+              className="px-5 py-2 min-w-[125px]"
             >
               Save Changes
-            </button>
+            </StatefulButton>
           </div>
         </form>
       </div>

@@ -1,17 +1,24 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { BillingCycle, InsuranceType, TransactionCategory } from '@/types';
+import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
 
 interface AddFinanceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialType?: 'subscription' | 'insurance' | 'income' | 'expense';
 }
 
-export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({ isOpen, onClose }) => {
+export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({ isOpen, onClose, initialType = 'subscription' }) => {
   const { addSubscription, addInsurance, addIncomeSource, addTransaction } = useFinance();
-  const [activeType, setActiveType] = useState<'subscription' | 'insurance' | 'income' | 'expense'>('subscription');
+  const [activeType, setActiveType] = useState<'subscription' | 'insurance' | 'income' | 'expense'>(initialType);
+  const [buttonState, setButtonState] = useState<ButtonState>('idle');
+
+  useEffect(() => {
+    if (initialType) {
+      setActiveType(initialType);
+    }
+  }, [initialType, isOpen]);
 
   // Subscription form fields
   const [subName, setSubName] = useState('');
@@ -47,60 +54,79 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({ isOpen, onClos
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setButtonState('loading');
 
-    if (activeType === 'subscription') {
-      if (!subName || !subAmount) return;
-      addSubscription({
-        name: subName,
-        provider: subProvider || subName,
-        logoKey: subLogoKey,
-        planName: `${subCycle === 'monthly' ? 'Monthly' : 'Annual'} Plan`,
-        amount: Number(subAmount),
-        currency: 'INR',
-        billing_cycle: subCycle,
-        category: subCategory,
-        next_renewal_date: subDate,
-        is_urgent: false,
-        is_active: true,
-      });
-    } else if (activeType === 'insurance') {
-      if (!insName || !insPremium) return;
-      addInsurance({
-        policy_name: insName,
-        provider: insProvider,
-        logoKey: insLogoKey,
-        policy_type: insType,
-        policy_number: insPolicyNo || `POL-${Math.floor(100000 + Math.random() * 900000)}`,
-        coverage_amount: Number(insCoverage) || 1000000,
-        premium_amount: Number(insPremium),
-        premium_frequency: insFreq,
-        renewal_date: insDate,
-        is_urgent: false,
-        is_active: true,
-      });
-    } else if (activeType === 'income') {
-      if (!incTitle || !incAmount) return;
-      addIncomeSource({
-        title: incTitle,
-        amount: Number(incAmount),
-        frequency: incFreq,
-        category: 'salary',
-        date: '01 of every month',
-      });
-    } else if (activeType === 'expense') {
-      if (!expTitle || !expAmount) return;
-      addTransaction({
-        title: expTitle,
-        amount: Number(expAmount),
-        currency: 'INR',
-        type: 'expense',
-        category: expCategory,
-        date: 'Today',
-        account_name: 'Primary Account',
-      });
-    }
+    setTimeout(() => {
+      if (activeType === 'subscription') {
+        if (!subName || !subAmount) {
+          setButtonState('error');
+          return;
+        }
+        addSubscription({
+          name: subName,
+          provider: subProvider || subName,
+          logoKey: subLogoKey,
+          planName: `${subCycle === 'monthly' ? 'Monthly' : 'Annual'} Plan`,
+          amount: Number(subAmount),
+          currency: 'INR',
+          billing_cycle: subCycle,
+          category: subCategory,
+          next_renewal_date: subDate,
+          is_urgent: false,
+          is_active: true,
+        });
+      } else if (activeType === 'insurance') {
+        if (!insName || !insPremium) {
+          setButtonState('error');
+          return;
+        }
+        addInsurance({
+          policy_name: insName,
+          provider: insProvider,
+          logoKey: insLogoKey,
+          policy_type: insType,
+          policy_number: insPolicyNo || `POL-${Math.floor(100000 + Math.random() * 900000)}`,
+          coverage_amount: Number(insCoverage) || 1000000,
+          premium_amount: Number(insPremium),
+          premium_frequency: insFreq,
+          renewal_date: insDate,
+          is_urgent: false,
+          is_active: true,
+        });
+      } else if (activeType === 'income') {
+        if (!incTitle || !incAmount) {
+          setButtonState('error');
+          return;
+        }
+        addIncomeSource({
+          title: incTitle,
+          amount: Number(incAmount),
+          frequency: incFreq,
+          category: 'salary',
+          date: '01 of every month',
+        });
+      } else if (activeType === 'expense') {
+        if (!expTitle || !expAmount) {
+          setButtonState('error');
+          return;
+        }
+        addTransaction({
+          title: expTitle,
+          amount: Number(expAmount),
+          currency: 'INR',
+          type: 'expense',
+          category: expCategory,
+          date: 'Today',
+          account_name: 'Primary Account',
+        });
+      }
 
-    onClose();
+      setButtonState('success');
+      setTimeout(() => {
+        setButtonState('idle');
+        onClose();
+      }, 500);
+    }, 400);
   };
 
   return (
@@ -399,12 +425,15 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({ isOpen, onClos
             >
               Cancel
             </button>
-            <button
+            <StatefulButton
               type="submit"
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold rounded-xl shadow-xs transition-all"
+              state={buttonState}
+              loadingText="Saving..."
+              successText="Saved!"
+              className="px-5 py-2 min-w-[120px]"
             >
               Save Record
-            </button>
+            </StatefulButton>
           </div>
         </form>
       </div>
