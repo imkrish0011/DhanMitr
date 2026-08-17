@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useFinance } from '@/context/FinanceContext';
 
@@ -9,6 +9,11 @@ export const SpendingOverviewChart: React.FC = () => {
   const [timeframe, setTimeframe] = useState<'This Month' | 'Last Month' | 'This Quarter'>('This Month');
   const [showDropdown, setShowDropdown] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-2xs hover:shadow-sm hover:border-emerald-500/20 transition-all duration-300 flex flex-col justify-between">
@@ -56,8 +61,9 @@ export const SpendingOverviewChart: React.FC = () => {
       {/* Chart and Legend Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
         {/* Donut Chart with Center Text */}
-        <div className="md:col-span-6 relative flex items-center justify-center min-h-[220px]">
-          <ResponsiveContainer width="100%" height={220}>
+        <div className="md:col-span-6 relative flex items-center justify-center min-w-0 min-h-[220px]">
+          {isMounted && (
+            <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
             <PieChart>
               <Pie
                 data={spendingCategories}
@@ -93,6 +99,7 @@ export const SpendingOverviewChart: React.FC = () => {
               />
             </PieChart>
           </ResponsiveContainer>
+          )}
 
           {/* Centered Total Label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
