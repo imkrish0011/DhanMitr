@@ -283,13 +283,13 @@ const AppContent: React.FC = () => {
       {/* ========================================================================= */}
       {/* DESKTOP VIEW (Visible on screens >= 768px md: breakpoint)                 */}
       {/* ========================================================================= */}
-      <div className="hidden md:flex min-h-screen">
+      <div className="hidden md:flex h-screen overflow-hidden">
         {/* Desktop Left Sidebar */}
         <Sidebar currentTab={currentTab} onSelectTab={setCurrentTab} />
 
         {/* AI Voice Assistant Desktop Canvas */}
         {currentTab === 'ai_companion' && aiMode === 'voice' && (
-          <main className="flex-1 min-h-screen">
+          <main className="flex-1 h-screen overflow-y-auto">
             <VoiceAssistant
               onSwitchToChat={() => setAiMode('chat')}
               onNavigateToHub={() => setCurrentTab('finance_hub')}
@@ -299,7 +299,7 @@ const AppContent: React.FC = () => {
 
         {/* AI Chat Assistant Desktop Canvas */}
         {currentTab === 'ai_companion' && aiMode === 'chat' && (
-          <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+          <main className="flex-1 h-screen p-4 lg:p-6 overflow-y-auto">
             <ChatAssistant
               onSwitchToVoice={() => setAiMode('voice')}
               onNavigateToHub={() => setCurrentTab('finance_hub')}
@@ -309,21 +309,21 @@ const AppContent: React.FC = () => {
 
         {/* Transactions Tab Canvas */}
         {currentTab === 'transactions' && (
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 h-screen overflow-y-auto">
             <TransactionsView />
           </main>
         )}
 
         {/* Settings Tab Canvas */}
         {currentTab === 'settings' && (
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 h-screen overflow-y-auto">
             <SettingsView />
           </main>
         )}
 
         {/* Finance Hub Dashboard Canvas */}
         {currentTab === 'finance_hub' && (
-          <main className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+          <main className="flex-1 flex flex-col h-screen overflow-y-auto">
             <Header onOpenAddModal={handleOpenAddModal} />
 
             <div className="px-8 sm:px-10 py-8 space-y-8">

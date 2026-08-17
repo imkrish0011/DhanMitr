@@ -24,7 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
   ];
 
   return (
-    <aside className="w-64 h-screen shrink-0 bg-white dark:bg-[#0B101B] border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between p-5 select-none transition-colors duration-200">
+    <aside className="w-64 h-screen shrink-0 sticky top-0 bg-white dark:bg-[#0B101B] border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between p-5 select-none transition-colors duration-200">
       {/* Top: Brand & Navigation */}
       <div>
         {/* Brand Header */}

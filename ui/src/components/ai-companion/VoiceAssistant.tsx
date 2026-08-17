@@ -84,8 +84,8 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     <div className="w-full h-[calc(100dvh-5.75rem)] md:min-h-screen bg-[#070B14] text-white flex flex-col justify-between px-4 sm:px-8 pt-3 pb-3 select-none transition-colors duration-200">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto w-full shrink-0">
-        {/* Brand */}
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={onNavigateToHub}>
+        {/* Brand: Visible on mobile, hidden on desktop since the left sidebar already displays the brand */}
+        <div className="flex md:hidden items-center gap-2.5 cursor-pointer" onClick={onNavigateToHub}>
           <DhanMitrLogo className="w-7 h-7 sm:w-8 sm:h-8" />
           <span className="text-base sm:text-lg font-bold tracking-tight text-white">
             Dhan<span className="text-emerald-400 font-extrabold">MITR</span>
@@ -93,7 +93,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         </div>
 
         {/* Controls on Right: Language Selector Only */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ml-auto">
           {/* Language Selector */}
           <div className="relative">
             <button
