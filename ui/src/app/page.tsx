@@ -129,7 +129,7 @@ const AppContent: React.FC = () => {
       {/* ========================================================================= */}
       {/* MOBILE NATIVE VIEW (Visible on mobile screen widths < 768px)               */}
       {/* ========================================================================= */}
-      <div className="block md:hidden min-h-screen relative pb-24">
+      <div className="block md:hidden min-h-screen relative pb-16">
         {currentTab === 'ai_companion' && aiMode === 'voice' ? (
           <div>
             <VoiceAssistant
