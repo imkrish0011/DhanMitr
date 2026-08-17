@@ -8,6 +8,7 @@ import {
   SparklesIcon,
   WalletIcon,
   TrendingUpIcon,
+  LockIcon,
 } from '@/components/icons/CustomIcons';
 
 interface LockedFeatureViewProps {
@@ -53,7 +54,8 @@ export const LockedFeatureView: React.FC<LockedFeatureViewProps> = ({
         {/* Headline */}
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold mb-3 border border-emerald-200 dark:border-emerald-800">
-            <span>🔒 Locked Feature</span>
+            <LockIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Locked Feature</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Unlock {featureName}

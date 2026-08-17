@@ -9,6 +9,7 @@ import {
   ShieldCheckIcon,
   BulbIcon,
   SparkleSmallIcon,
+  LockIcon,
 } from '@/components/icons/CustomIcons';
 
 export const QuickActionsSidebar: React.FC = () => {
@@ -67,8 +68,9 @@ export const QuickActionsSidebar: React.FC = () => {
               Quick Actions
             </h3>
             {!isAuthenticated && (
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                🔒 Login Required
+              <span className="text-[11px] text-amber-500/90 font-semibold flex items-center gap-1.5 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                <LockIcon className="w-3 h-3 text-amber-500 shrink-0" />
+                <span>Login Required</span>
               </span>
             )}
           </div>
@@ -81,7 +83,7 @@ export const QuickActionsSidebar: React.FC = () => {
                 className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all text-left group cursor-pointer ${
                   isAuthenticated
                     ? 'bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/70 dark:border-slate-700/60 hover:border-emerald-200 dark:hover:border-emerald-800 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300'
-                    : 'bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-800 text-slate-500 hover:border-emerald-500/40 hover:text-slate-700 dark:hover:text-slate-300'
+                    : 'bg-slate-50/60 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-800 text-slate-500 hover:border-emerald-500/40 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -92,9 +94,9 @@ export const QuickActionsSidebar: React.FC = () => {
                 </div>
 
                 {!isAuthenticated && (
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500" title="Sign in to unlock">
-                    🔒
-                  </span>
+                  <div className="p-1 rounded-md bg-slate-200/60 dark:bg-slate-800/80 text-slate-400 dark:text-slate-400 group-hover:text-emerald-500 transition-colors" title="Sign in to unlock">
+                    <LockIcon className="w-3.5 h-3.5" />
+                  </div>
                 )}
               </button>
             ))}
@@ -110,21 +112,23 @@ export const QuickActionsSidebar: React.FC = () => {
           {!isAuthenticated ? (
             <div
               onClick={() => openAuthModal('signup', 'Sign in to save and synchronize your conversation history.')}
-              className="p-4 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-2 cursor-pointer hover:border-emerald-500/40 transition-colors"
+              className="p-4 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-2.5 cursor-pointer hover:border-emerald-500/40 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-slate-200/70 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-500 text-xs">
-                🔒
+              <div className="w-9 h-9 rounded-full bg-slate-200/60 dark:bg-slate-800 border border-slate-300/50 dark:border-slate-700/50 flex items-center justify-center mx-auto text-slate-400">
+                <LockIcon className="w-4 h-4 text-slate-400" />
               </div>
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">History Disabled</p>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Sign in to save, sync, and resume your financial discussions across devices.
-              </p>
+              <div>
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">History Disabled</p>
+                <p className="text-[11px] text-slate-400 leading-relaxed mt-0.5">
+                  Sign in to save, sync, and resume your financial discussions across devices.
+                </p>
+              </div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   openAuthModal('login');
                 }}
-                className="mt-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-block"
+                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-block"
               >
                 Sign In to Save
               </button>
