@@ -57,9 +57,26 @@ export const InsurancesTab: React.FC<InsurancesTabProps> = ({ onOpenAddModal }) 
         </div>
       </div>
 
-      {/* Insurances List with Pop-up Hover and Edit buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {insurances.map((ins) => (
+      {/* Insurances List or Empty State */}
+      {insurances.length === 0 ? (
+        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-3xl p-12 text-center shadow-2xs space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 text-xl font-bold">
+            🛡️
+          </div>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">No Insurance Policies Added</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+            Add your health, term life, vehicle, or personal risk cover policies to track sum insured limits and premium renewal dates.
+          </p>
+          <button
+            onClick={onOpenAddModal}
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer inline-block"
+          >
+            + Add First Insurance Policy
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {insurances.map((ins) => (
           <div
             key={ins.id}
             className={`bg-white dark:bg-[#0F172A] border rounded-2xl p-5 shadow-2xs hover:shadow-sm hover:border-emerald-500/20 transition-all duration-300 flex flex-col justify-between group ${
@@ -156,6 +173,7 @@ export const InsurancesTab: React.FC<InsurancesTabProps> = ({ onOpenAddModal }) 
           </div>
         ))}
       </div>
+    )}
 
       {/* Edit Record Modal */}
       <EditRecordModal

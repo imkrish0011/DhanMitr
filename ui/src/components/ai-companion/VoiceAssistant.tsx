@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useVoiceChat } from '@/context/VoiceChatContext';
+import { useAuth } from '@/context/AuthContext';
 import { AudioVisualizerOrb } from './AudioVisualizerOrb';
 import {
   DhanMitrLogo,
@@ -33,6 +34,8 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     assistantVoiceReply,
     triggerPrompt,
   } = useVoiceChat();
+
+  const { isAuthenticated, remainingFreeChats, openAuthModal } = useAuth();
 
   const [textInput, setTextInput] = useState('');
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -92,8 +95,18 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           </span>
         </div>
 
-        {/* Controls on Right: Language Selector Only */}
+        {/* Controls on Right: Free Chat Badge & Language Selector */}
         <div className="flex items-center gap-3 ml-auto">
+          {!isAuthenticated && (
+            <button
+              onClick={() => openAuthModal('signup', 'Sign in or create an account for unlimited AI assistance.')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800/80 rounded-xl text-xs font-semibold text-emerald-300 transition-all cursor-pointer shadow-xs"
+            >
+              <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{remainingFreeChats}/3 Free Chats</span>
+              <span className="text-[10px] text-emerald-400 underline ml-1">Unlock All</span>
+            </button>
+          )}
           {/* Language Selector */}
           <div className="relative">
             <button

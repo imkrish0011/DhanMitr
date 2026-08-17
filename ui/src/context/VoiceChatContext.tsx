@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { ChatMessage, VoiceState } from '@/types';
 import { initialChatMessages } from '@/data/mockData';
 import { useFinance } from './FinanceContext';
+import { useAuth } from './AuthContext';
 
 interface VoiceChatContextType {
   // Voice State
@@ -31,7 +32,18 @@ interface VoiceChatContextType {
 const VoiceChatContext = createContext<VoiceChatContextType | undefined>(undefined);
 
 export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { spendingCategories, subscriptions, totalIncome, totalOutflow, netSurplus, savingsRate } = useFinance();
+  const {
+    spendingCategories,
+    subscriptions,
+    insurances,
+    totalIncome,
+    totalOutflow,
+    netSurplus,
+    savingsRate,
+    profile,
+  } = useFinance();
+
+  const { incrementFreeChatCount, isAuthenticated } = useAuth();
 
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'hi' | 'hinglish'>('en');
@@ -71,12 +83,9 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         recognition.onerror = (event: any) => {
           console.warn('Speech recognition status:', event.error);
-          // Do not abruptly terminate; let the fallback flow proceed smoothly
         };
 
-        recognition.onend = () => {
-          // Handled via sequence controller
-        };
+        recognition.onend = () => {};
 
         recognitionRef.current = recognition;
       }
@@ -146,14 +155,21 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Start voice listening with guaranteed 3-stage lifecycle animation sequence
+  // Start voice listening
   const startVoiceListening = () => {
+    // Check free chat limit for guests
+    if (!isAuthenticated) {
+      const allowed = incrementFreeChatCount();
+      if (!allowed) {
+        return;
+      }
+    }
+
     if (listeningTimeoutRef.current) clearTimeout(listeningTimeoutRef.current);
     setActiveTranscript('');
     setAssistantVoiceReply('');
     setVoiceState('listening');
 
-    // Attempt browser recognition
     if (recognitionRef.current) {
       try {
         recognitionRef.current.lang = selectedLanguage === 'hi' ? 'hi-IN' : 'en-IN';
@@ -161,13 +177,11 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch (e) {}
     }
 
-    // Set default query placeholder based on language
     const sampleQuery =
       selectedLanguage === 'hi'
         ? 'मेरे खर्चों का विश्लेषण करें और बचत के तरीके बताएं'
         : 'Analyze my spending and show how I can save more';
 
-    // Keep listening active for 3.5 seconds to showcase listening animation
     listeningTimeoutRef.current = setTimeout(() => {
       const queryToProcess = activeTranscript.trim() || sampleQuery;
       setActiveTranscript(queryToProcess);
@@ -178,9 +192,8 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }, 3200);
   };
 
-  // Process query transitioning into Processing state -> Speaking state -> Idle
+  // Process query sequence
   const processQuerySequence = async (query: string) => {
-    // 1. Enter Processing State (Particle orbit constellation animation)
     setVoiceState('processing');
 
     const userMsg: ChatMessage = {
@@ -193,10 +206,9 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     setMessages((prev) => [...prev, userMsg]);
 
-    // Keep processing visible for 2.2 seconds so user sees the particle orbit animation
-    await new Promise((resolve) => setTimeout(resolve, 2200));
+    await new Promise((resolve) => setTimeout(resolve, 1800));
 
-    const result = generateAssistantResponse(query, selectedLanguage);
+    const result = generateDynamicAssistantResponse(query, selectedLanguage);
     setAssistantVoiceReply(result.voiceReply);
 
     const assistantMsg: ChatMessage = {
@@ -210,12 +222,10 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     setMessages((prev) => [...prev, assistantMsg]);
-
-    // 2. Enter Speaking State (Glowing audio waveform + voice playback)
     speakText(result.voiceReply, result.lang);
   };
 
-  // Stop voice recording immediately and trigger processing
+  // Stop voice recording
   const stopVoiceListening = () => {
     if (listeningTimeoutRef.current) clearTimeout(listeningTimeoutRef.current);
     try {
@@ -229,7 +239,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     if (voiceState === 'listening') {
-      const query = activeTranscript.trim() || (selectedLanguage === 'hi' ? 'मेरे खर्चों का विश्लेषण करें' : 'How can I save more money this month?');
+      const query = activeTranscript.trim() || (selectedLanguage === 'hi' ? 'मेरे खर्चों का विश्लेषण करें' : 'How can I save more money?');
       setActiveTranscript(query);
       processQuerySequence(query);
     } else {
@@ -237,8 +247,8 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Intelligent Financial Query Processor
-  const generateAssistantResponse = (query: string, langHint?: 'en' | 'hi' | 'hinglish') => {
+  // Dynamic Financial Response Generator based on actual user profile & Supabase records
+  const generateDynamicAssistantResponse = (query: string, langHint?: 'en' | 'hi' | 'hinglish') => {
     const q = query.toLowerCase().trim();
     const isHindi =
       langHint === 'hi' ||
@@ -248,99 +258,145 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       q.includes('सब्सक्रिप्शन') ||
       q.includes('निवेश');
 
-    const formattedSurplus = `₹${netSurplus.toLocaleString('en-IN')}`;
+    const userName = profile?.name || 'Friend';
     const formattedIncome = `₹${totalIncome.toLocaleString('en-IN')}`;
     const formattedOutflow = `₹${totalOutflow.toLocaleString('en-IN')}`;
+    const formattedSurplus = `₹${netSurplus.toLocaleString('en-IN')}`;
+
+    const activeSubs = subscriptions.filter((s) => s.is_active);
+    const activeSubsCost = activeSubs.reduce(
+      (sum, s) => sum + (s.billing_cycle === 'monthly' ? s.amount : Math.round(s.amount / 12)),
+      0
+    );
+
+    // If user has zero financial records
+    const hasNoData = totalIncome === 0 && totalOutflow === 0 && subscriptions.length === 0;
 
     if (isHindi) {
-      if (q.includes('विश्लेषण') || q.includes('खर्च') || q.includes('expenses') || q.includes('spend')) {
+      if (hasNoData) {
         return {
-          text: `जरूर Rahul! पिछले महीने आपके कुल खर्च **${formattedOutflow}** थे। यहाँ आपके खर्चों का सारांश है:\n\nक्या आप किसी विशेष श्रेणी पर और विस्तार से जानना चाहेंगे?`,
+          text: `नमस्ते ${userName}! आपके पास वर्तमान में कोई वित्तीय रिकॉर्ड नहीं जुड़ा है।\n\nआप **Finance Hub** में जाकर अपना वेतन (Income), नियमित खर्च और सक्रिय सब्सक्रिप्शन जोड़ सकते हैं ताकि मैं आपको सटीक और व्यक्तिगत सलाह दे सकूँ।`,
+          widgetType: 'none' as const,
+          voiceReply: `नमस्ते ${userName}, आपके खाते में अभी वित्तीय रिकॉर्ड नहीं हैं। कृपया अपना बजट और आय जोड़ें।`,
+          lang: 'hi' as const,
+        };
+      }
+
+      if (q.includes('विश्लेषण') || q.includes('खर्च') || q.includes('expenses') || q.includes('spend')) {
+        const topCategories = spendingCategories.filter((c) => c.amount > 0);
+        return {
+          text: `जरूर ${userName}! आपकी वर्तमान मासिक आउटफ्लो **${formattedOutflow}** है।\n\n${
+            topCategories.length > 0
+              ? topCategories.map((c) => `- **${c.category}:** ₹${c.amount.toLocaleString('en-IN')} (${c.percentage}%)`).join('\n')
+              : 'आपके अधिकांश खर्च अभी वर्गीकृत नहीं हैं।'
+          }\n\nक्या आप किसी विशेष श्रेणी में बचत के उपाय जानना चाहते हैं?`,
           widgetType: 'expense_summary' as const,
           widgetData: spendingCategories,
-          voiceReply: `जरूर राहुल! पिछले महीने आपके कुल खर्च 40 हजार 993 रुपये थे। हाउसिंग और इन्वेस्टमेंट आपके मुख्य खर्च हैं।`,
+          voiceReply: `आपके वर्तमान कुल खर्च ${totalOutflow} रुपये हैं।`,
           lang: 'hi' as const,
         };
       }
 
       if (q.includes('सब्सक्रिप्शन') || q.includes('ott') || q.includes('subscription')) {
         return {
-          text: `आपके पास कुल **${subscriptions.length} OTT और सब्सक्रिप्शन प्लान** सक्रिय हैं, जिनका कुल मासिक खर्च **₹4,980** है।\n\n- **Netflix Standard:** ₹499 (24 Aug को देय)\n- **Amazon Prime:** ₹1,499 (25 Aug को देय)\n- **Spotify:** ₹119 (25 Aug को देय)\n\nसलाह: अप्रयुक्त प्लान्स जैसे Claude Pro को पॉज करके आप प्रति माह ₹1,999 बचा सकते हैं।`,
+          text: `आपके पास कुल **${activeSubs.length} सक्रिय सब्सक्रिप्शन** हैं, जिनका मासिक खर्च **₹${activeSubsCost.toLocaleString('en-IN')}** है।\n\n${
+            activeSubs.length > 0
+              ? activeSubs.slice(0, 4).map((s) => `- **${s.name}:** ₹${s.amount} (${s.billing_cycle})`).join('\n')
+              : 'वर्तमान में कोई सक्रिय प्लान नहीं है।'
+          }`,
           widgetType: 'subscription_alert' as const,
-          widgetData: subscriptions.slice(0, 4),
-          voiceReply: `आपके पास कुल 10 एक्टिव सब्सक्रिप्शन हैं जिनका मासिक खर्च 4980 रुपये है। नेटफ्लिक्स और अमेज़न प्राइम के नवीनीकरण जल्द ही देय हैं।`,
+          widgetData: activeSubs.slice(0, 4),
+          voiceReply: `आपके पास ${activeSubs.length} सक्रिय सब्सक्रिप्शन हैं जिनका मासिक खर्च ${activeSubsCost} रुपये है।`,
           lang: 'hi' as const,
         };
       }
 
       if (q.includes('बचत') || q.includes('save') || q.includes('कम')) {
         return {
-          text: `आपकी वर्तमान मासिक बचत दर **${savingsRate}%** (${formattedSurplus}) है जो बहुत शानदार है! 🎉\n\nऔर अधिक बचत के 3 स्मार्ट सुझाव:\n1. **OTT बंडलिंग:** अप्रयुक्त 2 AI और एंटरटेनमेंट प्लान्स को समेकित करें (बचत: ~₹2,200/माह)\n2. **यूटिलिटी ऑप्टिमाइज़ेशन:** पीक ऑवर बिजली व ब्रॉडबैंड प्लान को पुनर्गठित करें (बचत: ~₹800/माह)\n3. **स्वचालित SIP:** वेतन आते ही 1 तारीख को अतिरिक्त ₹3,000 ऑटो-डेबिट करें।`,
+          text: `आपकी वर्तमान मासिक बचत **${formattedSurplus}** (${savingsRate}% बचत दर) है।\n\n**बचत बढ़ाने के 3 स्मार्ट सुझाव:**\n1. **आवर्ती खर्चों की समीक्षा:** अप्रयुक्त सब्सक्रिप्शन और प्लान्स को पॉज करें।\n2. **यूटिलिटी और बिल प्रबंधन:** ऑटो-पे और कैशबैक ऑफर्स का उपयोग करें।\n3. **स्वचालित निवेश:** वेतन आते ही बचत राशि को अलग करें।`,
           widgetType: 'none' as const,
-          voiceReply: `आपकी मासिक बचत दर 37 प्रतिशत है। अगर आप अप्रयुक्त सब्सक्रिप्शन को पॉज करते हैं तो 2200 रुपये और बचा सकते हैं।`,
+          voiceReply: `आपकी मासिक बचत दर ${savingsRate} प्रतिशत है।`,
           lang: 'hi' as const,
         };
       }
 
-      if (q.includes('निवेश') || q.includes('invest') || q.includes('म्यूचुअल फंड')) {
+      if (q.includes('निवेश') || q.includes('invest') || q.includes('फंड')) {
         return {
-          text: `आपके मध्यम जोखिम प्रोफाइल (Moderate Risk) के आधार पर अनुशंसित निवेश रणनीति:\n\n- **Nifty 50 इंडेक्स फंड:** ₹5,000/माह (दीर्घकालिक विकास)\n- **फ्लेक्सी-कैप फंड:** ₹3,500/माह (स्थिर रिटर्न)\n- **आपातकालीन फंड:** 6 महीने का खर्च सुरक्षित है (₹2,10,000)।\n\nआप अपने टैक्स-सेविंग के लिए सेक्शन 80C के तहत PPF या ELSS में ₹1.5 लाख का लाभ ले सकते हैं।`,
+          text: `आपके **${profile.risk_tolerance || 'Moderate'}** रिस्क प्रोफाइल के आधार पर:\n\n- **इंडेक्स म्यूचुअल फंड (Nifty 50):** दीर्घकालिक पूंजी वृद्धि के लिए अनुकूल।\n- **आपातकालीन निधि (Emergency Fund):** कम से कम 3 से 6 महीने का खर्च सुरक्षित रखें।\n- **बीमा सुरक्षा:** पर्याप्त टर्म और स्वास्थ्य बीमा सक्रिय रखें।`,
           widgetType: 'investment_tip' as const,
-          voiceReply: `आपकी रिस्क प्रोफाइल के अनुसार निफ्टी 50 और फ्लेक्सी कैप फंड में एसआईपी सबसे अनुकूल विकल्प हैं।`,
+          voiceReply: `आपकी रिस्क प्रोफाइल के अनुसार इंडेक्स फंड और आपातकालीन बचत सबसे अनुकूल विकल्प हैं।`,
           lang: 'hi' as const,
         };
       }
 
       return {
-        text: `नमस्ते Rahul! आपकी मासिक आय **${formattedIncome}** और कुल खर्च **${formattedOutflow}** है। मैं आपके बजट, खर्च विश्लेषण और निवेश योजना में कैसे सहायता कर सकता हूँ?`,
+        text: `नमस्ते ${userName}! आपकी मासिक आय **${formattedIncome}** और मासिक खर्च **${formattedOutflow}** है। मैं आपके वित्तीय प्रबंधन में कैसे सहायता कर सकता हूँ?`,
         widgetType: 'none' as const,
-        voiceReply: `नमस्ते राहुल, मैं आपकी वित्तीय सहायता के लिए तैयार हूँ। आप मुझसे बजट या खर्चों के बारे में पूछ सकते हैं।`,
+        voiceReply: `नमस्ते ${userName}, मैं आपकी वित्तीय सहायता के लिए तैयार हूँ।`,
         lang: 'hi' as const,
       };
     } else {
       // English responses
-      if (q.includes('expense') || q.includes('spending') || q.includes('biggest') || q.includes('cost')) {
+      if (hasNoData) {
         return {
-          text: `Sure Rahul! Here is the breakdown of your total monthly outflow of **${formattedOutflow}**:\n\n- **Housing:** ₹15,800 (38.5%)\n- **Investments:** ₹8,500 (20.7%)\n- **Bills & Utilities:** ₹6,200 (15.1%)\n- **Subscriptions:** ₹4,980 (12.1%)\n- **Insurance:** ₹3,513 (8.6%)\n- **Others:** ₹2,000 (4.9%)\n\nWould you like to drill down into any specific category?`,
+          text: `Hello ${userName}! You haven't added any financial records yet.\n\nGo to the **Finance Hub** to log your income, monthly budget, or active subscriptions. Once added, I will provide real-time spending insights and custom savings strategies!`,
+          widgetType: 'none' as const,
+          voiceReply: `Hello ${userName}! You have not added any financial records yet. Add your income and expenses to get started.`,
+          lang: 'en' as const,
+        };
+      }
+
+      if (q.includes('expense') || q.includes('spending') || q.includes('biggest') || q.includes('cost')) {
+        const topCategories = spendingCategories.filter((c) => c.amount > 0);
+        return {
+          text: `Here is your current monthly outflow breakdown totaling **${formattedOutflow}**:\n\n${
+            topCategories.length > 0
+              ? topCategories.map((c) => `- **${c.category}:** ₹${c.amount.toLocaleString('en-IN')} (${c.percentage}%)`).join('\n')
+              : '- No categorized expenses recorded yet.'
+          }\n\nWould you like recommendations on optimizing any of these categories?`,
           widgetType: 'expense_summary' as const,
           widgetData: spendingCategories,
-          voiceReply: `Here is your expense breakdown. Your total outflow is ₹40,993 with housing and investments taking the largest share.`,
+          voiceReply: `Your total monthly outflow is ${formattedOutflow}.`,
           lang: 'en' as const,
         };
       }
 
       if (q.includes('save') || q.includes('more') || q.includes('budget')) {
         return {
-          text: `Great financial health! Your current savings rate is **${savingsRate}%** (${formattedSurplus}/month). 🚀\n\n**Top 3 AI Recommendations to Save More:**\n1. **Audit OTT & Subs:** Pause inactive plans to save ~₹2,200/mo.\n2. **Utility Cashbacks:** Enable auto-pay on credit cards for 5% bill cashbacks.\n3. **Increase Step-up SIP:** Allocate 10% of annual appraisal directly to index funds.`,
+          text: `Your current monthly surplus is **${formattedSurplus}** with a **${savingsRate}% savings rate**.\n\n**Top AI Recommendations to Increase Savings:**\n1. **Audit Recurring Plans:** Review your ${activeSubs.length} active subscriptions.\n2. **Budget Discipline:** Cap non-essential spending at 30% of net income.\n3. **Step-up SIP:** Automatically allocate 50% of your surplus into index funds.`,
           widgetType: 'none' as const,
-          voiceReply: `You have a healthy savings rate of 37%. By pruning unused subscriptions, you can easily save an additional ₹2,200 every month.`,
+          voiceReply: `Your current monthly surplus is ${formattedSurplus} with a ${savingsRate} percent savings rate.`,
           lang: 'en' as const,
         };
       }
 
       if (q.includes('sub') || q.includes('netflix') || q.includes('prime') || q.includes('renew')) {
         return {
-          text: `You have **${subscriptions.length} active subscriptions** totaling **₹4,980/mo**.\n\n⚠️ **Urgent Renewals Alert:**\n- **Netflix Standard HD:** ₹499 (Due: 24 Aug 2026, in 8 days)\n- **Amazon Prime:** ₹1,499 (Due: 25 Aug 2026, in 9 days)\n- **Spotify Premium:** ₹119 (Due: 25 Aug 2026, in 9 days)`,
+          text: `You have **${activeSubs.length} active subscriptions** totaling **₹${activeSubsCost.toLocaleString('en-IN')}/mo**.\n\n${
+            activeSubs.length > 0
+              ? activeSubs.slice(0, 4).map((s) => `- **${s.name}:** ₹${s.amount} (${s.billing_cycle}) - Renewal: ${s.next_renewal_date}`).join('\n')
+              : 'No active recurring subscriptions found.'
+          }`,
           widgetType: 'subscription_alert' as const,
-          widgetData: subscriptions.slice(0, 4),
-          voiceReply: `You have 10 subscriptions totaling ₹4,980 per month. Netflix and Amazon Prime renewals are due in the next 8 to 9 days.`,
+          widgetData: activeSubs.slice(0, 4),
+          voiceReply: `You have ${activeSubs.length} active subscriptions totaling ${activeSubsCost} rupees per month.`,
           lang: 'en' as const,
         };
       }
 
       if (q.includes('invest') || q.includes('growth') || q.includes('sip') || q.includes('tax')) {
         return {
-          text: `Based on your **Moderate Risk Tolerance** and **₹24,007 monthly surplus**:\n\n- **Equity SIP:** ₹8,500/month (Allocated: Parag Parikh Flexi Cap + Nifty 50)\n- **Emergency Fund:** Healthy at ₹2.1 Lakhs (5.1 months runway)\n- **Insurance Coverage:** ₹1.5 Cr Term Life + ₹15 Lakhs Health Insurance active.\n\nNext step: Consider investing the additional ₹5,000 surplus in Gold/Sovereign Bonds for balanced diversification.`,
+          text: `Based on your **${profile.risk_tolerance || 'Moderate'}** risk tolerance and **${formattedSurplus}** surplus:\n\n- **Broad Index SIPs:** Recommended for disciplined compounding.\n- **Emergency Cushion:** Target 3 to 6 months of expenses (₹${(totalOutflow * 6).toLocaleString('en-IN')}).\n- **Insurance Safety Net:** ${insurances.length > 0 ? `${insurances.length} active policies connected` : 'Add your term & health policies to track coverage gaps'}.`,
           widgetType: 'investment_tip' as const,
-          voiceReply: `Your investments are on track with ₹8,500 in monthly SIPs and a solid emergency fund of 2.1 lakh rupees.`,
+          voiceReply: `Based on your risk profile and surplus, index SIPs and a solid emergency cushion are your best next steps.`,
           lang: 'en' as const,
         };
       }
 
       return {
-        text: `Hello Rahul! Your total monthly income is **${formattedIncome}** and current surplus is **${formattedSurplus}** (${savingsRate}% savings rate). How can I assist you with your finances today?`,
+        text: `Hello ${userName}! Your monthly income is **${formattedIncome}**, total outflow is **${formattedOutflow}**, and net surplus is **${formattedSurplus}** (${savingsRate}% savings rate). How can I assist your finances today?`,
         widgetType: 'none' as const,
-        voiceReply: `Hello Rahul, I am your DhanMITR assistant. How can I help with your finances today?`,
+        voiceReply: `Hello ${userName}, I am your DhanMITR assistant. How can I help with your finances today?`,
         lang: 'en' as const,
       };
     }
@@ -349,6 +405,15 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Send message from chat box
   const sendMessage = async (text: string, language?: 'en' | 'hi' | 'hinglish') => {
     if (!text.trim()) return;
+
+    // Check free chat limit for guests
+    if (!isAuthenticated) {
+      const allowed = incrementFreeChatCount();
+      if (!allowed) {
+        return;
+      }
+    }
+
     const effectiveLang = language || selectedLanguage;
 
     const userMsg: ChatMessage = {
@@ -364,7 +429,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    const result = generateAssistantResponse(text, effectiveLang);
+    const result = generateDynamicAssistantResponse(text, effectiveLang);
 
     const assistantMsg: ChatMessage = {
       id: `msg_a_${Date.now()}`,

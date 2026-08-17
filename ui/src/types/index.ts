@@ -56,6 +56,7 @@ export interface UserFinancialProfile {
   risk_tolerance: RiskTolerance;
   employment_type: EmploymentType;
   tax_regime: TaxRegime;
+  is_onboarded?: boolean;
 }
 
 export interface SpendingCategorySummary {

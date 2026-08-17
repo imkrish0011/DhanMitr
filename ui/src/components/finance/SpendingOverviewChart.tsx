@@ -66,37 +66,39 @@ export const SpendingOverviewChart: React.FC = () => {
             <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
             <PieChart>
               <Pie
-                data={spendingCategories}
+                data={totalOutflow > 0 ? spendingCategories.filter((c) => c.amount > 0) : [{ id: 'empty', category: 'No Expenses', amount: 1, color: '#334155' }]}
                 cx="50%"
                 cy="50%"
                 innerRadius={64}
                 outerRadius={90}
-                paddingAngle={3}
+                paddingAngle={totalOutflow > 0 ? 3 : 0}
                 dataKey="amount"
-                onMouseEnter={(_, index) => setHoveredCategory(spendingCategories[index]?.id || null)}
+                onMouseEnter={(_, index) => totalOutflow > 0 && setHoveredCategory(spendingCategories[index]?.id || null)}
                 onMouseLeave={() => setHoveredCategory(null)}
               >
-                {spendingCategories.map((entry) => (
+                {(totalOutflow > 0 ? spendingCategories.filter((c) => c.amount > 0) : [{ id: 'empty', category: 'No Expenses', amount: 1, color: '#334155' }]).map((entry) => (
                   <Cell
                     key={entry.id}
                     fill={entry.color}
                     stroke="transparent"
                     className="transition-all duration-200"
-                    opacity={hoveredCategory ? (hoveredCategory === entry.id ? 1 : 0.4) : 1}
+                    opacity={hoveredCategory ? (hoveredCategory === entry.id ? 1 : 0.4) : (totalOutflow > 0 ? 1 : 0.3)}
                   />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, 'Amount']}
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderRadius: '12px',
-                  border: 'none',
-                  color: '#fff',
-                  fontSize: '12px',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-                }}
-              />
+              {totalOutflow > 0 && (
+                <Tooltip
+                  formatter={(value: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, 'Amount']}
+                  contentStyle={{
+                    backgroundColor: '#0F172A',
+                    borderRadius: '12px',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+                  }}
+                />
+              )}
             </PieChart>
           </ResponsiveContainer>
           )}

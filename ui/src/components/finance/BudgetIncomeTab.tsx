@@ -85,40 +85,53 @@ export const BudgetIncomeTab: React.FC<BudgetIncomeTabProps> = ({ onOpenAddModal
           </div>
 
           <div className="space-y-3">
-            {incomeSources.map((inc) => (
-              <div
-                key={inc.id}
-                className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 rounded-xl flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all"
-              >
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    {inc.title}
-                  </h4>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                    Credit Date: {inc.date}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                    +₹{inc.amount.toLocaleString('en-IN')}
-                  </span>
-                  <button
-                    onClick={() => setEditingItem({ type: 'income', data: inc })}
-                    className="text-slate-400 hover:text-emerald-600 text-xs p-1"
-                    title="Edit Income"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    onClick={() => deleteIncomeSource(inc.id)}
-                    className="text-slate-400 hover:text-red-500 text-xs"
-                    title="Delete"
-                  >
-                    ✕
-                  </button>
-                </div>
+            {incomeSources.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 space-y-2">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Income Sources Added</p>
+                <p className="text-[11px] text-slate-400">Log your primary salary, freelance earnings, or secondary inflows.</p>
+                <button
+                  onClick={onOpenAddModal}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer inline-block"
+                >
+                  + Add Income
+                </button>
               </div>
-            ))}
+            ) : (
+              incomeSources.map((inc) => (
+                <div
+                  key={inc.id}
+                  className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 rounded-xl flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all"
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                      {inc.title}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      Credit Date: {inc.date}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                      +₹{inc.amount.toLocaleString('en-IN')}
+                    </span>
+                    <button
+                      onClick={() => setEditingItem({ type: 'income', data: inc })}
+                      className="text-slate-400 hover:text-emerald-600 text-xs p-1"
+                      title="Edit Income"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={() => deleteIncomeSource(inc.id)}
+                      className="text-slate-400 hover:text-red-500 text-xs"
+                      title="Delete"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -142,58 +155,71 @@ export const BudgetIncomeTab: React.FC<BudgetIncomeTabProps> = ({ onOpenAddModal
           </div>
 
           <div className="space-y-4">
-            {budgetItems.map((item) => {
-              const percentUsed = Math.min(100, Math.round((item.spent / item.allocated) * 100));
-              const isExceeded = item.spent > item.allocated;
+            {budgetItems.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 space-y-2">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Category Budgets Set</p>
+                <p className="text-[11px] text-slate-400">Set monthly spend limits on housing, investments, food, or shopping.</p>
+                <button
+                  onClick={onOpenAddModal}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer inline-block"
+                >
+                  + Add Budget Cap
+                </button>
+              </div>
+            ) : (
+              budgetItems.map((item) => {
+                const percentUsed = Math.min(100, Math.round((item.spent / (item.allocated || 1)) * 100));
+                const isExceeded = item.spent > item.allocated;
 
-              return (
-                <div key={item.id} className="space-y-1.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {item.category}
-                      </span>
+                return (
+                  <div key={item.id} className="space-y-1.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          {item.category}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 dark:text-white">
+                          ₹{item.spent.toLocaleString('en-IN')}
+                        </span>
+                        <span className="text-slate-400 dark:text-slate-500">
+                          / ₹{item.allocated.toLocaleString('en-IN')}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                            isExceeded
+                              ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
+                          {percentUsed}%
+                        </span>
+                        <button
+                          onClick={() => setEditingItem({ type: 'budget', data: item })}
+                          className="text-slate-400 hover:text-emerald-600 text-xs ml-1"
+                          title="Edit Budget Cap"
+                        >
+                          ✎
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        ₹{item.spent.toLocaleString('en-IN')}
-                      </span>
-                      <span className="text-slate-400 dark:text-slate-500">
-                        / ₹{item.allocated.toLocaleString('en-IN')}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                          isExceeded
-                            ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
-                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                        }`}
-                      >
-                        {percentUsed}%
-                      </span>
-                      <button
-                        onClick={() => setEditingItem({ type: 'budget', data: item })}
-                        className="text-slate-400 hover:text-emerald-600 text-xs ml-1"
-                        title="Edit Budget Cap"
-                      >
-                        ✎
-                      </button>
+
+                    {/* Progress bar */}
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${percentUsed}%`,
+                          backgroundColor: isExceeded ? '#EF4444' : item.color,
+                        }}
+                      />
                     </div>
                   </div>
-
-                  {/* Progress bar */}
-                  <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${percentUsed}%`,
-                        backgroundColor: isExceeded ? '#EF4444' : item.color,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@ export const KpiCards: React.FC = () => {
     savingsRate,
     activeSubscriptionsCount,
     activeInsurancesCount,
+    incomeSources,
     setActiveSubTab,
   } = useFinance();
 
@@ -25,7 +26,7 @@ export const KpiCards: React.FC = () => {
       id: 'income',
       label: 'Monthly Income',
       value: `₹${totalIncome.toLocaleString('en-IN')}`,
-      subtext: 'Take-home salary',
+      subtext: incomeSources.length > 0 ? `${incomeSources.length} streams logged` : 'Monthly earnings',
       icon: <WalletIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
       iconBg: 'bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900/50',
       action: () => setActiveSubTab('budget'),

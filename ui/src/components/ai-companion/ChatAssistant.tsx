@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useVoiceChat } from '@/context/VoiceChatContext';
+import { useAuth } from '@/context/AuthContext';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { QuickActionsSidebar } from './QuickActionsSidebar';
 import {
@@ -9,6 +10,7 @@ import {
   RefreshIcon,
   MicIcon,
   SendIcon,
+  SparkleSmallIcon,
 } from '@/components/icons/CustomIcons';
 
 interface ChatAssistantProps {
@@ -29,6 +31,8 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
     startVoiceListening,
     voiceState,
   } = useVoiceChat();
+
+  const { isAuthenticated, remainingFreeChats, openAuthModal } = useAuth();
 
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -73,6 +77,16 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {!isAuthenticated && (
+              <button
+                onClick={() => openAuthModal('signup', 'Sign up to continue chatting and unlock the Finance Hub.')}
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              >
+                <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500" />
+                <span>{remainingFreeChats}/3 Free Chats</span>
+              </button>
+            )}
+
             {/* Switch to Voice Mode */}
             <button
               onClick={onSwitchToVoice}

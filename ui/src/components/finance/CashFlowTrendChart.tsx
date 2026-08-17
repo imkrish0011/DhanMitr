@@ -92,61 +92,67 @@ export const CashFlowTrendChart: React.FC = () => {
       {/* Chart Canvas */}
       <div className="w-full h-[220px] min-w-0 min-h-[220px] relative">
         {isMounted && (
-          <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
-            <ComposedChart data={cashFlowTrend} margin={{ top: 15, right: 10, left: -15, bottom: 0 }}>
-            <defs>
-              <linearGradient id="incomeAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop stopColor="#10B981" stopOpacity={0.22} />
-                <stop stopColor="#10B981" stopOpacity={0.0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
-            <XAxis
-              dataKey="month"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94A3B8', fontSize: 11 }}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94A3B8', fontSize: 11 }}
-              tickFormatter={formatYAxis}
-              domain={[0, 80000]}
-              ticks={[0, 20000, 40000, 60000, 80000]}
-            />
-            <Tooltip
-              formatter={(value: any, name: any) => [
-                `₹${Number(value || 0).toLocaleString('en-IN')}`,
-                name === 'income' ? 'Income' : 'Expense',
-              ]}
-              contentStyle={{
-                backgroundColor: '#0F172A',
-                borderRadius: '12px',
-                border: 'none',
-                color: '#fff',
-                fontSize: '12px',
-              }}
-            />
-            <Area
-              type="monotone"
-              dataKey="income"
-              stroke="#10B981"
-              strokeWidth={2.5}
-              fill="url(#incomeAreaGrad)"
-              activeDot={{ r: 5, fill: '#10B981', stroke: '#fff', strokeWidth: 2 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="expense"
-              stroke="#94A3B8"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              dot={false}
-              activeDot={{ r: 4, fill: '#94A3B8' }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+          cashFlowTrend.length === 0 ? (
+            <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Cash Flow Data</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Add income sources and budget caps to plot your cash flow trend.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
+              <ComposedChart data={cashFlowTrend} margin={{ top: 15, right: 10, left: -15, bottom: 0 }}>
+              <defs>
+                <linearGradient id="incomeAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop stopColor="#10B981" stopOpacity={0.22} />
+                  <stop stopColor="#10B981" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94A3B8', fontSize: 11 }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94A3B8', fontSize: 11 }}
+                tickFormatter={formatYAxis}
+                domain={[0, 'auto']}
+              />
+              <Tooltip
+                formatter={(value: any, name: any) => [
+                  `₹${Number(value || 0).toLocaleString('en-IN')}`,
+                  name === 'income' ? 'Income' : 'Expense',
+                ]}
+                contentStyle={{
+                  backgroundColor: '#0F172A',
+                  borderRadius: '12px',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '12px',
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="income"
+                stroke="#10B981"
+                strokeWidth={2.5}
+                fill="url(#incomeAreaGrad)"
+                activeDot={{ r: 5, fill: '#10B981', stroke: '#fff', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="expense"
+                stroke="#94A3B8"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={{ r: 4, fill: '#94A3B8' }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+          )
         )}
       </div>
     </div>

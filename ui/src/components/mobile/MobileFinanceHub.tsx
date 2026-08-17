@@ -217,11 +217,13 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
                 AI Insight
               </span>
               <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-md">
-                +18%
+                Active
               </span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-              Great job! You saved <strong>₹6,500</strong> more than last month. Keep it up!
+              {netSurplus > 0
+                ? `You have a healthy ₹${netSurplus.toLocaleString('en-IN')} net monthly surplus (${savingsRate}% savings rate).`
+                : 'Add your income streams and budget caps to track your monthly surplus in real-time.'}
             </p>
           </div>
 
@@ -240,36 +242,42 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
             </div>
 
             <div className="space-y-2">
-              {subscriptions.slice(0, 4).map((s) => (
-                <div
-                  key={s.id}
-                  className="p-3 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between shadow-2xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <ProviderLogo logoKey={s.logoKey} className="w-10 h-10 shrink-0" />
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white">{s.name}</h4>
-                        {s.is_urgent && (
-                          <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded">
-                            URGENT
-                          </span>
-                        )}
+              {subscriptions.length === 0 ? (
+                <div className="p-4 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+                  <p className="text-xs text-slate-400">No active renewals found</p>
+                </div>
+              ) : (
+                subscriptions.slice(0, 4).map((s) => (
+                  <div
+                    key={s.id}
+                    className="p-3 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between shadow-2xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <ProviderLogo logoKey={s.logoKey} className="w-10 h-10 shrink-0" />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white">{s.name}</h4>
+                          {s.is_urgent && (
+                            <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded">
+                              URGENT
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Due: {s.next_renewal_date} (in {s.days_remaining}d)
+                        </p>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        Due: {s.next_renewal_date} (in {s.days_remaining}d)
-                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                        ₹{s.amount}
+                      </span>
+                      <span className="text-[9px] text-slate-400 capitalize">{s.billing_cycle}</span>
                     </div>
                   </div>
-
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                      ₹{s.amount}
-                    </span>
-                    <span className="text-[9px] text-slate-400 capitalize">{s.billing_cycle}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
