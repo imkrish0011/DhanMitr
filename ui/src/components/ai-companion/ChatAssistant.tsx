@@ -48,12 +48,19 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
     setInput('');
   };
 
-  const sampleSuggestions = [
-    { label: 'मेरे खर्चों का विश्लेषण करें', query: 'मेरे खर्चों का विश्लेषण करें', lang: 'hi' as const },
-    { label: 'मेरे OTT और सब्सक्रिप्शन दिखाएं', query: 'मेरे OTT और सब्सक्रिप्शन दिखाएं', lang: 'hi' as const },
-    { label: 'मैं और ज्यादा कैसे बचत कर सकता हूँ?', query: 'मैं और ज्यादा कैसे बचत कर सकता हूँ?', lang: 'hi' as const },
-    { label: 'मेरे निवेश के लिए सुझाव दें', query: 'मेरे निवेश के लिए सुझाव दें', lang: 'hi' as const },
-  ];
+  const sampleSuggestions = isAuthenticated
+    ? [
+        { label: 'मेरे खर्चों का विश्लेषण करें', query: 'मेरे खर्चों का विश्लेषण करें', lang: 'hi' as const },
+        { label: 'मेरे OTT और सब्सक्रिप्शन दिखाएं', query: 'मेरे OTT और सब्सक्रिप्शन दिखाएं', lang: 'hi' as const },
+        { label: 'मैं और ज्यादा कैसे बचत कर सकता हूँ?', query: 'मैं और ज्यादा कैसे बचत कर सकता हूँ?', lang: 'hi' as const },
+        { label: 'मेरे निवेश के लिए सुझाव दें', query: 'मेरे निवेश के लिए सुझाव दें', lang: 'hi' as const },
+      ]
+    : [
+        { label: '50/30/20 बजट नियम क्या है?', query: '50/30/20 बजट नियम क्या है और इसे कैसे लागू करें?', lang: 'hi' as const },
+        { label: 'इमरजेंसी फंड कैसे बनाएं?', query: '6 महीने का इमरजेंसी फंड कैसे तैयार करें?', lang: 'hi' as const },
+        { label: 'Old vs New Tax Regime', query: 'ओल्ड और न्यू टैक्स रिजीम में क्या अंतर है?', lang: 'hi' as const },
+        { label: 'Smart Saving Tips', query: 'हर महीने फिजूलखर्ची रोकने के आसान तरीके बताएं', lang: 'hi' as const },
+      ];
 
   return (
     <div className="flex-1 flex h-full max-h-full bg-[#F8FAFC] dark:bg-[#090D16] rounded-2xl md:rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors duration-200">

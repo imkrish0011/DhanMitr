@@ -40,12 +40,19 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const [textInput, setTextInput] = useState('');
   const [showLangMenu, setShowLangMenu] = useState(false);
 
-  const suggestedPrompts = [
-    { label: 'How can I save more?', query: 'How can I save more money this month?', lang: 'en' as const },
-    { label: 'Show my biggest expenses', query: 'Show my biggest expenses and spending breakdown', lang: 'en' as const },
-    { label: 'Review my subscriptions', query: 'Review my OTT subscriptions and upcoming renewals', lang: 'en' as const },
-    { label: 'Plan my investments', query: 'Plan my investments and review my monthly savings', lang: 'en' as const },
-  ];
+  const suggestedPrompts = isAuthenticated
+    ? [
+        { label: 'How can I save more?', query: 'How can I save more money this month?', lang: 'en' as const },
+        { label: 'Show my biggest expenses', query: 'Show my biggest expenses and spending breakdown', lang: 'en' as const },
+        { label: 'Review my subscriptions', query: 'Review my OTT subscriptions and upcoming renewals', lang: 'en' as const },
+        { label: 'Plan my investments', query: 'Plan my investments and review my monthly savings', lang: 'en' as const },
+      ]
+    : [
+        { label: '50/30/20 Budget Rule', query: 'How does the 50/30/20 budgeting rule work?', lang: 'en' as const },
+        { label: 'Build Emergency Fund', query: 'How to build an emergency fund for 6 months?', lang: 'en' as const },
+        { label: 'Old vs New Tax Regime', query: 'Explain difference between Old and New Tax regime in India', lang: 'en' as const },
+        { label: 'Money Saving Habits', query: 'What are the top practical habits to save money every month?', lang: 'en' as const },
+      ];
 
   const handleSendText = (e: React.FormEvent) => {
     e.preventDefault();
