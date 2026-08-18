@@ -18,6 +18,9 @@ import { CashFlowTrendChart } from '@/components/finance/CashFlowTrendChart';
 import { SubscriptionsTab } from '@/components/finance/SubscriptionsTab';
 import { InsurancesTab } from '@/components/finance/InsurancesTab';
 import { BudgetIncomeTab } from '@/components/finance/BudgetIncomeTab';
+import { EmergencyRunwayGauge } from '@/components/finance/EmergencyRunwayGauge';
+import { GoalsTab } from '@/components/finance/GoalsTab';
+import { TaxRegimeComparator } from '@/components/finance/TaxRegimeComparator';
 
 interface MobileFinanceHubProps {
   onOpenVoice: () => void;
@@ -41,6 +44,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
     savingsRate,
     activeSubscriptionsCount,
     activeInsurancesCount,
+    activeGoalsCount,
     subscriptions,
     insurances,
   } = useFinance();
@@ -69,10 +73,13 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
 
   const tabs = [
     { id: 'overview' as const, label: 'Overview', shortLabel: 'Overview' },
-    { id: 'subscriptions' as const, label: `OTT & Subs (${activeSubscriptionsCount})`, shortLabel: `Subs (${activeSubscriptionsCount})` },
-    { id: 'insurances' as const, label: `Insurances (${activeInsurancesCount})`, shortLabel: `Ins. (${activeInsurancesCount})` },
+    { id: 'goals' as const, label: `Goals (${activeGoalsCount})`, shortLabel: 'Goals' },
+    { id: 'tax_calculator' as const, label: 'Tax', shortLabel: 'Tax' },
+    { id: 'subscriptions' as const, label: `Subs (${activeSubscriptionsCount})`, shortLabel: 'Subs' },
+    { id: 'insurances' as const, label: `Ins (${activeInsurancesCount})`, shortLabel: 'Ins' },
     { id: 'budget' as const, label: 'Budget', shortLabel: 'Budget' },
   ];
+
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] pb-16 text-slate-900 dark:text-white transition-colors duration-200">
@@ -259,6 +266,9 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
             </div>
           </div>
 
+          {/* Emergency Fund Runway Gauge */}
+          <EmergencyRunwayGauge />
+
           {/* Spending Overview Donut Chart */}
           <SpendingOverviewChart />
 
@@ -291,7 +301,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
               </h3>
               <button
                 onClick={() => setActiveSubTab('subscriptions')}
-                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer"
               >
                 View All
               </button>
@@ -339,6 +349,18 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
         </div>
       )}
 
+      {activeSubTab === 'goals' && (
+        <div className="px-4 pt-2">
+          <GoalsTab />
+        </div>
+      )}
+
+      {activeSubTab === 'tax_calculator' && (
+        <div className="px-4 pt-2">
+          <TaxRegimeComparator />
+        </div>
+      )}
+
       {activeSubTab === 'subscriptions' && (
         <div className="px-4 pt-2">
           <SubscriptionsTab onOpenAddModal={onOpenAddModal} />
@@ -359,3 +381,4 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
     </div>
   );
 };
+

@@ -18,6 +18,7 @@ interface VoiceChatContextType {
   activeTranscript: string;
   assistantVoiceReply: string;
   audioFrequencyData: number[];
+  speakText: (text: string, lang?: 'en' | 'hi' | 'hinglish') => void;
   
   // Chat State
   messages: ChatMessage[];
@@ -219,6 +220,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       language: result.lang,
       widgetType: result.widgetType,
       widgetData: result.widgetData,
+      sources: result.sources,
     };
 
     setMessages((prev) => [...prev, assistantMsg]);
@@ -256,6 +258,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       q.includes('खर्च') ||
       q.includes('बचत') ||
       q.includes('सब्सक्रिप्शन') ||
+      q.includes('टैक्स') ||
       q.includes('निवेश');
 
     const userName = profile?.name || 'Friend';
@@ -273,6 +276,41 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const hasNoData = totalIncome === 0 && totalOutflow === 0 && subscriptions.length === 0;
 
     if (isHindi) {
+      if (q.includes('योजना') || q.includes('pmjjby') || q.includes('बीमा')) {
+        return {
+          text: `**प्रधानमंत्री जीवन ज्योति बीमा योजना (PMJJBY):**\n\n- **पात्रता:** 18 से 50 वर्ष की आयु के बैंक खाताधारक।\n- **कवरेज:** ₹2,00,000 का जीवन बीमा (किसी भी कारण से मृत्यु पर)।\n- **प्रीमियम:** ₹436 प्रति वर्ष (सीधे बैंक खाते से ऑटो-डेबिट)।\n- **सुविधा:** किसी मेडिकल जांच की आवश्यकता नहीं है।`,
+          widgetType: 'none' as const,
+          voiceReply: `प्रधानमंत्री जीवन ज्योति बीमा योजना में मात्र 436 रुपये सालाना पर 2 लाख रुपये का जीवन बीमा मिलता है।`,
+          lang: 'hi' as const,
+          sources: [
+            {
+              title: 'PMJJBY Official Scheme Guidelines',
+              source_type: 'Government Scheme',
+              snippet: 'Pradhan Mantri Jeevan Jyoti Bima Yojana provides Rs. 2 Lakh life cover for an annual premium of Rs. 436 to persons in the age group of 18-50 years.',
+              url: 'https://financialservices.gov.in/pmjjby',
+              date: '2025-2026',
+            },
+          ],
+        };
+      }
+
+      if (q.includes('टैक्स') || q.includes('tax') || q.includes('regime')) {
+        return {
+          text: `**ओल्ड vs न्यू टैक्स रिजीम तुलना:**\n\n- **न्यू टैक्स रिजीम (डिफ़ॉल्ट):** ₹7.75 लाख तक की आय पर स्टैंडर्ड डिडक्शन (₹75,000) के साथ शून्य कर।\n- **ओल्ड टैक्स रिजीम:** यदि आपके पास 80C (₹1.5L), 80D हेल्थ इंश्योरेंस (₹25k-50k), और HRA जैसी बड़ी कटौतियां हैं तो यह अधिक फायदेमंद हो सकता है।\n\nआप हमारे **Finance Hub > Tax Optimizer** में जाकर अपना सटीक कर देख सकते हैं।`,
+          widgetType: 'none' as const,
+          voiceReply: `न्यू टैक्स रिजीम में 7.75 लाख रुपये तक की आय पर शून्य कर है। 80सी और एचआरए छूट के लिए ओल्ड रिजीम चुनें।`,
+          lang: 'hi' as const,
+          sources: [
+            {
+              title: 'Income Tax Department - Finance Act',
+              source_type: 'Tax Regulation',
+              snippet: 'Under the New Tax Regime, rebate u/s 87A provides zero tax liability up to taxable income of Rs. 7,00,000 plus standard deduction of Rs. 75,000 for salaried individuals.',
+              url: 'https://incometax.gov.in',
+            },
+          ],
+        };
+      }
+
       if (hasNoData) {
         return {
           text: `नमस्ते ${userName}! आपके पास वर्तमान में कोई वित्तीय रिकॉर्ड नहीं जुड़ा है।\n\nआप **Finance Hub** में जाकर अपना वेतन (Income), नियमित खर्च और सक्रिय सब्सक्रिप्शन जोड़ सकते हैं ताकि मैं आपको सटीक और व्यक्तिगत सलाह दे सकूँ।`,
@@ -317,6 +355,13 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           widgetType: 'none' as const,
           voiceReply: `आपकी मासिक बचत दर ${savingsRate} प्रतिशत है।`,
           lang: 'hi' as const,
+          sources: [
+            {
+              title: '50-30-20 Rule Heuristics',
+              source_type: 'Financial Guideline',
+              snippet: 'Allocate 50% income to Needs, 30% to Wants, and minimum 20% to Savings and Investments.',
+            },
+          ],
         };
       }
 
@@ -326,6 +371,14 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           widgetType: 'investment_tip' as const,
           voiceReply: `आपकी रिस्क प्रोफाइल के अनुसार इंडेक्स फंड और आपातकालीन बचत सबसे अनुकूल विकल्प हैं।`,
           lang: 'hi' as const,
+          sources: [
+            {
+              title: 'SEBI Investor Education Guidelines',
+              source_type: 'Regulatory Source',
+              snippet: 'Maintain a diversified asset allocation matching your risk tolerance and invest in low-cost index funds for long term goals.',
+              url: 'https://investor.sebi.gov.in',
+            },
+          ],
         };
       }
 
@@ -337,6 +390,41 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
     } else {
       // English responses
+      if (q.includes('pmjjby') || q.includes('scheme') || q.includes('jeevan jyoti')) {
+        return {
+          text: `**Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY):**\n\n- **Coverage:** ₹2,00,000 life insurance on death due to any cause.\n- **Eligibility:** Bank account holders aged 18 to 50 years.\n- **Annual Premium:** ₹436/year auto-debited in a single installment.\n- **Risk Coverage Period:** 1st June to 31st May annually.`,
+          widgetType: 'none' as const,
+          voiceReply: `PMJJBY provides 2 Lakh rupees life cover for an annual premium of 436 rupees.`,
+          lang: 'en' as const,
+          sources: [
+            {
+              title: 'PMJJBY Official Scheme Guidelines',
+              source_type: 'Government Scheme',
+              snippet: 'Pradhan Mantri Jeevan Jyoti Bima Yojana provides Rs. 2 Lakh life cover for an annual premium of Rs. 436 to persons in the age group of 18-50 years.',
+              url: 'https://financialservices.gov.in/pmjjby',
+              date: '2025-2026',
+            },
+          ],
+        };
+      }
+
+      if (q.includes('tax') || q.includes('regime') || q.includes('80c')) {
+        return {
+          text: `**Old vs. New Tax Regime Comparison:**\n\n- **New Regime (Default):** Zero tax up to **₹7.75 Lakhs** (including ₹75k Standard Deduction for salaried employees) with simplified tax slabs.\n- **Old Regime:** Allows deductions under Section 80C (up to ₹1.5L), 80D (health insurance), HRA, and Home Loan interest (Section 24).\n\n💡 *Tip: Check the **Tax Optimizer** subtab under Finance Hub to simulate your exact tax liability.*`,
+          widgetType: 'none' as const,
+          voiceReply: `Under the New Regime, income up to 7.75 Lakhs is tax-free with standard deduction. Use the Old regime if you have high 80C and HRA deductions.`,
+          lang: 'en' as const,
+          sources: [
+            {
+              title: 'Income Tax Department (CBDT) - FY 2025-26',
+              source_type: 'Tax Regulation',
+              snippet: 'Rebate u/s 87A in the New Tax Regime makes income up to Rs 7,00,000 tax-free. Standard deduction for salaried taxpayers is Rs. 75,000.',
+              url: 'https://incometax.gov.in',
+            },
+          ],
+        };
+      }
+
       if (hasNoData) {
         return {
           text: `Hello ${userName}! You haven't added any financial records yet.\n\nGo to the **Finance Hub** to log your income, monthly budget, or active subscriptions. Once added, I will provide real-time spending insights and custom savings strategies!`,
@@ -367,6 +455,13 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           widgetType: 'none' as const,
           voiceReply: `Your current monthly surplus is ${formattedSurplus} with a ${savingsRate} percent savings rate.`,
           lang: 'en' as const,
+          sources: [
+            {
+              title: 'Personal Finance 50/30/20 Framework',
+              source_type: 'Budget Strategy',
+              snippet: 'The 50/30/20 rule divides net income into 50% Needs, 30% Wants, and 20% Savings/Investments for sustainable wealth building.',
+            },
+          ],
         };
       }
 
@@ -384,12 +479,20 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
       }
 
-      if (q.includes('invest') || q.includes('growth') || q.includes('sip') || q.includes('tax')) {
+      if (q.includes('invest') || q.includes('growth') || q.includes('sip')) {
         return {
           text: `Based on your **${profile.risk_tolerance || 'Moderate'}** risk tolerance and **${formattedSurplus}** surplus:\n\n- **Broad Index SIPs:** Recommended for disciplined compounding.\n- **Emergency Cushion:** Target 3 to 6 months of expenses (₹${(totalOutflow * 6).toLocaleString('en-IN')}).\n- **Insurance Safety Net:** ${insurances.length > 0 ? `${insurances.length} active policies connected` : 'Add your term & health policies to track coverage gaps'}.`,
           widgetType: 'investment_tip' as const,
           voiceReply: `Based on your risk profile and surplus, index SIPs and a solid emergency cushion are your best next steps.`,
           lang: 'en' as const,
+          sources: [
+            {
+              title: 'SEBI Wealth Compounding Principles',
+              source_type: 'Investment Regulatory Framework',
+              snippet: 'Disciplined monthly SIPs in diversified index funds over 5+ years mitigate market volatility and deliver inflation-beating returns.',
+              url: 'https://investor.sebi.gov.in',
+            },
+          ],
         };
       }
 
@@ -439,11 +542,13 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       language: result.lang,
       widgetType: result.widgetType,
       widgetData: result.widgetData,
+      sources: result.sources,
     };
 
     setMessages((prev) => [...prev, assistantMsg]);
     setIsGeneratingResponse(false);
   };
+
 
   const triggerPrompt = (promptText: string, lang?: 'en' | 'hi' | 'hinglish') => {
     sendMessage(promptText, lang);
@@ -475,6 +580,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         resetChat,
         isGeneratingResponse,
         triggerPrompt,
+        speakText,
       }}
     >
       {children}
@@ -489,3 +595,4 @@ export const useVoiceChat = () => {
   }
   return context;
 };
+

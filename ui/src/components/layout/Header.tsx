@@ -24,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
     syncData,
     activeSubscriptionsCount,
     activeInsurancesCount,
+    activeGoalsCount,
     subscriptions,
     insurances,
     netSurplus,
@@ -35,6 +36,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
 
   const tabs: { id: FinanceSubTab; label: string; badge?: number | string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'goals', label: 'Goals & Milestones', badge: activeGoalsCount > 0 ? activeGoalsCount : undefined },
+    { id: 'tax_calculator', label: 'Tax Optimizer' },
     { id: 'subscriptions', label: 'OTT & Subscriptions', badge: activeSubscriptionsCount },
     { id: 'insurances', label: 'Insurances', badge: activeInsurancesCount },
     { id: 'budget', label: 'Budget & Income' },

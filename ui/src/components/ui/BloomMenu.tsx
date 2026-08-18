@@ -10,6 +10,8 @@ import {
   TrendingUp,
   Tv,
   Wallet,
+  Target,
+  Scale,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -25,6 +27,8 @@ const DEFAULT_FINANCE_ITEMS: MenuItem[] = [
   { id: 'income', label: 'Income', icon: Wallet, description: 'Salary & freelance' },
   { id: 'expense', label: 'Expense', icon: CreditCard, description: 'Daily transactions' },
   { id: 'investment', label: 'Investment', icon: TrendingUp, description: 'SIP & stocks' },
+  { id: 'goal', label: 'Goal', icon: Target, description: 'Milestones & savings' },
+  { id: 'tax', label: 'Tax Regime', icon: Scale, description: 'Old vs New tax' },
   { id: 'reminder', label: 'Alert / Bill', icon: Bell, description: 'Renewal reminders' },
 ];
 
@@ -87,7 +91,7 @@ export function BloomMenu({
               layoutId={layoutId}
               transition={morph}
               style={{ borderRadius: 20 }}
-              className="w-[min(90vw,360px)] sm:w-[380px] overflow-hidden border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0F172A] shadow-2xl origin-top-right"
+              className="w-[min(94vw,440px)] sm:w-[460px] overflow-hidden border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0F172A] shadow-2xl origin-top-right"
             >
               <motion.div
                 layout
@@ -122,10 +126,10 @@ export function BloomMenu({
                     duration: 0.35,
                     ease: EASE_OUT as any,
                   }}
-                  className="grid grid-cols-3 bg-white dark:bg-[#0F172A]"
+                  className="grid grid-cols-4 bg-white dark:bg-[#0F172A]"
                 >
                   {items.map((item, i) => {
-                    const cols = 3;
+                    const cols = 4;
                     const rows = Math.ceil(items.length / cols);
                     const col = i % cols;
                     const row = Math.floor(i / cols);
@@ -142,9 +146,9 @@ export function BloomMenu({
                           setOpen(false);
                         }}
                         className={cn(
-                          'flex items-center justify-center p-3 sm:p-3.5 text-slate-600 dark:text-slate-300 transition-colors hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer group',
-                          i % 3 !== 2 && 'border-r border-slate-100 dark:border-slate-800/80',
-                          i < 3 && 'border-b border-slate-100 dark:border-slate-800/80'
+                          'flex items-center justify-center p-2.5 sm:p-3 text-slate-600 dark:text-slate-300 transition-colors hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer group',
+                          col !== cols - 1 && 'border-r border-slate-100 dark:border-slate-800/80',
+                          row !== rows - 1 && 'border-b border-slate-100 dark:border-slate-800/80'
                         )}
                       >
                         <motion.span
@@ -165,7 +169,7 @@ export function BloomMenu({
                           <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800/90 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex items-center justify-center text-slate-700 dark:text-slate-200 transition-colors">
                             <item.icon className="h-4 w-4" />
                           </div>
-                          <span className="text-[11px] font-semibold tracking-tight">{item.label}</span>
+                          <span className="text-[10.5px] font-semibold tracking-tight leading-tight">{item.label}</span>
                         </motion.span>
                       </button>
                     );
@@ -173,6 +177,7 @@ export function BloomMenu({
                 </motion.div>
               </motion.div>
             </motion.div>
+
           ) : (
             <motion.button
               key="trigger"

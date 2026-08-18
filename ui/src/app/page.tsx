@@ -15,12 +15,15 @@ import { Header } from '@/components/layout/Header';
 
 // Finance Components
 import { KpiCards } from '@/components/finance/KpiCards';
+import { EmergencyRunwayGauge } from '@/components/finance/EmergencyRunwayGauge';
 import { SpendingOverviewChart } from '@/components/finance/SpendingOverviewChart';
 import { CashFlowTrendChart } from '@/components/finance/CashFlowTrendChart';
 import { UpcomingRenewals } from '@/components/finance/UpcomingRenewals';
 import { SubscriptionsTab } from '@/components/finance/SubscriptionsTab';
 import { InsurancesTab } from '@/components/finance/InsurancesTab';
 import { BudgetIncomeTab } from '@/components/finance/BudgetIncomeTab';
+import { GoalsTab } from '@/components/finance/GoalsTab';
+import { TaxRegimeComparator } from '@/components/finance/TaxRegimeComparator';
 import { TransactionsView } from '@/components/finance/TransactionsView';
 import { AddFinanceModal } from '@/components/finance/Modals/AddFinanceModal';
 
@@ -62,11 +65,12 @@ const AppContent: React.FC = () => {
       openAuthModal('signup', 'Sign up to add and track your personalized financial records.');
       return;
     }
-    if (type && ['subscription', 'insurance', 'income', 'expense', 'investment', 'reminder'].includes(type)) {
+    if (type && ['subscription', 'insurance', 'income', 'expense', 'investment', 'reminder', 'goal', 'tax'].includes(type)) {
       setAddModalType(type);
     }
     setIsAddModalOpen(true);
   };
+
 
   const handleNavSelection = (tab: NavTab) => {
     if (!isAuthenticated && (tab === 'finance_hub' || tab === 'transactions' || tab === 'settings')) {
@@ -308,6 +312,9 @@ const AppContent: React.FC = () => {
                   {/* Top 4 KPI Metrics */}
                   <KpiCards />
 
+                  {/* Emergency Fund Runway Gauge Meter */}
+                  <EmergencyRunwayGauge />
+
                   {/* Middle 2 Charts */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-6">
@@ -321,6 +328,16 @@ const AppContent: React.FC = () => {
                   {/* Upcoming Renewals & Alerts */}
                   <UpcomingRenewals />
                 </>
+              )}
+
+              {/* Goals Tab */}
+              {activeSubTab === 'goals' && (
+                <GoalsTab />
+              )}
+
+              {/* Tax Calculator Tab */}
+              {activeSubTab === 'tax_calculator' && (
+                <TaxRegimeComparator />
               )}
 
               {/* Subscriptions Tab */}

@@ -8,6 +8,7 @@ import {
   MonthlyCashFlowPoint,
   ChatMessage,
   Transaction,
+  FinancialGoal,
 } from '@/types';
 
 export const emptyProfile: UserFinancialProfile = {
@@ -85,14 +86,16 @@ export const emptyInsurances: Insurance[] = [];
 export const emptyBudgetItems: BudgetItem[] = [];
 export const emptyIncomeSources: IncomeSource[] = [];
 export const emptyTransactions: Transaction[] = [];
+export const emptyGoals: FinancialGoal[] = [];
 
 export const initialChatMessages: ChatMessage[] = [
   {
     id: 'msg_welcome',
     sender: 'assistant',
-    text: 'Namaste! I am DhanMITR, your AI financial companion.\n\nAsk me anything about budgeting, expense optimization, OTT subscriptions, or financial planning in Hindi or English!',
+    text: 'Namaste! I am DhanMITR, your AI financial companion.\n\nAsk me anything about budgeting, expense optimization, OTT subscriptions, tax regimes, or financial planning in Hindi or English!',
     timestamp: 'Just now',
     language: 'en',
     widgetType: 'none',
   },
 ];
+

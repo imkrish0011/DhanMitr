@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { SparkleSmallIcon } from '@/components/icons/CustomIcons';
+import { BottomSheetDrawer } from '@/components/ui/BottomSheetDrawer';
+import { Transaction, TransactionCategory, TransactionType } from '@/types';
 import {
   Wallet,
   TrendingUp,
@@ -14,6 +16,9 @@ import {
   Tv,
   HeartPulse,
   CreditCard,
+  Edit2,
+  Trash2,
+  Plus,
 } from 'lucide-react';
 
 interface TransactionsViewProps {
@@ -27,9 +32,47 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   onBack,
   isMobile = false,
 }) => {
-  const { transactions, totalIncome, totalOutflow, netSurplus } = useFinance();
+  const { transactions, totalIncome, totalOutflow, netSurplus, updateTransaction, deleteTransaction } = useFinance();
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Edit Drawer State
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editType, setEditType] = useState<TransactionType>('expense');
+  const [editCategory, setEditCategory] = useState<TransactionCategory>('other');
+  const [editAccount, setEditAccount] = useState('');
+  const [editDate, setEditDate] = useState('');
+
+  const handleOpenEdit = (tx: Transaction) => {
+    setEditingTx(tx);
+    setEditTitle(tx.title);
+    setEditAmount(tx.amount.toString());
+    setEditType(tx.type);
+    setEditCategory(tx.category);
+    setEditAccount(tx.account_name || 'Primary Bank');
+    setEditDate(tx.date || new Date().toISOString().slice(0, 10));
+    setIsEditDrawerOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTx || !editTitle.trim() || !editAmount) return;
+
+    await updateTransaction(editingTx.id, {
+      title: editTitle,
+      amount: Number(editAmount),
+      type: editType,
+      category: editCategory,
+      account_name: editAccount,
+      date: editDate,
+    });
+
+    setIsEditDrawerOpen(false);
+    setEditingTx(null);
+  };
 
   const filteredTransactions = transactions.filter((tx) => {
     const matchesType = filterType === 'all' || tx.type === filterType;
@@ -53,6 +96,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         return <ShoppingBag className="w-4 h-4 text-purple-500" />;
       case 'transport':
       case 'fuel':
+      case 'travel':
         return <Car className="w-4 h-4 text-sky-500" />;
       case 'utilities':
       case 'bills':
@@ -60,8 +104,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       case 'entertainment':
       case 'subscriptions':
         return <Tv className="w-4 h-4 text-rose-500" />;
+      case 'healthcare':
       case 'health':
         return <HeartPulse className="w-4 h-4 text-rose-500" />;
+      case 'investments':
       case 'investment':
         return <TrendingUp className="w-4 h-4 text-blue-500" />;
       default:
@@ -260,9 +306,9 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               {filteredTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="p-3.5 sm:p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                  className="p-3.5 sm:p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-base font-bold shrink-0 ${
                       tx.type === 'income'
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60'
@@ -270,29 +316,49 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     }`}>
                       {getCategoryIcon(tx.category, tx.type)}
                     </div>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                    <div className="min-w-0">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">
                         {tx.title}
                       </h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                      <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
                         <span>{tx.date}</span>
                         <span>•</span>
-                        <span className="px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 rounded font-medium text-slate-600 dark:text-slate-300">
+                        <span className="px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 rounded font-medium text-slate-600 dark:text-slate-300 truncate">
                           {tx.account_name || 'UPI / Cash'}
                         </span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className={`text-xs sm:text-sm font-extrabold ${
-                      tx.type === 'income'
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-slate-900 dark:text-white'
-                    }`}>
-                      {tx.type === 'income' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
-                    </span>
-                    <p className="text-[9px] text-slate-400 capitalize">{tx.category || tx.type}</p>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <span className={`text-xs sm:text-sm font-extrabold ${
+                        tx.type === 'income'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-slate-900 dark:text-white'
+                      }`}>
+                        {tx.type === 'income' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
+                      </span>
+                      <p className="text-[9px] text-slate-400 capitalize">{tx.category || tx.type}</p>
+                    </div>
+
+                    {/* Row Action Buttons: Edit & Delete */}
+                    <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity pl-2 border-l border-slate-100 dark:border-slate-800">
+                      <button
+                        onClick={() => handleOpenEdit(tx)}
+                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                        title="Edit Transaction"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => deleteTransaction(tx.id)}
+                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                        title="Delete Transaction"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -300,6 +366,121 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Edit Transaction Bottom Sheet Drawer */}
+      <BottomSheetDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        title="Edit Transaction"
+        subtitle="Update title, amount, category, or payment source"
+      >
+        <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Transaction Title
+            </label>
+            <input
+              type="text"
+              required
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Amount (₹)
+              </label>
+              <input
+                type="number"
+                required
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Type
+              </label>
+              <select
+                value={editType}
+                onChange={(e) => setEditType(e.target.value as TransactionType)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              >
+                <option value="expense">Expense (Debit -)</option>
+                <option value="income">Income (Credit +)</option>
+                <option value="investment">Investment</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Category
+              </label>
+              <select
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value as TransactionCategory)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              >
+                <option value="dining">Dining & Food</option>
+                <option value="groceries">Groceries</option>
+                <option value="housing">Housing / Rent</option>
+                <option value="utilities">Bills & Utilities</option>
+                <option value="shopping">Shopping</option>
+                <option value="travel">Transport & Travel</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="subscriptions">Subscriptions</option>
+                <option value="salary">Salary</option>
+                <option value="freelance">Freelance</option>
+                <option value="investments">Investments</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Account / Payment Source
+              </label>
+              <input
+                type="text"
+                placeholder="UPI / HDFC Bank"
+                value={editAccount}
+                onChange={(e) => setEditAccount(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Date
+            </label>
+            <input
+              type="text"
+              value={editDate}
+              onChange={(e) => setEditDate(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div className="pt-3">
+            <button
+              type="submit"
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </BottomSheetDrawer>
     </div>
   );
 };
+

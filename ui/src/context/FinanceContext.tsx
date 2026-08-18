@@ -11,6 +11,7 @@ import {
   MonthlyCashFlowPoint,
   Transaction,
   FinanceSubTab,
+  FinancialGoal,
 } from '@/types';
 import {
   emptyProfile,
@@ -20,6 +21,7 @@ import {
   emptyBudgetItems,
   emptyIncomeSources,
   emptyTransactions,
+  emptyGoals,
 } from '@/data/mockData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
@@ -33,6 +35,7 @@ interface FinanceContextType {
   budgetItems: BudgetItem[];
   incomeSources: IncomeSource[];
   transactions: Transaction[];
+  goals: FinancialGoal[];
   activeSubTab: FinanceSubTab;
   setActiveSubTab: (tab: FinanceSubTab) => void;
   isSyncing: boolean;
@@ -43,8 +46,10 @@ interface FinanceContextType {
   totalOutflow: number;
   netSurplus: number;
   savingsRate: number;
+  emergencyRunwayMonths: number;
   activeSubscriptionsCount: number;
   activeInsurancesCount: number;
+  activeGoalsCount: number;
   
   // CRUD Actions
   addSubscription: (sub: Omit<Subscription, 'id' | 'days_remaining'>) => Promise<void>;
@@ -66,7 +71,12 @@ interface FinanceContextType {
   deleteBudgetItem: (id: string) => Promise<void>;
 
   addTransaction: (tx: Omit<Transaction, 'id'>) => Promise<void>;
+  updateTransaction: (id: string, tx: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+
+  addGoal: (goal: Omit<FinancialGoal, 'id'>) => Promise<void>;
+  updateGoal: (id: string, goal: Partial<FinancialGoal>) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
   
   resetToDefaults: () => void;
 }
@@ -81,12 +91,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(emptyBudgetItems);
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>(emptyIncomeSources);
   const [transactions, setTransactions] = useState<Transaction[]>(emptyTransactions);
+  const [goals, setGoals] = useState<FinancialGoal[]>(emptyGoals);
   const [activeSubTab, setActiveSubTab] = useState<FinanceSubTab>('overview');
   const [isSyncing, setIsSyncing] = useState(false);
 
   const profile: UserFinancialProfile = useMemo(() => {
     return authProfile || emptyProfile;
   }, [authProfile]);
+
 
   // Load from Supabase when user logs in
   const fetchSupabaseData = useCallback(async (userId: string) => {
@@ -210,6 +222,30 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }))
         );
       }
+
+      // 6. Fetch Financial Goals
+      const { data: goalsData } = await supabase
+        .from('financial_goals')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (goalsData && goalsData.length > 0) {
+        setGoals(
+          goalsData.map((g: any) => ({
+            id: g.id,
+            user_id: g.user_id,
+            title: g.title,
+            target_amount: Number(g.target_amount || 0),
+            current_amount: Number(g.current_amount || 0),
+            target_date: g.target_date,
+            category: g.category || 'emergency_fund',
+            monthly_contribution: Number(g.monthly_contribution || 0),
+            priority: g.priority || 'medium',
+            is_completed: g.is_completed || false,
+          }))
+        );
+      }
     } catch (err) {
       console.error('Error fetching user data from Supabase:', err);
     } finally {
@@ -227,8 +263,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setBudgetItems(emptyBudgetItems);
       setIncomeSources(emptyIncomeSources);
       setTransactions(emptyTransactions);
+      setGoals(emptyGoals);
     }
   }, [user?.id, fetchSupabaseData]);
+
 
   // Synchronize Simulation / Refresh
   const syncData = async () => {
@@ -330,6 +368,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const activeInsurancesCount = useMemo(() => {
     return insurances.filter((i) => i.is_active).length;
   }, [insurances]);
+
+  const emergencyRunwayMonths = useMemo(() => {
+    if (totalOutflow <= 0) return totalIncome > 0 ? 12 : 0;
+    const liquidBalance = profile.emergency_fund_balance > 0
+      ? profile.emergency_fund_balance
+      : Math.max(netSurplus * 3, totalIncome * 2);
+    return Number((liquidBalance / totalOutflow).toFixed(1));
+  }, [profile.emergency_fund_balance, totalOutflow, netSurplus, totalIncome]);
+
+  const activeGoalsCount = useMemo(() => {
+    return goals.filter((g) => !g.is_completed).length;
+  }, [goals]);
 
   // Cash flow trend derived from actual numbers
   const cashFlowTrend = useMemo<MonthlyCashFlowPoint[]>(() => {
@@ -716,6 +766,32 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const updateTransaction = async (id: string, updated: Partial<Transaction>) => {
+    setTransactions((prev) => prev.map((t) => (t.id === id ? { ...t, ...updated } : t)));
+
+    if (user?.id && isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('transactions')
+          .update({
+            ...(updated.title && { title: updated.title }),
+            ...(updated.amount !== undefined && { amount: updated.amount }),
+            ...(updated.currency && { currency: updated.currency }),
+            ...(updated.type && { type: updated.type }),
+            ...(updated.category && { category: updated.category }),
+            ...(updated.date && { date: updated.date }),
+            ...(updated.account_name !== undefined && { account_name: updated.account_name }),
+            ...(updated.is_recurring !== undefined && { is_recurring: updated.is_recurring }),
+            ...(updated.note !== undefined && { note: updated.note }),
+          })
+          .eq('id', id)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.error('Error updating transaction in Supabase:', err);
+      }
+    }
+  };
+
   const deleteTransaction = async (id: string) => {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
 
@@ -728,12 +804,88 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  // Goals CRUD
+  const addGoal = async (goal: Omit<FinancialGoal, 'id'>) => {
+    const tempId = `goal_${Date.now()}`;
+    const newGoal: FinancialGoal = {
+      ...goal,
+      id: tempId,
+    };
+    setGoals((prev) => [newGoal, ...prev]);
+
+    if (user?.id && isSupabaseConfigured) {
+      try {
+        const { data } = await supabase
+          .from('financial_goals')
+          .insert([
+            {
+              user_id: user.id,
+              title: goal.title,
+              target_amount: goal.target_amount,
+              current_amount: goal.current_amount,
+              target_date: goal.target_date,
+              category: goal.category,
+              monthly_contribution: goal.monthly_contribution,
+              priority: goal.priority,
+              is_completed: goal.is_completed,
+            },
+          ])
+          .select()
+          .single();
+
+        if (data) {
+          setGoals((prev) => prev.map((g) => (g.id === tempId ? { ...g, id: data.id } : g)));
+        }
+      } catch (err) {
+        console.error('Error adding goal to Supabase:', err);
+      }
+    }
+  };
+
+  const updateGoal = async (id: string, updated: Partial<FinancialGoal>) => {
+    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, ...updated } : g)));
+
+    if (user?.id && isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('financial_goals')
+          .update({
+            ...(updated.title && { title: updated.title }),
+            ...(updated.target_amount !== undefined && { target_amount: updated.target_amount }),
+            ...(updated.current_amount !== undefined && { current_amount: updated.current_amount }),
+            ...(updated.target_date && { target_date: updated.target_date }),
+            ...(updated.category && { category: updated.category }),
+            ...(updated.monthly_contribution !== undefined && { monthly_contribution: updated.monthly_contribution }),
+            ...(updated.priority && { priority: updated.priority }),
+            ...(updated.is_completed !== undefined && { is_completed: updated.is_completed }),
+          })
+          .eq('id', id)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.error('Error updating goal in Supabase:', err);
+      }
+    }
+  };
+
+  const deleteGoal = async (id: string) => {
+    setGoals((prev) => prev.filter((g) => g.id !== id));
+
+    if (user?.id && isSupabaseConfigured) {
+      try {
+        await supabase.from('financial_goals').delete().eq('id', id).eq('user_id', user.id);
+      } catch (err) {
+        console.error('Error deleting goal from Supabase:', err);
+      }
+    }
+  };
+
   const resetToDefaults = () => {
     setSubscriptions(emptySubscriptions);
     setInsurances(emptyInsurances);
     setBudgetItems(emptyBudgetItems);
     setIncomeSources(emptyIncomeSources);
     setTransactions(emptyTransactions);
+    setGoals(emptyGoals);
   };
 
   return (
@@ -747,6 +899,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         budgetItems,
         incomeSources,
         transactions,
+        goals,
         activeSubTab,
         setActiveSubTab,
         isSyncing,
@@ -755,8 +908,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         totalOutflow,
         netSurplus,
         savingsRate,
+        emergencyRunwayMonths,
         activeSubscriptionsCount,
         activeInsurancesCount,
+        activeGoalsCount,
         addSubscription,
         updateSubscription,
         deleteSubscription,
@@ -772,7 +927,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateBudgetItem,
         deleteBudgetItem,
         addTransaction,
+        updateTransaction,
         deleteTransaction,
+        addGoal,
+        updateGoal,
+        deleteGoal,
         resetToDefaults,
       }}
     >
@@ -780,6 +939,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     </FinanceContext.Provider>
   );
 };
+
 
 export const useFinance = () => {
   const context = useContext(FinanceContext);

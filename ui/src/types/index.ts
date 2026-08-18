@@ -138,6 +138,27 @@ export interface MonthlyCashFlowPoint {
   surplus: number;
 }
 
+export interface KnowledgeSource {
+  title: string;
+  source_type: string;
+  snippet: string;
+  url?: string;
+  date?: string;
+}
+
+export interface FinancialGoal {
+  id: string;
+  user_id?: string;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  target_date: string;
+  category: GoalCategory;
+  monthly_contribution: number;
+  priority: GoalPriority;
+  is_completed: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'assistant';
@@ -146,10 +167,12 @@ export interface ChatMessage {
   language?: 'en' | 'hi' | 'hinglish';
   widgetType?: 'expense_summary' | 'subscription_alert' | 'investment_tip' | 'none';
   widgetData?: any;
+  sources?: KnowledgeSource[];
 }
 
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
 
 export type NavTab = 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings';
 
-export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget';
+export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator';
+

@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
-import { BillingCycle, InsuranceType, TransactionCategory } from '@/types';
+
+import { useAuth } from '@/context/AuthContext';
+import { BillingCycle, InsuranceType, TransactionCategory, GoalCategory, GoalPriority } from '@/types';
 import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
 import { CustomSelect, SelectOption } from '@/components/ui/CustomSelect';
 import {
@@ -35,10 +37,12 @@ import {
   AlertTriangle,
   AlertCircle,
   Calendar,
+  Target,
+  Scale,
   X,
 } from 'lucide-react';
 
-export type FinanceRecordType = 'subscription' | 'insurance' | 'income' | 'expense' | 'investment' | 'reminder';
+export type FinanceRecordType = 'subscription' | 'insurance' | 'income' | 'expense' | 'investment' | 'goal' | 'tax' | 'reminder';
 
 interface AddFinanceModalProps {
   isOpen: boolean;
@@ -51,9 +55,11 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   onClose,
   initialType = 'subscription',
 }) => {
-  const { addSubscription, addInsurance, addIncomeSource, addTransaction } = useFinance();
+  const { addSubscription, addInsurance, addIncomeSource, addTransaction, addGoal } = useFinance();
+  const { profile, saveOnboardingProfile } = useAuth();
   const [activeType, setActiveType] = useState<FinanceRecordType>(initialType);
   const [buttonState, setButtonState] = useState<ButtonState>('idle');
+
 
   useEffect(() => {
     if (initialType) {
@@ -108,6 +114,19 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   const [remCategory, setRemCategory] = useState('utilities');
   const [remDate, setRemDate] = useState('05 Sep 2026');
   const [remPriority, setRemPriority] = useState('high');
+
+  // 7. Goal form fields
+  const [goalTitle, setGoalTitle] = useState('');
+  const [goalTargetAmount, setGoalTargetAmount] = useState('');
+  const [goalCurrentAmount, setGoalCurrentAmount] = useState('');
+  const [goalCategory, setGoalCategory] = useState<GoalCategory>('emergency_fund');
+  const [goalMonthlyContribution, setGoalMonthlyContribution] = useState('');
+  const [goalPriority, setGoalPriority] = useState<GoalPriority>('medium');
+  const [goalTargetDate, setGoalTargetDate] = useState('2026-12-31');
+
+  // 8. Tax Regime form fields
+  const [taxRegimeChoice, setTaxRegimeChoice] = useState<'new' | 'old'>(profile?.tax_regime === 'old' ? 'old' : 'new');
+
 
   if (!isOpen) return null;
 
@@ -210,7 +229,27 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
           is_urgent: remPriority === 'high',
           is_active: true,
         });
+      } else if (activeType === 'goal') {
+        if (!goalTitle || !goalTargetAmount) {
+          setButtonState('error');
+          return;
+        }
+        addGoal({
+          title: goalTitle,
+          target_amount: Number(goalTargetAmount),
+          current_amount: Number(goalCurrentAmount) || 0,
+          target_date: goalTargetDate || '2026-12-31',
+          category: goalCategory,
+          monthly_contribution: Number(goalMonthlyContribution) || 0,
+          priority: goalPriority,
+          is_completed: Number(goalCurrentAmount) >= Number(goalTargetAmount),
+        });
+      } else if (activeType === 'tax') {
+        saveOnboardingProfile({
+          tax_regime: taxRegimeChoice,
+        });
       }
+
 
       setButtonState('success');
       setTimeout(() => {
@@ -226,6 +265,8 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
     { id: 'income' as const, label: 'Income', icon: Wallet },
     { id: 'expense' as const, label: 'Expense', icon: CreditCard },
     { id: 'investment' as const, label: 'Investment', icon: TrendingUp },
+    { id: 'goal' as const, label: 'Goal', icon: Target },
+    { id: 'tax' as const, label: 'Tax Regime', icon: Scale },
     { id: 'reminder' as const, label: 'Alert / Bill', icon: Bell },
   ];
 
@@ -307,8 +348,8 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
           </button>
         </div>
 
-        {/* 6 Tab Selection: 3-column x 2-row grid with full text visibility */}
-        <div className="grid grid-cols-3 p-3 bg-slate-100/80 dark:bg-[#0B101D] gap-2 border-b border-slate-200/60 dark:border-slate-800/80 shrink-0">
+        {/* 8 Tab Selection: 4-column x 2-row grid with full text visibility */}
+        <div className="grid grid-cols-4 p-2.5 sm:p-3 bg-slate-100/80 dark:bg-[#0B101D] gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-slate-800/80 shrink-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeType === tab.id;
@@ -317,18 +358,19 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveType(tab.id)}
-                className={`py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer select-none ${
+                className={`py-2 px-1 sm:px-2 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 cursor-pointer select-none text-center ${
                   isActive
                     ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 font-bold shadow-xs ring-1 ring-emerald-500/40 border border-emerald-500/20'
                     : 'bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 border border-transparent'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-500' : 'text-slate-400 dark:text-slate-500'}`} />
-                <span className="text-xs font-bold whitespace-nowrap">{tab.label}</span>
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                <span className="text-[10px] sm:text-xs font-bold truncate max-w-full">{tab.label}</span>
               </button>
             );
           })}
         </div>
+
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
@@ -774,7 +816,166 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
             </>
           )}
 
+          {/* ===================== 7. GOAL ===================== */}
+          {activeType === 'goal' && (
+            <>
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Goal Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 6-Month Emergency Cushion, Tesla Model 3"
+                  value={goalTitle}
+                  onChange={(e) => setGoalTitle(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Target Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 500000"
+                    value={goalTargetAmount}
+                    onChange={(e) => setGoalTargetAmount(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Current Saved (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 100000"
+                    value={goalCurrentAmount}
+                    onChange={(e) => setGoalCurrentAmount(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={goalCategory}
+                    onChange={(e) => setGoalCategory(e.target.value as GoalCategory)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500"
+                  >
+                    <option value="emergency_fund">Emergency Fund</option>
+                    <option value="home">Home / Property</option>
+                    <option value="vehicle">Vehicle / Car</option>
+                    <option value="education">Higher Education</option>
+                    <option value="retirement">Retirement</option>
+                    <option value="vacation">Vacation / Travel</option>
+                    <option value="wedding">Wedding / Family</option>
+                    <option value="other">Other Goal</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={goalPriority}
+                    onChange={(e) => setGoalPriority(e.target.value as GoalPriority)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500"
+                  >
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Monthly SIP (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 10000"
+                    value={goalMonthlyContribution}
+                    onChange={(e) => setGoalMonthlyContribution(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Target Date
+                  </label>
+                  <input
+                    type="date"
+                    value={goalTargetDate}
+                    onChange={(e) => setGoalTargetDate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ===================== 8. TAX REGIME ===================== */}
+          {activeType === 'tax' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Choose Primary Tax Regime
+                </label>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setTaxRegimeChoice('new')}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
+                      taxRegimeChoice === 'new'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 ring-1 ring-emerald-500/40 text-emerald-950 dark:text-white'
+                        : 'bg-slate-50 dark:bg-[#0B101D] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs">New Regime</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-extrabold">Default</span>
+                    </div>
+                    <p className="text-[10px] opacity-70 mt-1">₹7.75L tax-free with ₹75k Standard Deduction</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTaxRegimeChoice('old')}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
+                      taxRegimeChoice === 'old'
+                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-500 ring-1 ring-blue-500/40 text-blue-950 dark:text-white'
+                        : 'bg-slate-50 dark:bg-[#0B101D] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs">Old Regime</span>
+                    </div>
+                    <p className="text-[10px] opacity-70 mt-1">Allows 80C (₹1.5L), 80D, HRA & Home Loan interest</p>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-[#0B101D] border border-slate-200/70 dark:border-slate-800 rounded-xl text-[11px] text-slate-600 dark:text-slate-300">
+                💡 <strong className="text-slate-900 dark:text-white">Tip:</strong> You can also run real-time comparisons in the <strong>Finance Hub &gt; Tax Optimizer</strong> tab anytime!
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
+
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <button
               type="button"
