@@ -1,0 +1,13 @@
+{
+  "scheme_name": "RBI Current Rates",
+  "source_url": "https://www.rbi.org.in/",
+  "source_name": "Reserve Bank of India, Government of India",
+  "retrieved_at": "2026-08-18T08:02:56.996105+00:00",
+  "data_type": "periodic",
+  "sections": [
+    {
+      "heading": "Current Rates",
+      "content": "Policy Rates Policy Repo Rate : 5.25% Standing Deposit Facility Rate : 5.00% Marginal Standing Facility Rate : 5.50% Bank Rate : 5.50% Fixed Reverse Repo Rate : 3.35% Reserve Ratios CRR : 3.00% SLR : 18.00% Exchange Rates INR / 1 USD : 95.6772 INR / 1 GBP : 129.4471 INR / 1 EUR : 110.6969 INR / 100 JPY : 59.8900 INR / 1 AED : 26.0501 INR / 10000 IDR : 53.5844 (As at 1.00pm of August 18, 2026) (Source : FBIL) Archives Lending / Deposit Rates Base Rate : 8.40% - 10.00% MCLR (Overnight) : 7.80% - 8.00% Savings Deposit Rate : 2.50% Term Deposit Rate > 1 Year : 6.00% - 6.75% Market Trends Money Market Call Rates : 4.00% - 5.25% * * as on August 17, 2026 Government Securities Market 6.03% GS 2029 : 6.1930% # 6.36% GS 2031 : 6.4317% # 6.94% GS 2036 : 6.8060% # 6.68% GS 2040 : 6.9947% # 7.24% GS 2055 : 7.3940% # 91 day T-bills : 5.2624%* 182 day T-bills : 5.5390%* 364 day T-bills : 5.7094%* * cut-off at the last auction # as on August 17, 2026 Capital Market S&P BSE Sensex : 77728.16 * Nifty 50 : 24287.65 * * as on August 17, 2026"
+    }
+  ]
+}
