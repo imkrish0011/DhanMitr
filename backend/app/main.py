@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
+from backend.app.api.rag import router as rag_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -18,6 +19,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# ---------------------------------------------------------------------------
+# RAG Retrieval API
+# ---------------------------------------------------------------------------
+app.include_router(
+    rag_router,
+    prefix=settings.API_V1_PREFIX + "/rag",
+    tags=["RAG"],
 )
 
 
