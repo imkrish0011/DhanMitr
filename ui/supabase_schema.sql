@@ -183,3 +183,100 @@ CREATE POLICY "Users can manage their own transactions"
 ON public.transactions FOR ALL
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
+
+-- ==============================================================================
+-- 8. Admin Users & RBAC Table
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.admin_users (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('superadmin', 'admin', 'moderator')),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    created_by UUID REFERENCES auth.users(id)
+);
+
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+
+-- ------------------------------------------------------------------------------
+-- 9. Admin Security Function: is_admin
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_admin(check_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.admin_users 
+        WHERE user_id = check_user_id 
+          AND is_active = true
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Policies for admin_users
+CREATE POLICY "Admins can view admin users list"
+ON public.admin_users FOR SELECT
+USING (public.is_admin(auth.uid()));
+
+CREATE POLICY "Superadmins can manage admin users"
+ON public.admin_users FOR ALL
+USING (
+    EXISTS (
+        SELECT 1 FROM public.admin_users 
+        WHERE user_id = auth.uid() 
+          AND role = 'superadmin' 
+          AND is_active = true
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.admin_users 
+        WHERE user_id = auth.uid() 
+          AND role = 'superadmin' 
+          AND is_active = true
+    )
+);
+
+-- ------------------------------------------------------------------------------
+-- 10. Admin Audit Logs Table
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    admin_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    admin_email TEXT,
+    action TEXT NOT NULL,
+    target_resource TEXT NOT NULL,
+    target_id TEXT,
+    details JSONB DEFAULT '{}'::jsonb,
+    ip_address TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can view audit logs"
+ON public.admin_audit_logs FOR SELECT
+USING (public.is_admin(auth.uid()));
+
+CREATE POLICY "Admins can insert audit logs"
+ON public.admin_audit_logs FOR INSERT
+WITH CHECK (public.is_admin(auth.uid()));
+
+-- ------------------------------------------------------------------------------
+-- 11. Initial Admin Promotion Helper Script
+-- Run this block in your Supabase SQL editor after signing up:
+-- ------------------------------------------------------------------------------
+-- DO $$
+-- DECLARE
+--     target_email TEXT := 'ks9875277@gmail.com';
+--     target_user_id UUID;
+-- BEGIN
+--     SELECT id INTO target_user_id FROM auth.users WHERE email = target_email LIMIT 1;
+--     IF target_user_id IS NOT NULL THEN
+--         INSERT INTO public.admin_users (user_id, role, is_active)
+--         VALUES (target_user_id, 'superadmin', true)
+--         ON CONFLICT (user_id) DO UPDATE SET role = 'superadmin', is_active = true;
+--         RAISE NOTICE 'User % (ID: %) successfully promoted to superadmin.', target_email, target_user_id;
+--     ELSE
+--         RAISE NOTICE 'User with email % does not exist yet. Sign up first, then re-run this promotion script.', target_email;
+--     END IF;
+-- END $$;
+
