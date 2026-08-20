@@ -1,0 +1,43 @@
+# -----------------------------------------------------------------------------
+# DhanMITR Voice Module — STT / TTS pipeline
+# -----------------------------------------------------------------------------
+# Requires Python 3.11 or 3.12. Kokoro pins <3.13, so the repo's global 3.14
+# interpreter will not work — use the module venv:
+#
+#   py -3.11 -m venv voice/.venv
+#   voice/.venv/Scripts/activate          (Windows)
+#   pip install -r voice/requirements.txt
+#
+# System dependencies:
+#   ffmpeg    — decodes browser webm/opus into 16 kHz mono wav
+#   espeak-ng — Kokoro's fallback grapheme-to-phoneme backend
+#     Windows : winget install Gyan.FFmpeg ; winget install eSpeak-NG.eSpeak-NG
+#     macOS   : brew install ffmpeg espeak-ng
+#     Linux   : sudo apt install ffmpeg espeak-ng
+#
+# torch is CPU-only here. Install it first from the CPU index to avoid pulling
+# ~2.5 GB of unused CUDA libraries:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# -----------------------------------------------------------------------------
+
+# Test UI
+gradio>=5.0.0
+python-dotenv>=1.0.1
+
+# STT — SraVaani-1.0 (primary). Gated: accept the licence on Hugging Face, then
+# authenticate with `hf auth login` (or set HF_TOKEN).
+# transformers must be >=5.0: 4.x pins huggingface-hub<1.0 and conflicts with
+# the hub version the CLI installs.
+torch>=2.2.0
+transformers>=5.0.0
+sentencepiece>=0.2.0
+soundfile>=0.12.1
+numpy>=1.26.0
+
+# TTS — Kokoro-82M (primary). Apache 2.0, 82M params, English + Hindi.
+# misaki[hi] supplies Hindi grapheme-to-phoneme.
+kokoro>=0.9.2
+misaki[hi]>=0.9.3
+
+# STT — faster-whisper (optional English fast path / comparison baseline)
+faster-whisper>=1.0.0
