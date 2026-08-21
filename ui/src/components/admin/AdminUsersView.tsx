@@ -15,7 +15,10 @@ import {
   Check,
   Tv,
   DollarSign,
-  Layers
+  Layers,
+  Wallet,
+  TrendingUp,
+  Receipt
 } from 'lucide-react';
 
 interface UserRecord {
@@ -192,6 +195,46 @@ export const AdminUsersView: React.FC = () => {
         </div>
       )}
 
+      {/* Directory Summary Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Users Listed</span>
+            <Layers className="w-4 h-4 text-emerald-400" />
+          </div>
+          <span className="text-2xl font-bold text-white">{users.length}</span>
+        </div>
+        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Income Tracked</span>
+            <Wallet className="w-4 h-4 text-blue-400" />
+          </div>
+          <span className="text-2xl font-bold text-white">
+            {formatCurrency(users.reduce((sum, u) => sum + (u.monthly_income || 0), 0))}
+            <span className="text-xs text-slate-500 font-medium">/mo</span>
+          </span>
+        </div>
+        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Expenses Tracked</span>
+            <Receipt className="w-4 h-4 text-rose-400" />
+          </div>
+          <span className="text-2xl font-bold text-white">
+            {formatCurrency(users.reduce((sum, u) => sum + (u.monthly_expenses || 0), 0))}
+            <span className="text-xs text-slate-500 font-medium">/mo</span>
+          </span>
+        </div>
+        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Investments Tracked</span>
+            <TrendingUp className="w-4 h-4 text-purple-400" />
+          </div>
+          <span className="text-2xl font-bold text-white">
+            {formatCurrency(users.reduce((sum, u) => sum + (u.total_investments || 0), 0))}
+          </span>
+        </div>
+      </div>
+
       {/* Filter and Search Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
         {/* Search */}
@@ -257,6 +300,9 @@ export const AdminUsersView: React.FC = () => {
                   <th className="px-4 py-3.5">User ID</th>
                   <th className="px-4 py-3.5">Role</th>
                   <th className="px-4 py-3.5">Onboarding</th>
+                  <th className="px-4 py-3.5 text-right">Income /mo</th>
+                  <th className="px-4 py-3.5 text-right">Expenses /mo</th>
+                  <th className="px-4 py-3.5 text-right">Investments</th>
                   <th className="px-4 py-3.5">Risk Preference</th>
                   <th className="px-4 py-3.5">Registered</th>
                   <th className="px-5 py-3.5 text-right">Actions</th>
@@ -322,6 +368,21 @@ export const AdminUsersView: React.FC = () => {
                         }`}>
                           {user.is_onboarded ? 'Onboarded' : 'Pending'}
                         </span>
+                      </td>
+
+                      {/* Monthly Income */}
+                      <td className="px-4 py-3 text-right font-semibold text-emerald-400">
+                        {formatCurrency(user.monthly_income, user.currency)}
+                      </td>
+
+                      {/* Monthly Expenses */}
+                      <td className="px-4 py-3 text-right font-semibold text-rose-400">
+                        {formatCurrency(user.monthly_expenses, user.currency)}
+                      </td>
+
+                      {/* Total Investments */}
+                      <td className="px-4 py-3 text-right font-semibold text-purple-400">
+                        {formatCurrency(user.total_investments, user.currency)}
                       </td>
 
                       {/* Risk Preference */}
