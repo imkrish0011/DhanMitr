@@ -5,6 +5,7 @@ rag.match_chunks() RPC function. Does NOT generate embeddings —
 that pipeline is handled separately.
 """
 
+import asyncio
 import logging
 from typing import Any
 
@@ -106,6 +107,30 @@ def _normalise_chunk(row: dict[str, Any]) -> dict[str, Any]:
 # Public retrieval function
 # ---------------------------------------------------------------------------
 
+def _execute_match_chunks(
+    client: Client,
+    query_embedding: list[float],
+    match_threshold: float,
+    match_count: int,
+):
+    """Run the (synchronous) Supabase RPC call. Executed in a worker thread."""
+    # The RPC function lives in the 'rag' schema.
+    # Supabase-py supports schema switching via .schema().
+    return (
+        client
+        .schema("rag")
+        .rpc(
+            "match_chunks",
+            {
+                "query_embedding": query_embedding,
+                "match_threshold": match_threshold,
+                "match_count": match_count,
+            },
+        )
+        .execute()
+    )
+
+
 async def search_similar_chunks(
     query_embedding: list[float],
     match_count: int = 5,
@@ -142,20 +167,14 @@ async def search_similar_chunks(
     client = _get_supabase_client()
 
     try:
-        # The RPC function lives in the 'rag' schema.
-        # Supabase-py supports schema switching via .schema().
-        response = (
-            client
-            .schema("rag")
-            .rpc(
-                "match_chunks",
-                {
-                    "query_embedding": query_embedding,
-                    "match_threshold": match_threshold,
-                    "match_count": match_count,
-                },
-            )
-            .execute()
+        # supabase-py is synchronous — offload to a thread so the
+        # event loop is not blocked during the network round-trip.
+        response = await asyncio.to_thread(
+            _execute_match_chunks,
+            client,
+            query_embedding,
+            match_threshold,
+            match_count,
         )
     except Exception as exc:
         logger.error("Supabase RPC match_chunks failed: %s", exc)
