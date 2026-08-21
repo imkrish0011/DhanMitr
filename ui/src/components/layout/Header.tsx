@@ -6,14 +6,14 @@ import { useAuth } from '@/context/AuthContext';
 import { FinanceSubTab } from '@/types';
 import {
   RefreshIcon,
-  BellIcon,
   SparkleSmallIcon,
 } from '@/components/icons/CustomIcons';
 
 import { BloomMenu } from '@/components/ui/BloomMenu';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface HeaderProps {
-  onOpenAddModal: (type?: any) => void;
+  onOpenAddModal: (type?: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
@@ -25,13 +25,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
     activeSubscriptionsCount,
     activeInsurancesCount,
     activeGoalsCount,
-    subscriptions,
-    insurances,
-    netSurplus,
   } = useFinance();
 
   const { isAuthenticated, profile, openAuthModal, signOut } = useAuth();
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const tabs: { id: FinanceSubTab; label: string; badge?: number | string }[] = [
@@ -41,26 +37,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
     { id: 'subscriptions', label: 'OTT & Subscriptions', badge: activeSubscriptionsCount },
     { id: 'insurances', label: 'Insurances', badge: activeInsurancesCount },
     { id: 'budget', label: 'Budget & Income' },
-  ];
-
-  // Dynamic alerts strictly from user's actual database records
-  const activeAlerts = [
-    ...subscriptions
-      .filter((s) => s.is_active && (s.is_urgent || (s.days_remaining !== undefined && s.days_remaining <= 10)))
-      .map((s) => ({
-        id: s.id,
-        title: `${s.name} Renewal`,
-        sub: `₹${s.amount.toLocaleString('en-IN')} due (${s.next_renewal_date})`,
-        type: 'warning' as const,
-      })),
-    ...insurances
-      .filter((i) => i.is_active && (i.is_urgent || (i.days_remaining !== undefined && i.days_remaining <= 10)))
-      .map((i) => ({
-        id: i.id,
-        title: `${i.policy_name} Due`,
-        sub: `₹${i.premium_amount.toLocaleString('en-IN')} premium due (${i.renewal_date})`,
-        type: 'warning' as const,
-      })),
   ];
 
   return (
@@ -102,64 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
               </button>
 
               {/* Notification Bell */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2.5 bg-white dark:bg-[#0F172A] text-slate-600 dark:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs hover:shadow-xs transition-colors cursor-pointer"
-                >
-                  <BellIcon className="w-4 h-4" />
-                  {activeAlerts.length > 0 && (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
-                  )}
-                </button>
-
-                {/* Notifications Dropdown */}
-                {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-xs font-bold text-slate-800 dark:text-white">Alerts & Reminders</span>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                        {activeAlerts.length} Active
-                      </span>
-                    </div>
-                    <div className="space-y-2 text-xs">
-                      {activeAlerts.length === 0 ? (
-                        <p className="text-slate-400 text-center py-2">No pending alerts</p>
-                      ) : (
-                        activeAlerts.map((alt) => (
-                          <div
-                            key={alt.id}
-                            className={`p-2.5 rounded-xl border ${
-                              alt.type === 'warning'
-                                ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/50'
-                                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50'
-                            }`}
-                          >
-                            <p
-                              className={`font-bold ${
-                                alt.type === 'warning'
-                                  ? 'text-amber-900 dark:text-amber-300'
-                                  : 'text-emerald-900 dark:text-emerald-300'
-                              }`}
-                            >
-                              {alt.title}
-                            </p>
-                            <p
-                              className={`text-[11px] ${
-                                alt.type === 'warning'
-                                  ? 'text-amber-700 dark:text-amber-400'
-                                  : 'text-emerald-700 dark:text-emerald-400'
-                              }`}
-                            >
-                              {alt.sub}
-                            </p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <NotificationBell />
 
               {/* User Avatar Menu */}
               <div className="relative">
