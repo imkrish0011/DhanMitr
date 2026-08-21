@@ -3,10 +3,22 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from supabase import Client, create_client
+
+
+# Add project root to Python import path.
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+
+from rag.scripts.context.build_context import build_context
 
 
 MODEL_NAME = "BAAI/bge-m3"
@@ -14,7 +26,7 @@ MODEL_NAME = "BAAI/bge-m3"
 MATCH_THRESHOLD = 0.0
 MATCH_COUNT = 5
 
-load_dotenv()
+load_dotenv(PROJECT_ROOT / ".env")
 
 
 def get_supabase_client() -> Client:
@@ -34,6 +46,8 @@ def retrieve_chunks(
     match_threshold: float = MATCH_THRESHOLD,
     match_count: int = MATCH_COUNT,
 ) -> list[dict]:
+    """Embed the question and retrieve relevant chunks from Supabase."""
+
     model = SentenceTransformer(MODEL_NAME)
 
     query_embedding = model.encode(
@@ -43,7 +57,7 @@ def retrieve_chunks(
 
     supabase = get_supabase_client()
 
-    # The match_chunks function is inside the "rag" schema.
+    # match_chunks() is located in the "rag" schema.
     rag_client = supabase.schema("rag")
 
     response = rag_client.rpc(
@@ -66,15 +80,13 @@ def main() -> None:
 
     results = retrieve_chunks(question)
 
-    print(f"Results: {len(results)}")
+    print(f"Retrieved chunks: {len(results)}")
 
-    for index, result in enumerate(results, start=1):
-        print()
-        print(f"--- Result {index} ---")
-        print("Chunk ID:", result.get("chunk_id"))
-        print("Source:", result.get("source_name"))
-        print("Similarity:", result.get("similarity"))
-        print("Text:", result.get("chunk_text", "")[:500])
+    print("\n===== RAG CONTEXT =====\n")
+
+    context = build_context(results)
+
+    print(context)
 
 
 if __name__ == "__main__":
