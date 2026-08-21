@@ -17,6 +17,21 @@ export const metadata: Metadata = {
   description: "Intelligent personal finance assistant with real-time tracking, OTT subscriptions, insurance analytics, and conversational voice guidance.",
 };
 
+// Applies the persisted theme before first paint to prevent a
+// white flash (FOUC) on pages rendered in dark mode.
+const themeInitScript = `
+(function () {
+  try {
+    var t = localStorage.getItem('dhanmitr_theme');
+    if (t === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,6 +44,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-[#F8FAFC] dark:bg-[#090D16] text-slate-900 dark:text-white transition-colors duration-200">
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}
       </body>
     </html>
