@@ -6,13 +6,11 @@ import os
 import sys
 from pathlib import Path
 
-
 # Add project root to Python import path.
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
 
 from dotenv import load_dotenv
 from groq import Groq
@@ -52,13 +50,25 @@ def get_groq_client() -> Groq:
     return Groq(api_key=api_key)
 
 
-def generate_answer(question: str) -> str:
-    """Retrieve context and generate a grounded answer with Groq."""
+def generate_answer(
+    question: str,
+    results: list[dict] | None = None,
+) -> str:
+    """
+    Generate a grounded answer using retrieved RAG context.
 
-    results = retrieve_chunks(question)
+    If retrieved results are already provided, reuse them.
+    Otherwise, retrieve the relevant chunks first.
+    """
 
+    # Retrieve only when the caller has not already retrieved results.
+    if results is None:
+        results = retrieve_chunks(question)
+
+    # Build context from the retrieved results.
     context = build_context(results)
 
+    # Load the DhanMitra system prompt.
     system_prompt = load_system_prompt()
 
     user_prompt = f"""
@@ -95,6 +105,8 @@ Answer the user's question using the provided context.
 
 
 def main() -> None:
+    """Run a simple command-line generation test."""
+
     question = "What is India's fiscal deficit?"
 
     print(f"Question: {question}")
