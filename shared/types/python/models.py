@@ -246,12 +246,24 @@ class VoiceTimingTelemetry(BaseModel):
     total_ms: float = 0.0
 
 
+class VoiceHealthProviderStatus(BaseModel):
+    model_config = {"extra": "allow"}
+
+    provider: str = ""
+    loaded: bool = False
+    warmed_up: bool = False
+    error: Optional[str] = None
+    warmup_ms: float = 0.0
+
+
 class VoiceHealthResponse(BaseModel):
+    model_config = {"extra": "allow"}
+
     status: str
     service: str = "dhanmitr-voice"
-    stt: Dict[str, Any] = Field(default_factory=dict)
-    tts: Dict[str, Any] = Field(default_factory=dict)
-    uptime_ready: bool = True
+    stt: VoiceHealthProviderStatus | Dict[str, Any] = Field(default_factory=dict)
+    tts: VoiceHealthProviderStatus | Dict[str, Any] = Field(default_factory=dict)
+    uptime_ready: bool = False
 
 
 class VoiceRequest(BaseModel):

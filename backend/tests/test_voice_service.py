@@ -1,7 +1,6 @@
-"""Unit tests for DhanMITR Voice Service."""
+"""Unit tests for DhanMITR Voice Service & Temporary Response Service."""
 
 import sys
-import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -10,7 +9,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 import pytest
-from backend.app.services import voice_service
+from backend.app.services import temporary_response_service, voice_service
 from shared.types.python.models import (
     CurrencyCode,
     EmploymentType,
@@ -24,17 +23,99 @@ from voice.stt import STTResult
 from voice.tts import TTSResult
 
 
-class TestVoiceHealth:
-    def test_voice_health_structure(self):
+class TestVoiceHealthWarmupReadiness:
+    def setup_method(self):
+        voice_service.reset_voice_state()
+
+    def test_voice_health_initial_unwarmed(self):
         health = voice_service.get_voice_health()
         assert health.service == "dhanmitr-voice"
-        assert health.status in ["ready", "warming", "unwarmed", "degraded"]
-        assert "configured_provider" in health.stt
-        assert "configured_provider" in health.tts
-        assert "supported_languages" in health.tts
+        assert health.status == "unwarmed"
+        assert health.uptime_ready is False
+        assert health.stt.warmed_up is False
+        assert health.tts.warmed_up is False
+
+    @pytest.mark.asyncio
+    async def test_warmup_success_sets_ready(self):
+        with patch("backend.app.services.voice_service.stt_module.get_stt") as mock_stt, \
+             patch("backend.app.services.voice_service.tts_module.get_tts") as mock_tts:
+            stt_engine = MagicMock()
+            stt_engine.name = "faster_whisper"
+            stt_engine.is_loaded = True
+            mock_stt.return_value = stt_engine
+
+            tts_engine = MagicMock()
+            tts_engine.name = "kokoro"
+            tts_engine.is_loaded = True
+            mock_tts.return_value = tts_engine
+
+            await voice_service.warmup_voice_models()
+            health = voice_service.get_voice_health()
+
+            assert health.status == "ready"
+            assert health.uptime_ready is True
+            assert health.stt.warmed_up is True
+            assert health.stt.loaded is True
+            assert health.stt.error is None
+            assert health.tts.warmed_up is True
+            assert health.tts.loaded is True
+            assert health.tts.error is None
+
+    @pytest.mark.asyncio
+    async def test_warmup_stt_failure_sets_degraded(self):
+        with patch("backend.app.services.voice_service.stt_module.get_stt", side_effect=RuntimeError("SraVaani gated model auth error")), \
+             patch("backend.app.services.voice_service.tts_module.get_tts") as mock_tts:
+            tts_engine = MagicMock()
+            tts_engine.name = "kokoro"
+            tts_engine.is_loaded = True
+            mock_tts.return_value = tts_engine
+
+            await voice_service.warmup_voice_models()
+            health = voice_service.get_voice_health()
+
+            assert health.status == "degraded"
+            assert health.uptime_ready is False
+            assert health.stt.warmed_up is False
+            assert health.stt.loaded is False
+            assert "gated model" in health.stt.error.lower()
+            assert health.tts.warmed_up is True
+            assert health.tts.error is None
+
+    @pytest.mark.asyncio
+    async def test_warmup_tts_failure_sets_degraded(self):
+        with patch("backend.app.services.voice_service.stt_module.get_stt") as mock_stt, \
+             patch("backend.app.services.voice_service.tts_module.get_tts", side_effect=RuntimeError("Kokoro model not found")):
+            stt_engine = MagicMock()
+            stt_engine.name = "faster_whisper"
+            stt_engine.is_loaded = True
+            mock_stt.return_value = stt_engine
+
+            await voice_service.warmup_voice_models()
+            health = voice_service.get_voice_health()
+
+            assert health.status == "degraded"
+            assert health.uptime_ready is False
+            assert health.stt.warmed_up is True
+            assert health.tts.warmed_up is False
+            assert "kokoro" in health.tts.error.lower()
+
+    @pytest.mark.asyncio
+    async def test_warmup_both_failure_sets_unavailable(self):
+        with patch("backend.app.services.voice_service.stt_module.get_stt", side_effect=RuntimeError("STT failed")), \
+             patch("backend.app.services.voice_service.tts_module.get_tts", side_effect=RuntimeError("TTS failed")):
+
+            await voice_service.warmup_voice_models()
+            health = voice_service.get_voice_health()
+
+            assert health.status == "unavailable"
+            assert health.uptime_ready is False
+            assert health.stt.warmed_up is False
+            assert health.tts.warmed_up is False
+            assert health.stt.error is not None
+            assert health.tts.error is not None
 
 
-class TestTemporaryFinancialResponses:
+class TestIsolatedTemporaryFinancialResponses:
     @pytest.fixture
     def sample_context(self):
         profile = UserFinancialProfile(
@@ -58,7 +139,7 @@ class TestTemporaryFinancialResponses:
         )
 
     def test_english_pmjjby(self, sample_context):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "What is PMJJBY insurance scheme?", "en", sample_context
         )
         assert "PMJJBY" in text or "Pradhan Mantri" in text
@@ -66,7 +147,7 @@ class TestTemporaryFinancialResponses:
         assert lang == "en"
 
     def test_english_tax(self, sample_context):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "Explain old vs new tax regime", "en", sample_context
         )
         assert "7.75" in text or "Tax" in text
@@ -74,7 +155,7 @@ class TestTemporaryFinancialResponses:
         assert lang == "en"
 
     def test_english_expenses(self, sample_context):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "What are my monthly expenses?", "en", sample_context
         )
         assert "45,000" in text
@@ -82,14 +163,14 @@ class TestTemporaryFinancialResponses:
         assert lang == "en"
 
     def test_english_savings(self, sample_context):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "How can I save more money?", "en", sample_context
         )
         assert "surplus" in text.lower() or "saving" in text.lower()
         assert lang == "en"
 
     def test_hindi_pmjjby(self, sample_context):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "पीएमजेजेबीवाई बीमा योजना क्या है?", "hi", sample_context
         )
         assert "प्रधानमंत्री" in text or "बीमा" in text
@@ -97,7 +178,7 @@ class TestTemporaryFinancialResponses:
         assert lang == "hi"
 
     def test_hindi_tax(self, sample_context):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "टैक्स रिजीम के बारे में बताएं", "hi", sample_context
         )
         assert "टैक्स" in text or "रिजीम" in text
@@ -105,7 +186,7 @@ class TestTemporaryFinancialResponses:
         assert lang == "hi"
 
     def test_hindi_expenses(self, sample_context):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "मेरे खर्चों का विश्लेषण करें", "hi", sample_context
         )
         assert "45,000" in text
@@ -113,7 +194,7 @@ class TestTemporaryFinancialResponses:
         assert lang == "hi"
 
     def test_empty_financial_profile(self):
-        text, voice, lang = voice_service.generate_temporary_financial_response(
+        text, voice, lang = temporary_response_service.generate_temporary_financial_response(
             "Analyze my spending", "en", None
         )
         assert "Finance Hub" in text

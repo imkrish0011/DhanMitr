@@ -187,11 +187,19 @@ export interface VoiceTimingTelemetry {
   total_ms: number;
 }
 
+export interface VoiceHealthProviderStatus {
+  provider: string;
+  loaded: boolean;
+  warmed_up: boolean;
+  error?: string | null;
+  warmup_ms: number;
+}
+
 export interface VoiceHealthResponse {
   status: string;
   service: string;
-  stt: Record<string, unknown>;
-  tts: Record<string, unknown>;
+  stt: VoiceHealthProviderStatus | Record<string, unknown>;
+  tts: VoiceHealthProviderStatus | Record<string, unknown>;
   uptime_ready: boolean;
 }
 

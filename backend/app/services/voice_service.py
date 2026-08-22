@@ -1,7 +1,8 @@
 """Voice Processing Service for DhanMITR.
 
-Orchestrates Speech-to-Text (SraVaani), Modular Temporary Response Generation,
-and Text-to-Speech (Kokoro). Pre-warms models during application startup.
+Orchestrates Speech-to-Text (SraVaani / FasterWhisper), Modular Temporary
+Financial Response Generation, and Text-to-Speech (Kokoro). Pre-warms models
+during application startup and tracks provider readiness independently.
 """
 
 import asyncio
@@ -23,10 +24,14 @@ import voice.audio_utils as audio_utils
 import voice.config as voice_config
 import voice.stt as stt_module
 import voice.tts as tts_module
+from backend.app.services.temporary_response_service import (
+    generate_temporary_financial_response,
+)
 from shared.types.python.models import (
     FinancialContext,
     STTTelemetry,
     TTSTelemetry,
+    VoiceHealthProviderStatus,
     VoiceHealthResponse,
     VoiceRequest,
     VoiceResponse,
@@ -41,59 +46,106 @@ class VoiceServiceError(Exception):
 
 
 # ---------------------------------------------------------------------------
-# Global Service State & Readiness
+# Global Service State & Independent Provider Tracking
 # ---------------------------------------------------------------------------
 
+def _initial_provider_state(provider_name: str) -> Dict[str, Any]:
+    return {
+        "provider": provider_name,
+        "initialized": False,
+        "loaded": False,
+        "warmup_success": False,
+        "warmup_error": None,
+        "warmup_duration_ms": 0.0,
+    }
+
+
 _state: Dict[str, Any] = {
-    "is_ready": False,
     "is_warming": False,
-    "stt_provider": voice_config.STT_PROVIDER,
-    "tts_provider": voice_config.TTS_PROVIDER,
-    "stt_warmup_ms": 0.0,
-    "tts_warmup_ms": 0.0,
-    "error": None,
+    "stt": _initial_provider_state(voice_config.STT_PROVIDER),
+    "tts": _initial_provider_state(voice_config.TTS_PROVIDER),
 }
 
 
+def reset_voice_state() -> None:
+    """Resets global warmup state (useful for test fixtures & simulated failures)."""
+    global _state
+    _state["is_warming"] = False
+    _state["stt"] = _initial_provider_state(voice_config.STT_PROVIDER)
+    _state["tts"] = _initial_provider_state(voice_config.TTS_PROVIDER)
+
+
+# ---------------------------------------------------------------------------
+# Model Warmup Lifecycle
+# ---------------------------------------------------------------------------
+
 def _run_warmup_sync() -> Dict[str, Any]:
-    """Execute warmup for STT and TTS synchronously (called in worker thread)."""
-    results: Dict[str, Any] = {"stt_ms": 0.0, "tts_ms": 0.0}
+    """Executes warmup for STT and TTS synchronously (executed in thread pool)."""
+    global _state
+    stt_provider = voice_config.STT_PROVIDER
+    tts_provider = voice_config.TTS_PROVIDER
 
-    # 1. Warm up STT
+    _state["stt"]["provider"] = stt_provider
+    _state["stt"]["initialized"] = True
+    _state["tts"]["provider"] = tts_provider
+    _state["tts"]["initialized"] = True
+
+    # 1. Warm up STT Provider
+    t0_stt = time.perf_counter()
     try:
-        t0 = time.perf_counter()
-        stt_engine = stt_module.get_stt()
+        stt_engine = stt_module.get_stt(stt_provider)
         stt_engine.warmup()
-        results["stt_ms"] = round((time.perf_counter() - t0) * 1000, 1)
+        stt_ms = round((time.perf_counter() - t0_stt) * 1000, 1)
+        _state["stt"]["loaded"] = stt_engine.is_loaded
+        _state["stt"]["warmup_success"] = True
+        _state["stt"]["warmup_error"] = None
+        _state["stt"]["warmup_duration_ms"] = stt_ms
         logger.info(
-            "STT provider '%s' warmed up in %s ms",
+            "STT provider '%s' initialized and warmed up in %s ms",
             stt_engine.name,
-            results["stt_ms"],
+            stt_ms,
         )
     except Exception as exc:
-        logger.warning("STT warmup encountered an issue: %s", exc)
+        stt_ms = round((time.perf_counter() - t0_stt) * 1000, 1)
+        _state["stt"]["loaded"] = False
+        _state["stt"]["warmup_success"] = False
+        _state["stt"]["warmup_error"] = str(exc)
+        _state["stt"]["warmup_duration_ms"] = stt_ms
+        logger.error("STT warmup failed for '%s': %s", stt_provider, exc)
 
-    # 2. Warm up TTS
+    # 2. Warm up TTS Provider
+    t0_tts = time.perf_counter()
     try:
-        t0 = time.perf_counter()
-        tts_engine = tts_module.get_tts()
+        tts_engine = tts_module.get_tts(tts_provider)
         tts_engine.warmup()
-        results["tts_ms"] = round((time.perf_counter() - t0) * 1000, 1)
+        tts_ms = round((time.perf_counter() - t0_tts) * 1000, 1)
+        _state["tts"]["loaded"] = tts_engine.is_loaded
+        _state["tts"]["warmup_success"] = True
+        _state["tts"]["warmup_error"] = None
+        _state["tts"]["warmup_duration_ms"] = tts_ms
         logger.info(
-            "TTS provider '%s' warmed up in %s ms",
+            "TTS provider '%s' initialized and warmed up in %s ms",
             tts_engine.name,
-            results["tts_ms"],
+            tts_ms,
         )
     except Exception as exc:
-        logger.warning("TTS warmup encountered an issue: %s", exc)
+        tts_ms = round((time.perf_counter() - t0_tts) * 1000, 1)
+        _state["tts"]["loaded"] = False
+        _state["tts"]["warmup_success"] = False
+        _state["tts"]["warmup_error"] = str(exc)
+        _state["tts"]["warmup_duration_ms"] = tts_ms
+        logger.error("TTS warmup failed for '%s': %s", tts_provider, exc)
 
-    return results
+    return {
+        "stt_success": _state["stt"]["warmup_success"],
+        "tts_success": _state["tts"]["warmup_success"],
+    }
 
 
 async def warmup_voice_models() -> None:
-    """Pre-load and warm up STT and TTS models during backend startup."""
+    """Pre-loads and warms up STT and TTS models during backend startup."""
     global _state
-    if _state["is_ready"] or _state["is_warming"]:
+    if _state["is_warming"]:
         return
 
     _state["is_warming"] = True
@@ -104,246 +156,57 @@ async def warmup_voice_models() -> None:
     )
 
     try:
-        results = await asyncio.to_thread(_run_warmup_sync)
-        _state["stt_warmup_ms"] = results["stt_ms"]
-        _state["tts_warmup_ms"] = results["tts_ms"]
-        _state["is_ready"] = True
-        _state["error"] = None
-        logger.info("DhanMITR Voice service pre-warming completed successfully.")
-    except Exception as exc:
-        _state["error"] = str(exc)
-        logger.error("Voice pre-warming failed: %s", exc)
+        await asyncio.to_thread(_run_warmup_sync)
     finally:
         _state["is_warming"] = False
 
 
-def get_voice_health() -> VoiceHealthResponse:
-    """Check readiness and status of STT/TTS providers."""
-    stt_loaded = stt_module.available_providers()
-    tts_loaded = tts_module.available_providers()
+# ---------------------------------------------------------------------------
+# Health & Readiness Evaluation
+# ---------------------------------------------------------------------------
 
-    status = "ready" if _state["is_ready"] else ("warming" if _state["is_warming"] else "unwarmed")
-    if _state["error"]:
+def get_voice_health() -> VoiceHealthResponse:
+    """Evaluates readiness of STT and TTS providers with strict status computation."""
+    stt_info = _state["stt"]
+    tts_info = _state["tts"]
+
+    # Determine status
+    if _state["is_warming"]:
+        status = "warming"
+    elif not stt_info["initialized"] and not tts_info["initialized"]:
+        status = "unwarmed"
+    elif stt_info["warmup_success"] and tts_info["warmup_success"]:
+        status = "ready"
+    elif stt_info["warmup_success"] or tts_info["warmup_success"]:
         status = "degraded"
+    else:
+        status = "unavailable"
+
+    is_ready = (status == "ready")
+
+    stt_status = VoiceHealthProviderStatus(
+        provider=stt_info["provider"],
+        loaded=stt_info["loaded"],
+        warmed_up=stt_info["warmup_success"],
+        error=stt_info["warmup_error"],
+        warmup_ms=stt_info["warmup_duration_ms"],
+    )
+
+    tts_status = VoiceHealthProviderStatus(
+        provider=tts_info["provider"],
+        loaded=tts_info["loaded"],
+        warmed_up=tts_info["warmup_success"],
+        error=tts_info["warmup_error"],
+        warmup_ms=tts_info["warmup_duration_ms"],
+    )
 
     return VoiceHealthResponse(
         status=status,
         service="dhanmitr-voice",
-        stt={
-            "configured_provider": voice_config.STT_PROVIDER,
-            "providers_loaded": stt_loaded,
-            "warmup_latency_ms": _state["stt_warmup_ms"],
-        },
-        tts={
-            "configured_provider": voice_config.TTS_PROVIDER,
-            "providers_loaded": tts_loaded,
-            "warmup_latency_ms": _state["tts_warmup_ms"],
-            "supported_languages": tts_module.supported_languages(),
-        },
-        uptime_ready=_state["is_ready"],
+        stt=stt_status,
+        tts=tts_status,
+        uptime_ready=is_ready,
     )
-
-
-# ---------------------------------------------------------------------------
-# Modular Temporary Response Generation (Financial Domain Heuristics)
-# NOTE: RAG/LLM is intentionally bypassed in this phase.
-# ---------------------------------------------------------------------------
-
-def generate_temporary_financial_response(
-    query: str,
-    language_hint: Optional[str] = None,
-    context: Optional[FinancialContext] = None,
-) -> Tuple[str, str, str]:
-    """Generates structured financial answers and spoken summaries.
-
-    Parameters
-    ----------
-    query : str
-        User transcription or text query.
-    language_hint : Optional[str]
-        'en' | 'hi' | 'hinglish' or None.
-    context : Optional[FinancialContext]
-        Structured financial snapshot from user session.
-
-    Returns
-    -------
-    Tuple[str, str, str]
-        (full_markdown_text, spoken_voice_reply, effective_language)
-    """
-    q = (query or "").lower().strip()
-    is_hindi = (
-        language_hint == "hi"
-        or any("\u0900" <= ch <= "\u097f" for ch in query)
-        or any(w in q for w in ["खर्च", "बचत", "सब्सक्रिप्शन", "टैक्स", "निवेश", "योजना", "बीमा"])
-    )
-    effective_lang = "hi" if is_hindi else ("en" if language_hint == "en" else "en")
-
-    # Extract financial context variables defensively
-    profile = getattr(context, "profile", None) if context else None
-    monthly_income = getattr(profile, "monthly_income", 0.0) or 0.0
-    monthly_expenses = getattr(profile, "monthly_expenses", 0.0) or 0.0
-    net_surplus = max(0.0, monthly_income - monthly_expenses)
-    savings_rate = (
-        round((net_surplus / monthly_income) * 100, 1)
-        if monthly_income > 0
-        else getattr(context, "savings_rate_percentage", 0.0) or 0.0
-    )
-    risk_tolerance = getattr(profile, "risk_tolerance", "moderate") or "moderate"
-    if hasattr(risk_tolerance, "value"):
-        risk_tolerance = risk_tolerance.value
-
-    top_categories = getattr(context, "top_spending_categories", []) or []
-    subs_total = getattr(context, "active_subscriptions_total", 0.0) or 0.0
-    has_no_data = monthly_income == 0 and monthly_expenses == 0 and not top_categories
-
-    if is_hindi:
-        if any(w in q for w in ["योजना", "pmjjby", "बीमा", "insurance", "policy"]):
-            text = (
-                "**प्रधानमंत्री जीवन ज्योति बीमा योजना (PMJJBY):**\n\n"
-                "- **पात्रता:** 18 से 50 वर्ष की आयु के बैंक खाताधारक।\n"
-                "- **कवरेज:** ₹2,00,000 का जीवन बीमा (किसी भी कारण से मृत्यु पर)।\n"
-                "- **प्रीमियम:** ₹436 प्रति वर्ष (सीधे बैंक खाते से ऑटो-डेबिट)।\n"
-                "- **सुविधा:** किसी मेडिकल जांच की आवश्यकता नहीं है।"
-            )
-            voice_reply = "प्रधानमंत्री जीवन ज्योति बीमा योजना में मात्र 436 रुपये सालाना पर 2 लाख रुपये का जीवन बीमा मिलता है।"
-            return text, voice_reply, "hi"
-
-        if any(w in q for w in ["टैक्स", "tax", "regime", "80c"]):
-            text = (
-                "**ओल्ड vs न्यू टैक्स रिजीम तुलना:**\n\n"
-                "- **न्यू टैक्स रिजीम (डिफ़ॉल्ट):** ₹7.75 लाख तक की आय पर स्टैंडर्ड डिडक्शन (₹75,000) के साथ शून्य कर।\n"
-                "- **ओल्ड टैक्स रिजीम:** यदि आपके पास 80C (₹1.5L), 80D हेल्थ इंश्योरेंस, और HRA जैसी बड़ी कटौतियां हैं तो यह अधिक फायदेमंद हो सकता है।"
-            )
-            voice_reply = "न्यू टैक्स रिजीम में 7.75 लाख रुपये तक की आय पर शून्य कर है। 80सी और एचआरए छूट के लिए ओल्ड रिजीम चुनें।"
-            return text, voice_reply, "hi"
-
-        if has_no_data:
-            text = (
-                "नमस्ते! आपके पास वर्तमान में कोई वित्तीय रिकॉर्ड नहीं जुड़ा है।\n\n"
-                "आप Finance Hub में जाकर अपना वेतन, नियमित खर्च और सक्रिय सब्सक्रिप्शन जोड़ सकते हैं ताकि मैं आपको सटीक सलाह दे सकूँ।"
-            )
-            voice_reply = "नमस्ते! आपके खाते में अभी वित्तीय रिकॉर्ड नहीं हैं। कृपया अपना बजट और आय जोड़ें।"
-            return text, voice_reply, "hi"
-
-        if any(w in q for w in ["विश्लेषण", "खर्च", "expenses", "spend"]):
-            text = (
-                f"आपकी वर्तमान मासिक आउटफ्लो **₹{monthly_expenses:,.0f}** है।\n\n"
-                + (
-                    "\n".join([f"- **{c.category if hasattr(c, 'category') else c.get('category', '')}:** ₹{c.amount if hasattr(c, 'amount') else c.get('amount', 0):,.0f}" for c in top_categories[:4]])
-                    if top_categories
-                    else "- आपके अधिकांश खर्च अभी वर्गीकृत नहीं हैं।"
-                )
-            )
-            voice_reply = f"आपके वर्तमान कुल मासिक खर्च {monthly_expenses:,.0f} रुपये हैं।"
-            return text, voice_reply, "hi"
-
-        if any(w in q for w in ["बचत", "save", "surplus"]):
-            text = (
-                f"आपकी वर्तमान मासिक बचत **₹{net_surplus:,.0f}** ({savings_rate}% बचत दर) है।\n\n"
-                "**बचत बढ़ाने के 3 स्मार्ट सुझाव:**\n"
-                "1. **आवर्ती खर्चों की समीक्षा:** अप्रयुक्त सब्सक्रिप्शन को पॉज करें।\n"
-                "2. **यूटिलिटी और बिल प्रबंधन:** ऑटो-पे और कैशबैक ऑफर्स का उपयोग करें।\n"
-                "3. **स्वचालित निवेश:** वेतन आते ही बचत राशि को अलग करें।"
-            )
-            voice_reply = f"आपकी मासिक बचत दर {savings_rate} प्रतिशत है।"
-            return text, voice_reply, "hi"
-
-        if any(w in q for w in ["निवेश", "invest", "mutual fund", "sip"]):
-            text = (
-                f"आपके **{risk_tolerance.capitalize()}** रिस्क प्रोफाइल के आधार पर:\n\n"
-                "- **इंडेक्स म्यूचुअल फंड (Nifty 50):** दीर्घकालिक पूंजी वृद्धि के लिए अनुकूल।\n"
-                "- **आपातकालीन निधि (Emergency Fund):** कम से कम 3 से 6 महीने का खर्च सुरक्षित रखें।\n"
-                "- **बीमा सुरक्षा:** पर्याप्त टर्म और स्वास्थ्य बीमा सक्रिय रखें।"
-            )
-            voice_reply = "आपकी रिस्क प्रोफाइल के अनुसार इंडेक्स फंड और आपातकालीन बचत सबसे अनुकूल विकल्प हैं।"
-            return text, voice_reply, "hi"
-
-        # General Hindi greeting
-        text = (
-            f"नमस्ते! आपकी मासिक आय **₹{monthly_income:,.0f}** और मासिक खर्च **₹{monthly_expenses:,.0f}** है। "
-            "मैं आपके वित्तीय प्रबंधन में कैसे सहायता कर सकता हूँ?"
-        )
-        voice_reply = "नमस्ते, मैं आपकी वित्तीय सहायता के लिए तैयार हूँ।"
-        return text, voice_reply, "hi"
-
-    else:
-        # English flow
-        if any(w in q for w in ["pmjjby", "scheme", "jeevan jyoti", "insurance", "policy"]):
-            text = (
-                "**Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY):**\n\n"
-                "- **Coverage:** ₹2,00,000 life insurance on death due to any cause.\n"
-                "- **Eligibility:** Bank account holders aged 18 to 50 years.\n"
-                "- **Annual Premium:** ₹436/year auto-debited in a single installment.\n"
-                "- **Risk Coverage Period:** 1st June to 31st May annually."
-            )
-            voice_reply = "PMJJBY provides 2 Lakh rupees life cover for an annual premium of 436 rupees."
-            return text, voice_reply, "en"
-
-        if any(w in q for w in ["tax", "regime", "80c", "deduction"]):
-            text = (
-                "**Old vs. New Tax Regime Comparison:**\n\n"
-                "- **New Regime (Default):** Zero tax up to **₹7.75 Lakhs** (including ₹75k Standard Deduction for salaried employees).\n"
-                "- **Old Regime:** Allows deductions under Section 80C (up to ₹1.5L), 80D (health insurance), HRA, and Home Loan interest."
-            )
-            voice_reply = "Under the New Regime, income up to 7.75 Lakhs is tax-free with standard deduction. Use the Old regime if you have high 80C and HRA deductions."
-            return text, voice_reply, "en"
-
-        if has_no_data:
-            text = (
-                "Hello! You haven't added any financial records yet.\n\n"
-                "Go to the **Finance Hub** to log your income, monthly budget, or active subscriptions. "
-                "Once added, I will provide real-time spending insights and custom savings strategies!"
-            )
-            voice_reply = "Hello! You have not added any financial records yet. Add your income and expenses to get started."
-            return text, voice_reply, "en"
-
-        if any(w in q for w in ["expense", "spending", "biggest", "cost", "outflow"]):
-            text = (
-                f"Here is your current monthly outflow breakdown totaling **₹{monthly_expenses:,.0f}**:\n\n"
-                + (
-                    "\n".join([f"- **{c.category if hasattr(c, 'category') else c.get('category', '')}:** ₹{c.amount if hasattr(c, 'amount') else c.get('amount', 0):,.0f}" for c in top_categories[:4]])
-                    if top_categories
-                    else "- No categorized expenses recorded yet."
-                )
-            )
-            voice_reply = f"Your total monthly outflow is {monthly_expenses:,.0f} rupees."
-            return text, voice_reply, "en"
-
-        if any(w in q for w in ["save", "saving", "more", "surplus", "budget"]):
-            text = (
-                f"Your current monthly surplus is **₹{net_surplus:,.0f}** with a **{savings_rate}% savings rate**.\n\n"
-                "**Top AI Recommendations to Increase Savings:**\n"
-                "1. **Audit Recurring Plans:** Review your active subscriptions.\n"
-                "2. **Budget Discipline:** Cap non-essential spending at 30% of net income.\n"
-                "3. **Step-up SIP:** Automatically allocate 50% of your surplus into index funds."
-            )
-            voice_reply = f"Your current monthly surplus is {net_surplus:,.0f} rupees with a {savings_rate} percent savings rate."
-            return text, voice_reply, "en"
-
-        if any(w in q for w in ["sub", "netflix", "prime", "renew", "subscription"]):
-            text = (
-                f"You have active subscriptions totaling **₹{subs_total:,.0f}/mo**.\n\n"
-                "Review subscriptions under Finance Hub to prune unused services."
-            )
-            voice_reply = f"Your active subscriptions total {subs_total:,.0f} rupees per month."
-            return text, voice_reply, "en"
-
-        if any(w in q for w in ["invest", "growth", "sip", "portfolio"]):
-            text = (
-                f"Based on your **{risk_tolerance.capitalize()}** risk tolerance and **₹{net_surplus:,.0f}** surplus:\n\n"
-                "- **Broad Index SIPs:** Recommended for disciplined compounding.\n"
-                f"- **Emergency Cushion:** Target 3 to 6 months of expenses (₹{monthly_expenses * 6:,.0f}).\n"
-                "- **Insurance Safety Net:** Keep active term & health coverage in place."
-            )
-            voice_reply = "Based on your risk profile and surplus, index SIPs and a solid emergency cushion are your best next steps."
-            return text, voice_reply, "en"
-
-        text = (
-            f"Hello! Your monthly income is **₹{monthly_income:,.0f}**, total outflow is **₹{monthly_expenses:,.0f}**, "
-            f"and net surplus is **₹{net_surplus:,.0f}** ({savings_rate}% savings rate). How can I assist your finances today?"
-        )
-        voice_reply = "Hello, I am your DhanMITR assistant. How can I help with your finances today?"
-        return text, voice_reply, "en"
 
 
 # ---------------------------------------------------------------------------
@@ -369,7 +232,7 @@ def _process_voice_sync(
         # 2. Transcode to 16 kHz mono WAV
         wav_tmp = audio_utils.to_wav16k_mono(raw_tmp)
 
-        # 3. Speech-to-Text Transcription
+        # 3. Speech-to-Text Transcription with cached provider
         stt_result = None
         for engine_key in [None, "faster_whisper", "mock"]:
             try:
@@ -377,7 +240,11 @@ def _process_voice_sync(
                 stt_result = stt_engine.transcribe(wav_tmp, language=language_hint)
                 break
             except Exception as stt_err:
-                logger.warning("STT provider '%s' failed, trying next: %s", engine_key or voice_config.STT_PROVIDER, stt_err)
+                logger.warning(
+                    "STT provider '%s' failed, trying next: %s",
+                    engine_key or voice_config.STT_PROVIDER,
+                    stt_err,
+                )
 
         if not stt_result:
             stt_engine = stt_module.get_stt("mock")
@@ -402,7 +269,7 @@ def _process_voice_sync(
                 context=financial_context,
             )
 
-        # 5. Text-to-Speech Synthesis
+        # 5. Text-to-Speech Synthesis with cached provider
         try:
             tts_engine = tts_module.get_tts()
             tts_result = tts_engine.synthesize(
@@ -418,6 +285,7 @@ def _process_voice_sync(
                 language=reply_lang,
                 voice=voice_id,
             )
+
         tts_out = tts_result.audio_path
 
         # 6. Encode synthesized audio to base64

@@ -27,9 +27,45 @@ class TestVoiceHealthEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert data["service"] == "dhanmitr-voice"
-        assert "status" in data
+        assert data["status"] in ["ready", "degraded", "unavailable", "warming", "unwarmed"]
         assert "stt" in data
         assert "tts" in data
+        assert "loaded" in data["stt"]
+        assert "warmed_up" in data["stt"]
+        assert "loaded" in data["tts"]
+        assert "warmed_up" in data["tts"]
+
+    def test_get_voice_health_degraded_when_stt_fails(self):
+        with patch.dict(
+            "backend.app.services.voice_service._state",
+            {
+                "is_warming": False,
+                "stt": {
+                    "provider": "sravaani",
+                    "initialized": True,
+                    "loaded": False,
+                    "warmup_success": False,
+                    "warmup_error": "Auth failed",
+                    "warmup_duration_ms": 10.0,
+                },
+                "tts": {
+                    "provider": "kokoro",
+                    "initialized": True,
+                    "loaded": True,
+                    "warmup_success": True,
+                    "warmup_error": None,
+                    "warmup_duration_ms": 50.0,
+                },
+            },
+        ):
+            resp = client.get(VOICE_HEALTH_URL)
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["status"] == "degraded"
+            assert data["uptime_ready"] is False
+            assert data["stt"]["warmed_up"] is False
+            assert data["stt"]["error"] == "Auth failed"
+            assert data["tts"]["warmed_up"] is True
 
 
 class TestVoiceChatEndpoint:
