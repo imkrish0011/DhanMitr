@@ -167,9 +167,53 @@ class TestVoiceChatEndpoint:
             assert resp.status_code == 200
             assert "audio could not be decoded" in resp.json()["answer"].lower()
 
+    def test_voice_chat_stt_provider_failure_returns_503(self):
+        with patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("in.webm")), \
+             patch("backend.app.services.voice_service.audio_utils.to_wav16k_mono", return_value=Path("in.wav")), \
+             patch("backend.app.services.voice_service.stt_module.get_stt", side_effect=RuntimeError("SraVaani authentication failed")), \
+             patch("backend.app.services.voice_service.audio_utils.cleanup"):
+
+            payload = {"audio_base64": "valid_audio_base64", "language": "en"}
+            resp = client.post(VOICE_CHAT_URL, json=payload)
+            assert resp.status_code == 503
+            data = resp.json()
+            assert "error" in data["detail"]
+            assert data["detail"]["error"]["code"] == "STT_PROVIDER_UNAVAILABLE"
+            assert "unavailable" in data["detail"]["error"]["message"].lower()
+
+    def test_voice_chat_tts_provider_failure_returns_503(self):
+        mock_stt_result = STTResult(
+            text="Check budget",
+            language="en",
+            provider="sravaani",
+            latency_ms=25.0,
+            audio_seconds=1.5,
+        )
+
+        with patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("in.webm")), \
+             patch("backend.app.services.voice_service.audio_utils.to_wav16k_mono", return_value=Path("in.wav")), \
+             patch("backend.app.services.voice_service.stt_module.get_stt") as mock_get_stt, \
+             patch("backend.app.services.voice_service.tts_module.get_tts", side_effect=RuntimeError("Kokoro model failed")), \
+             patch("backend.app.services.voice_service.audio_utils.cleanup"):
+
+            mock_stt = MagicMock()
+            mock_stt.transcribe.return_value = mock_stt_result
+            mock_stt.name = "sravaani"
+            mock_get_stt.return_value = mock_stt
+
+            payload = {"audio_base64": "valid_audio_base64", "language": "en"}
+            resp = client.post(VOICE_CHAT_URL, json=payload)
+            assert resp.status_code == 503
+            data = resp.json()
+            assert "error" in data["detail"]
+            assert data["detail"]["error"]["code"] == "TTS_PROVIDER_UNAVAILABLE"
+            assert "unavailable" in data["detail"]["error"]["message"].lower()
+
     def test_voice_chat_server_error_returns_500(self):
         with patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", side_effect=RuntimeError("Unexpected fatal")):
             payload = {"audio_base64": "valid_data", "language": "en"}
             resp = client.post(VOICE_CHAT_URL, json=payload)
             assert resp.status_code == 500
-            assert "failed to process" in resp.json()["detail"].lower()
+            data = resp.json()
+            assert "error" in data["detail"]
+            assert data["detail"]["error"]["code"] == "VOICE_INTERNAL_ERROR"

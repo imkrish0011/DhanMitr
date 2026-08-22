@@ -40,7 +40,7 @@ class TestVoiceHealthWarmupReadiness:
         with patch("backend.app.services.voice_service.stt_module.get_stt") as mock_stt, \
              patch("backend.app.services.voice_service.tts_module.get_tts") as mock_tts:
             stt_engine = MagicMock()
-            stt_engine.name = "faster_whisper"
+            stt_engine.name = "sravaani"
             stt_engine.is_loaded = True
             mock_stt.return_value = stt_engine
 
@@ -86,7 +86,7 @@ class TestVoiceHealthWarmupReadiness:
         with patch("backend.app.services.voice_service.stt_module.get_stt") as mock_stt, \
              patch("backend.app.services.voice_service.tts_module.get_tts", side_effect=RuntimeError("Kokoro model not found")):
             stt_engine = MagicMock()
-            stt_engine.name = "faster_whisper"
+            stt_engine.name = "sravaani"
             stt_engine.is_loaded = True
             mock_stt.return_value = stt_engine
 
@@ -202,14 +202,14 @@ class TestIsolatedTemporaryFinancialResponses:
         assert lang == "en"
 
 
-class TestVoiceChatPipeline:
+class TestVoiceChatPipelineNoSilentFallbacks:
     @pytest.mark.asyncio
     async def test_process_voice_chat_text_only(self):
         mock_tts_result = TTSResult(
             audio_path=Path("dummy.wav"),
             sample_rate=24000,
-            provider="mock_tts",
-            voice="test_voice",
+            provider="kokoro",
+            voice="af_bella",
             latency_ms=12.0,
             audio_seconds=1.5,
         )
@@ -219,7 +219,7 @@ class TestVoiceChatPipeline:
              patch("backend.app.services.voice_service.audio_utils.cleanup"):
             mock_tts = MagicMock()
             mock_tts.synthesize.return_value = mock_tts_result
-            mock_tts.name = "mock_tts"
+            mock_tts.name = "kokoro"
             mock_get_tts.return_value = mock_tts
 
             req = VoiceRequest(text="Hello DhanMITR", language="en")
@@ -227,7 +227,7 @@ class TestVoiceChatPipeline:
 
             assert response.transcript == "Hello DhanMITR"
             assert response.audio_base64 == "bW9ja19hdWRpb19kYXRh"
-            assert response.tts.provider == "mock_tts"
+            assert response.tts.provider == "kokoro"
             assert response.timing.total_ms >= 0
 
     @pytest.mark.asyncio
@@ -235,14 +235,14 @@ class TestVoiceChatPipeline:
         mock_stt_result = STTResult(
             text="Analyze my expenses",
             language="en",
-            provider="mock_stt",
+            provider="sravaani",
             latency_ms=25.0,
             audio_seconds=2.0,
         )
         mock_tts_result = TTSResult(
             audio_path=Path("dummy_out.wav"),
             sample_rate=24000,
-            provider="mock_tts",
+            provider="kokoro",
             voice="af_bella",
             latency_ms=18.0,
             audio_seconds=2.2,
@@ -257,12 +257,12 @@ class TestVoiceChatPipeline:
 
             mock_stt = MagicMock()
             mock_stt.transcribe.return_value = mock_stt_result
-            mock_stt.name = "mock_stt"
+            mock_stt.name = "sravaani"
             mock_get_stt.return_value = mock_stt
 
             mock_tts = MagicMock()
             mock_tts.synthesize.return_value = mock_tts_result
-            mock_tts.name = "mock_tts"
+            mock_tts.name = "kokoro"
             mock_get_tts.return_value = mock_tts
 
             req = VoiceRequest(audio_base64="ZHVtbXlfd2VibV9kYXRh", language="en")
@@ -270,10 +270,96 @@ class TestVoiceChatPipeline:
 
             assert response.transcript == "Analyze my expenses"
             assert response.audio_base64 == "c3ludGhlc2l6ZWRfd2F2"
-            assert response.stt.provider == "mock_stt"
-            assert response.tts.provider == "mock_tts"
+            assert response.stt.provider == "sravaani"
+            assert response.tts.provider == "kokoro"
             assert response.language == "en"
             assert response.timing.total_ms > 0
+
+    @pytest.mark.asyncio
+    async def test_configured_sravaani_failure_raises_stt_provider_error_no_fallback(self):
+        with patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("in.webm")), \
+             patch("backend.app.services.voice_service.audio_utils.to_wav16k_mono", return_value=Path("in.wav")), \
+             patch("backend.app.services.voice_service.stt_module.get_stt", side_effect=RuntimeError("SraVaani CUDA out of memory")), \
+             patch("backend.app.services.voice_service.audio_utils.cleanup"):
+
+            req = VoiceRequest(audio_base64="ZHVtbXlfd2VibV9kYXRh", language="en")
+            with pytest.raises(voice_service.STTProviderError) as exc_info:
+                await voice_service.process_voice_chat(req)
+
+            assert exc_info.value.code == "STT_PROVIDER_UNAVAILABLE"
+            assert "unavailable" in exc_info.value.message.lower()
+
+    @pytest.mark.asyncio
+    async def test_configured_kokoro_failure_raises_tts_provider_error_no_fallback(self):
+        mock_stt_result = STTResult(
+            text="Analyze my expenses",
+            language="en",
+            provider="sravaani",
+            latency_ms=25.0,
+            audio_seconds=2.0,
+        )
+
+        with patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("in.webm")), \
+             patch("backend.app.services.voice_service.audio_utils.to_wav16k_mono", return_value=Path("in.wav")), \
+             patch("backend.app.services.voice_service.stt_module.get_stt") as mock_get_stt, \
+             patch("backend.app.services.voice_service.tts_module.get_tts", side_effect=RuntimeError("Kokoro model corrupted")), \
+             patch("backend.app.services.voice_service.audio_utils.cleanup"):
+
+            mock_stt = MagicMock()
+            mock_stt.transcribe.return_value = mock_stt_result
+            mock_stt.name = "sravaani"
+            mock_get_stt.return_value = mock_stt
+
+            req = VoiceRequest(audio_base64="ZHVtbXlfd2VibV9kYXRh", language="en")
+            with pytest.raises(voice_service.TTSProviderError) as exc_info:
+                await voice_service.process_voice_chat(req)
+
+            assert exc_info.value.code == "TTS_PROVIDER_UNAVAILABLE"
+            assert "unavailable" in exc_info.value.message.lower()
+
+    @pytest.mark.asyncio
+    async def test_explicit_mock_stt_and_tts_provider(self):
+        mock_stt_result = STTResult(
+            text="Mock transcript",
+            language="en",
+            provider="mock",
+            latency_ms=1.0,
+            audio_seconds=1.0,
+        )
+        mock_tts_result = TTSResult(
+            audio_path=Path("dummy_mock.wav"),
+            sample_rate=16000,
+            provider="mock",
+            voice="mock",
+            latency_ms=1.0,
+            audio_seconds=1.0,
+        )
+
+        with patch("backend.app.services.voice_service.voice_config.STT_PROVIDER", "mock"), \
+             patch("backend.app.services.voice_service.voice_config.TTS_PROVIDER", "mock"), \
+             patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("in.webm")), \
+             patch("backend.app.services.voice_service.audio_utils.to_wav16k_mono", return_value=Path("in.wav")), \
+             patch("backend.app.services.voice_service.stt_module.get_stt") as mock_get_stt, \
+             patch("backend.app.services.voice_service.tts_module.get_tts") as mock_get_tts, \
+             patch("backend.app.services.voice_service.audio_utils.wav_to_base64", return_value="bW9ja193YXY="), \
+             patch("backend.app.services.voice_service.audio_utils.cleanup"):
+
+            mock_stt = MagicMock()
+            mock_stt.transcribe.return_value = mock_stt_result
+            mock_stt.name = "mock"
+            mock_get_stt.return_value = mock_stt
+
+            mock_tts = MagicMock()
+            mock_tts.synthesize.return_value = mock_tts_result
+            mock_tts.name = "mock"
+            mock_get_tts.return_value = mock_tts
+
+            req = VoiceRequest(audio_base64="ZHVtbXlfd2VibV9kYXRh", language="en")
+            response = await voice_service.process_voice_chat(req)
+
+            assert response.transcript == "Mock transcript"
+            assert response.stt.provider == "mock"
+            assert response.tts.provider == "mock"
 
     @pytest.mark.asyncio
     async def test_process_voice_chat_empty_request_raises_value_error(self):

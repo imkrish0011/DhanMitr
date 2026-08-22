@@ -69,12 +69,10 @@ class BaseTTS:
         self.load()
         result = None
         try:
-            result = self.synthesize("नमस्ते", language="hi")
-        except Exception:
             try:
-                result = self.synthesize("Hello")
+                result = self.synthesize("नमस्ते", language="hi")
             except Exception:
-                pass  # warmup is best-effort and must not block startup
+                result = self.synthesize("Hello", language="en")
         finally:
             if result is not None:
                 audio_utils.cleanup(result.audio_path)

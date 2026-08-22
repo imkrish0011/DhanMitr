@@ -64,8 +64,6 @@ class BaseSTT:
         try:
             silence = audio_utils.make_silence_wav(1.0)
             self.transcribe(silence)
-        except Exception:
-            pass  # warmup is best-effort; a failure here must not block startup
         finally:
             audio_utils.cleanup(silence)
 

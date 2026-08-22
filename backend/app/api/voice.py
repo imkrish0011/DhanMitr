@@ -54,11 +54,38 @@ async def voice_chat(request: VoiceRequest) -> VoiceResponse:
             tts=TTSTelemetry(provider="none", voice="", latency_ms=0.0),
             timing=VoiceTimingTelemetry(total_ms=0.0),
         )
+    except (voice_service.STTProviderError, voice_service.TTSProviderError) as exc:
+        logger.error("Voice provider unavailable: %s (code: %s)", exc.message, exc.code)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                }
+            },
+        ) from exc
+    except voice_service.VoiceServiceError as exc:
+        logger.error("Voice service error: %s (code: %s)", exc.message, exc.code)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                }
+            },
+        ) from exc
     except Exception as exc:
         logger.error("Voice pipeline execution error: %s", exc, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process voice request. Please check server logs.",
+            detail={
+                "error": {
+                    "code": "VOICE_INTERNAL_ERROR",
+                    "message": "Failed to process voice request. Please check server logs.",
+                }
+            },
         ) from exc
 
 

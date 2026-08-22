@@ -1,8 +1,10 @@
 """Voice Processing Service for DhanMITR.
 
-Orchestrates Speech-to-Text (SraVaani / FasterWhisper), Modular Temporary
-Financial Response Generation, and Text-to-Speech (Kokoro). Pre-warms models
-during application startup and tracks provider readiness independently.
+Orchestrates Speech-to-Text (SraVaani / configured STT), Modular Temporary
+Financial Response Generation, and Text-to-Speech (Kokoro / configured TTS).
+Pre-warms models during application startup, tracks provider readiness
+independently, and strictly executes configured providers without silent
+production fallbacks.
 """
 
 import asyncio
@@ -10,7 +12,7 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 # Ensure voice package is resolvable
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -41,8 +43,43 @@ from shared.types.python.models import (
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Structured Exceptions for Production Provider Failures
+# ---------------------------------------------------------------------------
+
 class VoiceServiceError(Exception):
-    """Raised when voice pipeline encounters an error."""
+    """Base exception for voice service errors."""
+
+    def __init__(
+        self,
+        message: str = "Voice service error.",
+        code: str = "VOICE_SERVICE_ERROR",
+    ):
+        super().__init__(message)
+        self.message = message
+        self.code = code
+
+
+class STTProviderError(VoiceServiceError):
+    """Raised when the configured STT provider fails or is unavailable."""
+
+    def __init__(
+        self,
+        message: str = "Configured STT provider is unavailable.",
+        code: str = "STT_PROVIDER_UNAVAILABLE",
+    ):
+        super().__init__(message=message, code=code)
+
+
+class TTSProviderError(VoiceServiceError):
+    """Raised when the configured TTS provider fails or is unavailable."""
+
+    def __init__(
+        self,
+        message: str = "Configured TTS provider is unavailable.",
+        code: str = "TTS_PROVIDER_UNAVAILABLE",
+    ):
+        super().__init__(message=message, code=code)
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +127,7 @@ def _run_warmup_sync() -> Dict[str, Any]:
     _state["tts"]["provider"] = tts_provider
     _state["tts"]["initialized"] = True
 
-    # 1. Warm up STT Provider
+    # 1. Warm up Configured STT Provider
     t0_stt = time.perf_counter()
     try:
         stt_engine = stt_module.get_stt(stt_provider)
@@ -111,9 +148,14 @@ def _run_warmup_sync() -> Dict[str, Any]:
         _state["stt"]["warmup_success"] = False
         _state["stt"]["warmup_error"] = str(exc)
         _state["stt"]["warmup_duration_ms"] = stt_ms
-        logger.error("STT warmup failed for '%s': %s", stt_provider, exc)
+        logger.error(
+            "Configured STT warmup failed for '%s': %s",
+            stt_provider,
+            exc,
+            exc_info=True,
+        )
 
-    # 2. Warm up TTS Provider
+    # 2. Warm up Configured TTS Provider
     t0_tts = time.perf_counter()
     try:
         tts_engine = tts_module.get_tts(tts_provider)
@@ -134,7 +176,12 @@ def _run_warmup_sync() -> Dict[str, Any]:
         _state["tts"]["warmup_success"] = False
         _state["tts"]["warmup_error"] = str(exc)
         _state["tts"]["warmup_duration_ms"] = tts_ms
-        logger.error("TTS warmup failed for '%s': %s", tts_provider, exc)
+        logger.error(
+            "Configured TTS warmup failed for '%s': %s",
+            tts_provider,
+            exc,
+            exc_info=True,
+        )
 
     return {
         "stt_success": _state["stt"]["warmup_success"],
@@ -210,7 +257,7 @@ def get_voice_health() -> VoiceHealthResponse:
 
 
 # ---------------------------------------------------------------------------
-# Core Audio Processing Pipeline
+# Core Audio Processing Pipeline (No Silent Fallbacks)
 # ---------------------------------------------------------------------------
 
 def _process_voice_sync(
@@ -232,23 +279,22 @@ def _process_voice_sync(
         # 2. Transcode to 16 kHz mono WAV
         wav_tmp = audio_utils.to_wav16k_mono(raw_tmp)
 
-        # 3. Speech-to-Text Transcription with cached provider
-        stt_result = None
-        for engine_key in [None, "faster_whisper", "mock"]:
-            try:
-                stt_engine = stt_module.get_stt(engine_key)
-                stt_result = stt_engine.transcribe(wav_tmp, language=language_hint)
-                break
-            except Exception as stt_err:
-                logger.warning(
-                    "STT provider '%s' failed, trying next: %s",
-                    engine_key or voice_config.STT_PROVIDER,
-                    stt_err,
-                )
-
-        if not stt_result:
-            stt_engine = stt_module.get_stt("mock")
+        # 3. Speech-to-Text Transcription with strictly configured provider
+        stt_provider = voice_config.STT_PROVIDER
+        try:
+            stt_engine = stt_module.get_stt(stt_provider)
             stt_result = stt_engine.transcribe(wav_tmp, language=language_hint)
+        except Exception as stt_err:
+            logger.error(
+                "Configured STT provider '%s' failed during transcription: %s",
+                stt_provider,
+                stt_err,
+                exc_info=True,
+            )
+            raise STTProviderError(
+                message="Configured STT provider is unavailable.",
+                code="STT_PROVIDER_UNAVAILABLE",
+            ) from stt_err
 
         transcript = (stt_result.text or "").strip()
 
@@ -269,22 +315,26 @@ def _process_voice_sync(
                 context=financial_context,
             )
 
-        # 5. Text-to-Speech Synthesis with cached provider
+        # 5. Text-to-Speech Synthesis with strictly configured provider
+        tts_provider = voice_config.TTS_PROVIDER
         try:
-            tts_engine = tts_module.get_tts()
+            tts_engine = tts_module.get_tts(tts_provider)
             tts_result = tts_engine.synthesize(
                 text=spoken_reply,
                 language=reply_lang,
                 voice=voice_id,
             )
         except Exception as tts_err:
-            logger.warning("Primary TTS provider error, falling back to mock: %s", tts_err)
-            tts_engine = tts_module.get_tts("mock")
-            tts_result = tts_engine.synthesize(
-                text=spoken_reply,
-                language=reply_lang,
-                voice=voice_id,
+            logger.error(
+                "Configured TTS provider '%s' failed during synthesis: %s",
+                tts_provider,
+                tts_err,
+                exc_info=True,
             )
+            raise TTSProviderError(
+                message="Configured TTS provider is unavailable.",
+                code="TTS_PROVIDER_UNAVAILABLE",
+            ) from tts_err
 
         tts_out = tts_result.audio_path
 
@@ -367,8 +417,9 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
         context=parsed_context,
     )
 
+    tts_provider = voice_config.TTS_PROVIDER
     try:
-        tts_engine = tts_module.get_tts()
+        tts_engine = tts_module.get_tts(tts_provider)
         tts_result = await asyncio.to_thread(
             tts_engine.synthesize,
             spoken_reply,
@@ -376,14 +427,16 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             request.voice_id,
         )
     except Exception as tts_err:
-        logger.warning("TTS error in text chat, fallback to mock: %s", tts_err)
-        tts_engine = tts_module.get_tts("mock")
-        tts_result = await asyncio.to_thread(
-            tts_engine.synthesize,
-            spoken_reply,
-            reply_lang,
-            request.voice_id,
+        logger.error(
+            "Configured TTS provider '%s' failed in text chat synthesis: %s",
+            tts_provider,
+            tts_err,
+            exc_info=True,
         )
+        raise TTSProviderError(
+            message="Configured TTS provider is unavailable.",
+            code="TTS_PROVIDER_UNAVAILABLE",
+        ) from tts_err
 
     b64 = audio_utils.wav_to_base64(tts_result.audio_path)
     audio_utils.cleanup(tts_result.audio_path)
