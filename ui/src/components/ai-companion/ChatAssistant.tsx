@@ -20,7 +20,6 @@ interface ChatAssistantProps {
 
 export const ChatAssistant: React.FC<ChatAssistantProps> = ({
   onSwitchToVoice,
-  onNavigateToHub,
 }) => {
   const {
     messages,
@@ -29,6 +28,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
     isGeneratingResponse,
     triggerPrompt,
     startVoiceListening,
+    stopVoiceListening,
     voiceState,
   } = useVoiceChat();
 
@@ -183,15 +183,31 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
             {/* Microphone button */}
             <button
               type="button"
-              onClick={startVoiceListening}
-              className={`p-1.5 rounded-lg transition-colors ${
+              onClick={voiceState === 'listening' || voiceState === 'speaking' ? stopVoiceListening : startVoiceListening}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                 voiceState === 'listening'
-                  ? 'bg-red-500 text-white animate-pulse shadow-md'
+                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-md ring-2 ring-red-400/50'
+                  : voiceState === 'processing'
+                  ? 'bg-amber-500 text-white animate-pulse shadow-md'
+                  : voiceState === 'speaking'
+                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white animate-pulse shadow-md'
                   : 'neumorph-btn text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
               }`}
-              title="Voice Input"
+              title={
+                voiceState === 'listening'
+                  ? 'Tap to stop recording & submit'
+                  : voiceState === 'speaking'
+                  ? 'Tap to stop audio playback'
+                  : voiceState === 'processing'
+                  ? 'Processing your voice...'
+                  : 'Voice Input'
+              }
             >
-              <MicIcon className="w-3.5 h-3.5" />
+              {voiceState === 'listening' ? (
+                <span className="w-3.5 h-3.5 block bg-white rounded-2xs" />
+              ) : (
+                <MicIcon className="w-3.5 h-3.5" />
+              )}
             </button>
 
             {/* Send button */}

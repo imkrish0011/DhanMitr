@@ -22,7 +22,7 @@ except ImportError:  # python-dotenv is optional; shell env still works
 # -----------------------------------------------------------------------------
 # Provider selection
 # -----------------------------------------------------------------------------
-STT_PROVIDER = os.getenv("STT_PROVIDER", "sravaani").strip().lower()  # sravaani | faster_whisper | mock
+STT_PROVIDER = os.getenv("STT_PROVIDER", "faster_whisper" if not (os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")) else "sravaani").strip().lower()  # sravaani | faster_whisper | mock
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "kokoro").strip().lower()    # kokoro | piper | mock
 
 # -----------------------------------------------------------------------------

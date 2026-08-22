@@ -27,6 +27,10 @@
     },
     "user_id": {
       "type": "string"
+    },
+    "financial_context": {
+      "type": "object",
+      "description": "Structured financial snapshot of the active user."
     }
   }
 }

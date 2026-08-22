@@ -166,13 +166,61 @@ export interface ChatMessage {
   timestamp: string;
   language?: 'en' | 'hi' | 'hinglish';
   widgetType?: 'expense_summary' | 'subscription_alert' | 'investment_tip' | 'none';
-  widgetData?: any;
+  widgetData?: SpendingCategorySummary[] | Subscription[] | Record<string, unknown> | null;
   sources?: KnowledgeSource[];
 }
 
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
 
+export interface STTTelemetry {
+  provider: string;
+  latency_ms: number;
+}
+
+export interface TTSTelemetry {
+  provider: string;
+  voice: string;
+  latency_ms: number;
+}
+
+export interface VoiceTimingTelemetry {
+  total_ms: number;
+}
+
+export interface VoiceHealthResponse {
+  status: string;
+  service: string;
+  stt: Record<string, unknown>;
+  tts: Record<string, unknown>;
+  uptime_ready: boolean;
+}
+
+export interface VoiceRequest {
+  audio_base64?: string;
+  text?: string;
+  voice_id?: string;
+  language?: string;
+  stream_output?: boolean;
+  user_id?: string;
+  financial_context?: Record<string, unknown>;
+}
+
+export interface VoiceResponse {
+  transcript: string;
+  answer?: string;
+  reply_text?: string;
+  audio_base64?: string;
+  audio_format?: string;
+  language?: string;
+  duration_seconds?: number;
+  latency_ms?: number;
+  stt?: STTTelemetry;
+  tts?: TTSTelemetry;
+  timing?: VoiceTimingTelemetry;
+}
+
 export type NavTab = 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings';
 
 export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator';
+
 

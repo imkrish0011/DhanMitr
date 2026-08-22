@@ -24,7 +24,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 }) => {
   const {
     voiceState,
-    setVoiceState,
     selectedLanguage,
     setSelectedLanguage,
     startVoiceListening,
@@ -232,7 +231,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         {/* Live Audio Transcript Display: Sunken Debossed Capsule */}
         {activeTranscript && (
           <div className="mt-4 px-5 py-2 neumorph-inset rounded-2xl max-w-md text-xs text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-            "{activeTranscript}"
+            &ldquo;{activeTranscript}&rdquo;
           </div>
         )}
       </div>
@@ -277,11 +276,29 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
           <button
             type="button"
-            onClick={startVoiceListening}
-            className="p-2 neumorph-btn text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl"
-            title="Start Voice Recognition"
+            onClick={voiceState === 'listening' || voiceState === 'speaking' ? stopVoiceListening : startVoiceListening}
+            className={`p-2 rounded-xl transition-all cursor-pointer ${
+              voiceState === 'listening'
+                ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-md ring-2 ring-red-400/50'
+                : voiceState === 'processing'
+                ? 'bg-amber-500 text-white animate-pulse shadow-md'
+                : voiceState === 'speaking'
+                ? 'bg-emerald-500 hover:bg-emerald-600 text-white animate-pulse shadow-md'
+                : 'neumorph-btn text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
+            }`}
+            title={
+              voiceState === 'listening'
+                ? 'Tap to stop recording & submit'
+                : voiceState === 'speaking'
+                ? 'Tap to stop playback'
+                : 'Start Voice Recognition'
+            }
           >
-            <MicIcon className="w-4 h-4" />
+            {voiceState === 'listening' ? (
+              <span className="w-4 h-4 block bg-white rounded-2xs" />
+            ) : (
+              <MicIcon className="w-4 h-4" />
+            )}
           </button>
 
           <button

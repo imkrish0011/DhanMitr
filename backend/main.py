@@ -11,7 +11,7 @@ if str(ROOT_DIR) not in sys.path:
 from backend.app.core.config import settings
 
 def start():
-    print(f"🚀 Starting DhanMITR Backend on http://{settings.HOST}:{settings.PORT}")
+    print(f"Starting DhanMITR Backend on http://{settings.HOST}:{settings.PORT}")
     uvicorn.run(
         "backend.app.main:app",
         host=settings.HOST,

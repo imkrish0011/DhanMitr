@@ -8,6 +8,10 @@
       "type": "string",
       "description": "Speech-to-text recognized transcript."
     },
+    "answer": {
+      "type": "string",
+      "description": "Assistant answer text."
+    },
     "reply_text": {
       "type": "string",
       "description": "AI response generated from the transcript."
@@ -20,11 +24,36 @@
       "type": "string",
       "default": "audio/wav"
     },
+    "language": {
+      "type": "string",
+      "default": "en"
+    },
     "duration_seconds": {
       "type": "number"
     },
     "latency_ms": {
       "type": "number"
+    },
+    "stt": {
+      "type": "object",
+      "properties": {
+        "provider": { "type": "string" },
+        "latency_ms": { "type": "number" }
+      }
+    },
+    "tts": {
+      "type": "object",
+      "properties": {
+        "provider": { "type": "string" },
+        "voice": { "type": "string" },
+        "latency_ms": { "type": "number" }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "total_ms": { "type": "number" }
+      }
     }
   },
   "required": ["transcript"]

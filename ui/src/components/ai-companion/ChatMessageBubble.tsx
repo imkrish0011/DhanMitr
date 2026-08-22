@@ -12,7 +12,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   BookOpen,
-  Sparkles,
 } from 'lucide-react';
 
 interface ChatMessageBubbleProps {
@@ -46,7 +45,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
   };
 
   // Helper to format text with bold spans, bullet points, and lists
-  const renderFormattedText = (text: string) => {
+  const renderFormattedText = (text: string): React.ReactNode => {
     const lines = text.split('\n');
     return lines.map((line, lIdx) => {
       const isBullet = line.trim().startsWith('- ') || line.trim().startsWith('* ');
@@ -108,7 +107,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
             <div className="space-y-1">{renderFormattedText(message.text)}</div>
 
             {/* Embedded Interactive Expense Breakdown Widget */}
-            {message.widgetType === 'expense_summary' && message.widgetData && (
+            {message.widgetType === 'expense_summary' && Array.isArray(message.widgetData) && (
               <div className="mt-2.5 p-2.5 neumorph-inset rounded-xl space-y-1.5 border border-slate-200/50 dark:border-slate-800/50">
                 <div className="text-[10px] font-extrabold text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-300/40 dark:border-slate-700/60">
                   श्रेणीवार मासिक खर्च सारांश (Category Breakdown):

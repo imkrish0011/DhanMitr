@@ -174,6 +174,29 @@ export interface ChatStreamChunk {
   error?: string;
 }
 
+export interface STTTelemetry {
+  provider: string;
+  latency_ms: number;
+}
+
+export interface TTSTelemetry {
+  provider: string;
+  voice: string;
+  latency_ms: number;
+}
+
+export interface VoiceTimingTelemetry {
+  total_ms: number;
+}
+
+export interface VoiceHealthResponse {
+  status: string;
+  service: string;
+  stt: Record<string, any>;
+  tts: Record<string, any>;
+  uptime_ready: boolean;
+}
+
 export interface VoiceRequest {
   audio_base64?: string;
   text?: string;
@@ -181,13 +204,20 @@ export interface VoiceRequest {
   language?: string;
   stream_output?: boolean;
   user_id?: string;
+  financial_context?: FinancialContext;
 }
 
 export interface VoiceResponse {
   transcript: string;
+  answer?: string;
   reply_text?: string;
   audio_base64?: string;
   audio_format?: string;
+  language?: string;
   duration_seconds?: number;
   latency_ms?: number;
+  stt?: STTTelemetry;
+  tts?: TTSTelemetry;
+  timing?: VoiceTimingTelemetry;
 }
+
