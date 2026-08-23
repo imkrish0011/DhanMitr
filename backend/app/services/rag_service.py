@@ -65,6 +65,20 @@ def reset_client() -> None:
     _supabase_client = None
 
 
+def warmup_rag_model() -> None:
+    """Pre-loads the BGE-M3 embedding model in background during startup."""
+    global _sentence_transformer_model
+    try:
+        logger.info("Pre-warming BGE-M3 SentenceTransformer model...")
+        if _sentence_transformer_model is None:
+            from sentence_transformers import SentenceTransformer
+            _sentence_transformer_model = SentenceTransformer("BAAI/bge-m3")
+        _sentence_transformer_model.encode("DhanMITR warmup query", normalize_embeddings=True)
+        logger.info("BGE-M3 SentenceTransformer model successfully pre-warmed.")
+    except Exception as exc:
+        logger.warning("BGE-M3 pre-warm failed or skipped: %s", exc)
+
+
 def get_embedding_vector(text: str) -> Optional[List[float]]:
     """Encodes query text into a 1024-dimensional BGE-M3 float vector."""
     global _sentence_transformer_model
@@ -77,7 +91,7 @@ def get_embedding_vector(text: str) -> Optional[List[float]]:
         ).tolist()
         return vector
     except Exception as exc:
-        logger.debug("SentenceTransformer encoding unavailable or failed: %s", exc)
+        logger.warning("SentenceTransformer encoding failed: %s", exc)
         return None
 
 
@@ -419,9 +433,10 @@ async def generate_grounded_answer(
         if vector:
             retrieved_chunks = await search_similar_chunks(
                 query_embedding=vector,
-                match_count=4,
-                match_threshold=0.35,
+                match_count=5,
+                match_threshold=0.20,
             )
+            logger.info("RAG search for '%s' retrieved %d chunks", q, len(retrieved_chunks))
             for c in retrieved_chunks:
                 sources.append({
                     "title": c.get("document_title") or c.get("source_name") or "DhanMITR Knowledge",
@@ -431,7 +446,7 @@ async def generate_grounded_answer(
                     "similarity": c.get("similarity", 0.0),
                 })
     except Exception as exc:
-        logger.debug("RAG vector retrieval check skipped or failed: %s", exc)
+        logger.warning("RAG vector retrieval failed: %s", exc)
 
     # 3. Conditional Personal Finance Context Injection
     is_personal = detect_personal_finance_intent(q)

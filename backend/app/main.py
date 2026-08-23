@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -5,16 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.api.v1.endpoints.rag import router as rag_router
 from backend.app.api.voice import router as voice_router
-from backend.app.services import voice_service
+from backend.app.services import voice_service, rag_service
 
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI Lifespan handler for pre-warming voice models."""
-    logger.info("Initializing DhanMITR Voice models (STT & TTS pre-warming)...")
-    await voice_service.warmup_voice_models()
+    """FastAPI Lifespan handler for pre-warming voice and RAG embedding models."""
+    logger.info("Initializing DhanMITR AI models (STT, TTS, RAG pre-warming)...")
+    asyncio.create_task(voice_service.warmup_voice_models())
+    asyncio.create_task(asyncio.to_thread(rag_service.warmup_rag_model))
     yield
     logger.info("DhanMITR Backend shutdown complete.")
 
