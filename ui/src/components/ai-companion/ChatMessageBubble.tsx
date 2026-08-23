@@ -44,38 +44,17 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
     setIsSourceModalOpen(true);
   };
 
-  // Helper to format text with bold spans, bullet points, and lists
+  // Helper to render plain text with paragraph breaks and line-by-line layout
   const renderFormattedText = (text: string): React.ReactNode => {
     const lines = text.split('\n');
     return lines.map((line, lIdx) => {
-      const isBullet = line.trim().startsWith('- ') || line.trim().startsWith('* ');
-      const cleanLine = isBullet ? line.trim().substring(2) : line;
-
-      // Replace bold markers **text**
-      const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+      if (!line.trim()) {
+        return <div key={lIdx} className="h-1.5" />;
+      }
       return (
-        <div
-          key={lIdx}
-          className={`${lIdx > 0 ? 'mt-1' : ''} ${
-            isBullet ? 'flex items-start gap-1.5 pl-1' : ''
-          }`}
-        >
-          {isBullet && (
-            <span className="text-emerald-500 font-bold leading-none mt-1 shrink-0">•</span>
-          )}
-          <p className="flex-1">
-            {parts.map((part, pIdx) => {
-              if (part.startsWith('**') && part.endsWith('**')) {
-                return (
-                  <strong key={pIdx} className="font-extrabold text-slate-900 dark:text-white">
-                    {part.slice(2, -2)}
-                  </strong>
-                );
-              }
-              return part;
-            })}
-          </p>
-        </div>
+        <p key={lIdx} className={lIdx > 0 ? 'mt-0.5' : ''}>
+          {line}
+        </p>
       );
     });
   };
