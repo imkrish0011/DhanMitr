@@ -11,11 +11,30 @@ from sentence_transformers import SentenceTransformer
 MODEL_NAME = "BAAI/bge-m3"
 
 CHUNK_FILES = [
+    # DEA
     Path("rag/processed/chunks/dea_national_summary_2026-08-14_chunks.json"),
+
+    # RBI
     Path("rag/processed/chunks/rbi_rates_chunks.json"),
     Path("rag/processed/chunks/rbi_vrrr_chunks.json"),
+    Path("rag/processed/chunks/rbi_fame_chunks.json"),
+
+    # SEBI
     Path("rag/processed/chunks/sebi_bulletin_july_2026_chunks.json"),
+
+    # NSE
     Path("rag/processed/chunks/nse_primary_market_june_2026_chunks.json"),
+
+    # Government schemes
+    Path("rag/processed/chunks/apy_chunks.json"),
+    Path("rag/processed/chunks/nps_chunks.json"),
+    Path("rag/processed/chunks/pmjdy_chunks.json"),
+    Path("rag/processed/chunks/pmjjby_chunks.json"),
+    Path("rag/processed/chunks/pmkisan_chunks.json"),
+    Path("rag/processed/chunks/pmmy_chunks.json"),
+    Path("rag/processed/chunks/pmsby_chunks.json"),
+    Path("rag/processed/chunks/standup_chunks.json"),
+    Path("rag/processed/chunks/pm_svanidhi_chunks.json"),
 ]
 
 OUTPUT_FILE = Path(
@@ -32,13 +51,21 @@ def main() -> None:
     for chunk_file in CHUNK_FILES:
         print(f"Loading: {chunk_file}")
 
-        data = json.loads(chunk_file.read_text(encoding="utf-8"))
+        if not chunk_file.exists():
+            raise FileNotFoundError(
+                f"Chunk file not found: {chunk_file}"
+            )
+
+        data = json.loads(
+            chunk_file.read_text(encoding="utf-8")
+        )
+
         chunks = data.get("chunks", [])
 
         print(f"  Chunks found: {len(chunks)}")
 
         for chunk in chunks:
-            text = chunk.get("text", "").strip()
+            text = (chunk.get("text") or "").strip()
 
             if not text:
                 continue
@@ -83,7 +110,10 @@ def main() -> None:
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
     OUTPUT_FILE.write_text(
-        json.dumps(output, ensure_ascii=False),
+        json.dumps(
+            output,
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
 

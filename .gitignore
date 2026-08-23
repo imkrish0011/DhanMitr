@@ -79,3 +79,4 @@ logs/
 .DS_Store
 Thumbs.db
 Desktop.ini
+rag_test_ui/
