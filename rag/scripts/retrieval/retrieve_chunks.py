@@ -34,11 +34,22 @@ RELATIVE_SCORE_RATIO = 0.80
 load_dotenv(PROJECT_ROOT / ".env")
 
 
+_model = None
+
+
+def get_embedding_model() -> SentenceTransformer:
+    """Return cached SentenceTransformer singleton."""
+    global _model
+    if _model is None:
+        _model = SentenceTransformer(MODEL_NAME)
+    return _model
+
+
 def get_supabase_client() -> Client:
     """Create a Supabase client using the service-role key."""
 
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
 
     if not url or not key:
         raise RuntimeError(
@@ -148,7 +159,7 @@ def retrieve_chunks(
 ) -> list[dict]:
     """Embed the question and retrieve genuinely relevant chunks."""
 
-    model = SentenceTransformer(MODEL_NAME)
+    model = get_embedding_model()
 
     query_embedding = model.encode(
         question,

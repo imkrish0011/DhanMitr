@@ -225,6 +225,7 @@ export interface VoiceResponse {
   stt?: STTTelemetry;
   tts?: TTSTelemetry;
   timing?: VoiceTimingTelemetry;
+  sources?: KnowledgeSource[];
 }
 
 export type NavTab = 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings';

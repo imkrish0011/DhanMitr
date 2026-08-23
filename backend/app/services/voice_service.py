@@ -26,6 +26,7 @@ import voice.audio_utils as audio_utils
 import voice.config as voice_config
 import voice.stt as stt_module
 import voice.tts as tts_module
+from backend.app.services import rag_service
 from backend.app.services.temporary_response_service import (
     generate_temporary_financial_response,
 )
@@ -308,12 +309,28 @@ def _process_voice_sync(
             spoken_reply = answer_text
             reply_lang = "hi" if language_hint == "hi" else "en"
         else:
-            # 4. Generate Temporary Financial Response (NO RAG/LLM)
-            answer_text, spoken_reply, reply_lang = generate_temporary_financial_response(
-                query=transcript,
-                language_hint=language_hint or stt_result.language,
-                context=financial_context,
-            )
+            # 4. Generate Grounded RAG / Live Market / Financial Response
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                rag_out = loop.run_until_complete(
+                    rag_service.generate_grounded_answer(
+                        question=transcript,
+                        financial_context=financial_context,
+                        language=language_hint or stt_result.language,
+                    )
+                )
+                loop.close()
+                answer_text = rag_out["answer"]
+                spoken_reply = rag_out["reply_text"]
+                reply_lang = rag_out["language"]
+            except Exception as rag_err:
+                logger.warning("RAG answer generation fallback in voice pipeline: %s", rag_err)
+                answer_text, spoken_reply, reply_lang = generate_temporary_financial_response(
+                    query=transcript,
+                    language_hint=language_hint or stt_result.language,
+                    context=financial_context,
+                )
 
         # 5. Text-to-Speech Synthesis with strictly configured provider
         tts_provider = voice_config.TTS_PROVIDER
@@ -411,11 +428,22 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
     # Standalone text chat path
     text_input = (request.text or "").strip()
     t0 = time.perf_counter()
-    answer_text, spoken_reply, reply_lang = generate_temporary_financial_response(
-        query=text_input,
-        language_hint=request.language or "en",
-        context=parsed_context,
-    )
+    try:
+        rag_out = await rag_service.generate_grounded_answer(
+            question=text_input,
+            financial_context=parsed_context,
+            language=request.language or "en",
+        )
+        answer_text = rag_out["answer"]
+        spoken_reply = rag_out["reply_text"]
+        reply_lang = rag_out["language"]
+    except Exception as rag_err:
+        logger.warning("RAG answer generation fallback in text chat: %s", rag_err)
+        answer_text, spoken_reply, reply_lang = generate_temporary_financial_response(
+            query=text_input,
+            language_hint=request.language or "en",
+            context=parsed_context,
+        )
 
     tts_provider = voice_config.TTS_PROVIDER
     try:

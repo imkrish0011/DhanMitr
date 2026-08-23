@@ -200,3 +200,46 @@ class TestRAGSearchEndpoint:
             )
 
         assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/rag/ask
+# ---------------------------------------------------------------------------
+
+class TestRAGAskEndpoint:
+    def test_ask_empty_body_returns_422(self):
+        resp = client.post("/api/v1/rag/ask", json={})
+        assert resp.status_code == 422
+
+    def test_ask_valid_question_with_fallback(self):
+        resp = client.post(
+            "/api/v1/rag/ask",
+            json={"question": "What is the 50/30/20 budget rule?", "language": "en"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["question"] == "What is the 50/30/20 budget rule?"
+        assert len(data["answer"]) > 0
+        assert "reply_text" in data
+        assert isinstance(data["sources"], list)
+
+    def test_ask_live_data_rbi_query(self):
+        resp = client.post(
+            "/api/v1/rag/ask",
+            json={"question": "What is the current repo rate?", "language": "en"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["question"] == "What is the current repo rate?"
+        assert "repo" in data["answer"].lower() or "rate" in data["answer"].lower()
+
+    def test_ask_hindi_query(self):
+        resp = client.post(
+            "/api/v1/rag/ask",
+            json={"question": "PMJJBY योजना क्या है?", "language": "hi"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["language"] == "hi"
+        assert len(data["answer"]) > 0
+

@@ -330,6 +330,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               text: replyText,
               timestamp: getTimestampStr(),
               language: (response.language as 'en' | 'hi' | 'hinglish') || selectedLanguage,
+              sources: response.sources,
             };
             setMessages((prev) => [...prev, assistantMsg]);
           }
@@ -475,6 +476,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         text: replyText,
         timestamp: getTimestampStr(),
         language: (response.language as 'en' | 'hi' | 'hinglish') || effectiveLang,
+        sources: response.sources,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);

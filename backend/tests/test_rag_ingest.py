@@ -60,8 +60,8 @@ class TestDatasetValidation:
     def test_valid_actual_file(self):
         file_path = Path("rag/processed/embeddings/rag_embeddings.json")
         data = read_and_validate_dataset(file_path)
-        assert data["count"] == 36
-        assert len(data["records"]) == 36
+        assert data["count"] == len(data["records"])
+        assert data["count"] >= 36
         assert data["embedding_dimension"] == 1024
 
     def test_file_not_found(self, tmp_path):

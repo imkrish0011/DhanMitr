@@ -1,6 +1,6 @@
 """RAG Pydantic schemas for DhanMITR."""
 
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -57,3 +57,37 @@ class RAGSearchResponse(BaseModel):
     """Response wrapper for the RAG similarity-search endpoint."""
 
     results: list[RAGChunkResult]
+
+
+class KnowledgeSourceSchema(BaseModel):
+    """Schema representing a citation source for generated RAG answers."""
+
+    title: str = ""
+    source_type: str = "rag"
+    snippet: str = ""
+    url: Optional[str] = None
+    similarity: float = 0.0
+
+
+class RAGAskRequest(BaseModel):
+    """Request schema for end-to-end question answering via RAG + Live Data + LLM."""
+
+    question: str = Field(..., min_length=1, description="Natural language user question")
+    financial_context: Optional[dict[str, Any]] = Field(
+        default=None, description="Optional user finance context (income, expenses, etc.)"
+    )
+    language: Optional[str] = Field(
+        default="en", description="Target response language ('en', 'hi', 'hinglish')"
+    )
+
+
+class RAGAskResponse(BaseModel):
+    """Response schema for end-to-end question answering."""
+
+    question: str
+    answer: str
+    reply_text: str
+    language: str = "en"
+    sources: list[KnowledgeSourceSchema] = Field(default_factory=list)
+    live_data: Optional[dict[str, Any]] = None
+    suggested_actions: list[str] = Field(default_factory=list)

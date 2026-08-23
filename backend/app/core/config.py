@@ -42,6 +42,15 @@ class Settings(BaseSettings):
         default="", validation_alias="SUPABASE_SERVICE_ROLE_KEY"
     )
 
+    # LLM / Groq & Live Data
+    GROQ_API_KEY: str = Field(default="", validation_alias="GROQ_API_KEY")
+    GROQ_MODEL: str = Field(
+        default="openai/gpt-oss-120b", validation_alias="GROQ_MODEL"
+    )
+    COINGECKO_API_KEY: str = Field(
+        default="", validation_alias="COINGECKO_API_KEY"
+    )
+
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def split_origins(cls, v):

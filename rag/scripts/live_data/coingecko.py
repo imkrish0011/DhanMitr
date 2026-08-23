@@ -30,10 +30,10 @@ def get_crypto_price(
 ) -> dict:
     """Get current cryptocurrency price and 24-hour change."""
 
+    headers = {}
     api_key = os.getenv("COINGECKO_API_KEY")
-
-    if not api_key:
-        raise RuntimeError("COINGECKO_API_KEY must be set.")
+    if api_key:
+        headers["x-cg-demo-api-key"] = api_key
 
     response = requests.get(
         f"{COINGECKO_BASE_URL}/simple/price",
@@ -42,9 +42,7 @@ def get_crypto_price(
             "vs_currencies": currency,
             "include_24hr_change": "true",
         },
-        headers={
-            "x-cg-demo-api-key": api_key,
-        },
+        headers=headers,
         timeout=10,
     )
 

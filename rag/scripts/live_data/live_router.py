@@ -331,52 +331,56 @@ def get_live_data(question: str) -> dict | None:
     # ---------------------------------------------------------------
     # 1. Crypto
     # ---------------------------------------------------------------
-
-    crypto_data = get_live_crypto_data(question)
-
-    if crypto_data:
-        return crypto_data
+    try:
+        crypto_data = get_live_crypto_data(question)
+        if crypto_data:
+            return crypto_data
+    except Exception:
+        pass
 
     # ---------------------------------------------------------------
     # 2. RBI
     # ---------------------------------------------------------------
-
-    rbi_data = get_live_rbi_data(question)
-
-    if rbi_data:
-        return rbi_data
+    try:
+        rbi_data = get_live_rbi_data(question)
+        if rbi_data:
+            return rbi_data
+    except Exception:
+        pass
 
     # ---------------------------------------------------------------
     # 3. Forex
     # ---------------------------------------------------------------
-
-    forex_data = get_live_forex_data(question)
-
-    if forex_data:
-        return forex_data
+    try:
+        forex_data = get_live_forex_data(question)
+        if forex_data:
+            return forex_data
+    except Exception:
+        pass
 
     # ---------------------------------------------------------------
     # 4. Stocks
     # ---------------------------------------------------------------
-
-    stock_data = get_live_stock_data(question)
-
-    if stock_data:
-        return stock_data
+    try:
+        stock_data = get_live_stock_data(question)
+        if stock_data:
+            return stock_data
+    except Exception:
+        pass
 
     # ---------------------------------------------------------------
     # 5. Gold / Silver
     # ---------------------------------------------------------------
-
-    metals_data = get_live_metals_data(question)
-
-    if metals_data:
-        return metals_data
+    try:
+        metals_data = get_live_metals_data(question)
+        if metals_data:
+            return metals_data
+    except Exception:
+        pass
 
     # ---------------------------------------------------------------
     # 6. No live-data provider matched
     # ---------------------------------------------------------------
-
     return None
 
 
