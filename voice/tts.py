@@ -281,8 +281,91 @@ class MockTTS(BaseTTS):
         )
 
 
+class EdgeTTS(BaseTTS):
+    """Microsoft Edge Neural TTS — high-quality, natural speech for English and Hindi.
+
+    Zero local weight download overhead, real-time generation, with lifelike
+    voices for Indian English (en-IN-NeerjaNeural) and Hindi (hi-IN-SwaraNeural).
+    """
+
+    name = "edge"
+
+    VOICES = {
+        "en": "en-IN-NeerjaNeural",
+        "en-in": "en-IN-NeerjaNeural",
+        "en-us": "en-US-JennyNeural",
+        "en-gb": "en-GB-SoniaNeural",
+        "hi": "hi-IN-SwaraNeural",
+    }
+
+    def __init__(self) -> None:
+        self._loaded = True
+
+    def load(self) -> None:
+        self._loaded = True
+
+    def warmup(self) -> None:
+        return
+
+    def synthesize(
+        self, text: str, language: str = "en", voice: Optional[str] = None
+    ) -> TTSResult:
+        text = (text or "").strip()
+        if not text:
+            raise ValueError("Cannot synthesise empty text.")
+
+        import asyncio
+        import concurrent.futures
+        import edge_tts
+
+        lang_key = (language or "en").lower().split("-")[0]
+        voice_name = voice or self.VOICES.get(language.lower(), self.VOICES.get(lang_key, self.VOICES["en"]))
+        dst_mp3 = audio_utils._temp_path(".mp3")
+
+        started = time.perf_counter()
+
+        async def _synth():
+            communicate = edge_tts.Communicate(text, voice_name)
+            await communicate.save(str(dst_mp3))
+
+        try:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    pool.submit(asyncio.run, _synth()).result()
+            else:
+                asyncio.run(_synth())
+        except Exception as exc:
+            audio_utils.cleanup(dst_mp3)
+            raise RuntimeError(f"EdgeTTS synthesis failed: {exc}") from exc
+
+        try:
+            wav_path = audio_utils.to_wav16k_mono(dst_mp3)
+        finally:
+            audio_utils.cleanup(dst_mp3)
+
+        elapsed_ms = (time.perf_counter() - started) * 1000
+
+        return TTSResult(
+            audio_path=wav_path,
+            sample_rate=config.TARGET_SAMPLE_RATE,
+            provider=self.name,
+            voice=voice_name,
+            language=language,
+            latency_ms=round(elapsed_ms, 1),
+            audio_seconds=audio_utils.wav_duration_seconds(wav_path),
+            meta={"voice": voice_name},
+        )
+
+
 _PROVIDERS = {
     "kokoro": KokoroTTS,
+    "edge": EdgeTTS,
+    "edge_tts": EdgeTTS,
     "piper": PiperTTS,
     "mock": MockTTS,
 }
