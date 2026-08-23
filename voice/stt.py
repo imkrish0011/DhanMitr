@@ -205,35 +205,9 @@ class FasterWhisperSTT(BaseSTT):
         )
 
 
-class MockSTT(BaseSTT):
-    """Returns a canned transcript so the UI can be wired without any model."""
-
-    name = "mock"
-
-    def __init__(self) -> None:
-        self._model = "mock"
-
-    def load(self) -> None:
-        return
-
-    def warmup(self) -> None:
-        return
-
-    def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
-        return STTResult(
-            text="मेरा इमरजेंसी फंड कितना होना चाहिए?",
-            language=language or "hi",
-            provider=self.name,
-            latency_ms=0.0,
-            audio_seconds=audio_utils.wav_duration_seconds(wav_path),
-            meta={"note": "mock provider — no model was loaded"},
-        )
-
-
 _PROVIDERS = {
     "sravaani": SraVaaniSTT,
     "faster_whisper": FasterWhisperSTT,
-    "mock": MockSTT,
 }
 
 _cache: Dict[str, BaseSTT] = {}

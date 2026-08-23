@@ -290,4 +290,5 @@ class VoiceResponse(BaseModel):
     stt: Optional[STTTelemetry] = None
     tts: Optional[TTSTelemetry] = None
     timing: Optional[VoiceTimingTelemetry] = None
+    sources: List[KnowledgeSource] = Field(default_factory=list)
 

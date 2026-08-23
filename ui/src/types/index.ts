@@ -164,7 +164,7 @@ export interface ChatMessage {
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
-  language?: 'en' | 'hi' | 'hinglish';
+  language?: 'auto' | 'en' | 'hi' | 'hinglish';
   widgetType?: 'expense_summary' | 'subscription_alert' | 'investment_tip' | 'none';
   widgetData?: SpendingCategorySummary[] | Subscription[] | Record<string, unknown> | null;
   sources?: KnowledgeSource[];

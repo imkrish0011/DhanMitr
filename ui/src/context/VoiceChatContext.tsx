@@ -6,28 +6,30 @@ import { useFinance } from './FinanceContext';
 import { useAuth } from './AuthContext';
 import { sendVoiceChat } from '@/lib/voiceApi';
 
+export type SupportedLanguage = 'auto' | 'en' | 'hi' | 'hinglish';
+
 interface VoiceChatContextType {
   // Voice State
   voiceState: VoiceState;
   setVoiceState: (state: VoiceState) => void;
-  selectedLanguage: 'en' | 'hi' | 'hinglish';
-  setSelectedLanguage: (lang: 'en' | 'hi' | 'hinglish') => void;
+  selectedLanguage: SupportedLanguage;
+  setSelectedLanguage: (lang: SupportedLanguage) => void;
   startVoiceListening: () => void;
   stopVoiceListening: () => void;
   isVoiceActive: boolean;
   activeTranscript: string;
   assistantVoiceReply: string;
   audioFrequencyData: number[];
-  speakText: (text: string, lang?: 'en' | 'hi' | 'hinglish') => void;
+  speakText: (text: string, lang?: SupportedLanguage) => void;
 
   // Chat State
   messages: ChatMessage[];
-  sendMessage: (text: string, language?: 'en' | 'hi' | 'hinglish') => Promise<void>;
+  sendMessage: (text: string, language?: SupportedLanguage) => Promise<void>;
   resetChat: () => void;
   isGeneratingResponse: boolean;
 
   // Quick Actions & Triggers
-  triggerPrompt: (promptText: string, lang?: 'en' | 'hi' | 'hinglish') => void;
+  triggerPrompt: (promptText: string, lang?: SupportedLanguage) => void;
 }
 
 const generateMsgId = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -50,7 +52,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { incrementFreeChatCount, isAuthenticated } = useAuth();
 
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'hi' | 'hinglish'>('en');
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('auto');
   const [activeTranscript, setActiveTranscript] = useState('');
   const [assistantVoiceReply, setAssistantVoiceReply] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -301,10 +303,12 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
           const response = await sendVoiceChat({
             audio_base64: base64Data,
-            language: selectedLanguage,
+            language: selectedLanguage === 'auto' ? undefined : selectedLanguage,
             user_id: profile?.user_id,
             financial_context: buildFinancialContext(),
           });
+
+          const detectedLang = (response.language as 'en' | 'hi' | 'hinglish') || (selectedLanguage === 'auto' ? 'en' : selectedLanguage);
 
           // 1. Update user transcript in UI and chat
           const transcriptText = response.transcript || '';
@@ -315,7 +319,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               sender: 'user',
               text: transcriptText,
               timestamp: getTimestampStr(),
-              language: selectedLanguage,
+              language: detectedLang,
             };
             setMessages((prev) => [...prev, userMsg]);
           }
@@ -329,7 +333,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               sender: 'assistant',
               text: replyText,
               timestamp: getTimestampStr(),
-              language: (response.language as 'en' | 'hi' | 'hinglish') || selectedLanguage,
+              language: detectedLang,
               sources: response.sources,
             };
             setMessages((prev) => [...prev, assistantMsg]);
@@ -438,7 +442,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // Send message from chat box
-  const sendMessage = async (text: string, language?: 'en' | 'hi' | 'hinglish') => {
+  const sendMessage = async (text: string, language?: SupportedLanguage) => {
     if (!text.trim()) return;
 
     if (!isAuthenticated) {
@@ -464,18 +468,19 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const response = await sendVoiceChat({
         text,
-        language: effectiveLang,
+        language: effectiveLang === 'auto' ? undefined : effectiveLang,
         user_id: profile?.user_id,
         financial_context: buildFinancialContext(),
       });
 
       const replyText = response.answer || response.reply_text || '';
+      const detectedLang = (response.language as 'en' | 'hi' | 'hinglish') || (effectiveLang === 'auto' ? 'en' : effectiveLang);
       const assistantMsg: ChatMessage = {
         id: generateMsgId('msg_a'),
         sender: 'assistant',
         text: replyText,
         timestamp: getTimestampStr(),
-        language: (response.language as 'en' | 'hi' | 'hinglish') || effectiveLang,
+        language: detectedLang,
         sources: response.sources,
       };
 
@@ -495,7 +500,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const triggerPrompt = (promptText: string, lang?: 'en' | 'hi' | 'hinglish') => {
+  const triggerPrompt = (promptText: string, lang?: SupportedLanguage) => {
     sendMessage(promptText, lang);
   };
 

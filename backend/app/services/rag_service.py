@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -205,8 +206,20 @@ async def search_similar_chunks(
             match_count,
         )
     except Exception as exc:
-        logger.error("Supabase RPC match_chunks failed: %s", exc)
-        raise RAGServiceError(f"Failed to query RAG chunks: {exc}") from exc
+        logger.warning("Supabase RPC match_chunks transient failure, resetting client and retrying: %s", exc)
+        reset_client()
+        try:
+            client = _get_supabase_client()
+            response = await asyncio.to_thread(
+                _execute_match_chunks,
+                client,
+                query_embedding,
+                match_threshold,
+                match_count,
+            )
+        except Exception as retry_exc:
+            logger.error("Supabase RPC match_chunks retry failed: %s", retry_exc)
+            raise RAGServiceError(f"Failed to query RAG chunks: {retry_exc}") from retry_exc
 
     rows = response.data if response.data else []
     return [_normalise_chunk(row) for row in rows]
@@ -384,19 +397,14 @@ def format_user_financial_context(ctx: Any) -> str:
     return "\n".join(lines) if len(lines) > 1 else ""
 
 
+from backend.app.core.language_detector import detect_language
+
 async def generate_grounded_answer(
     question: str,
     financial_context: Optional[Any] = None,
     language: str = "en",
 ) -> Dict[str, Any]:
-    """Orchestrates end-to-end grounded answer generation.
-
-    1. Checks real-time live data router (RBI, Metals, Forex, Stocks, Crypto).
-    2. Retrieves relevant RAG chunks from Supabase pgvector.
-    3. If GROQ_API_KEY is configured, queries Groq (openai/gpt-oss-120b or llama-3.3-70b-versatile).
-    4. Otherwise, formats structured grounded answer from verified sources & financial profile.
-    5. Produces both rich markdown answer and speech-friendly TTS reply.
-    """
+    """Orchestrates end-to-end grounded answer generation with language auto-detection and telemetry."""
     q = (question or "").strip()
     if not q:
         return {
@@ -407,15 +415,14 @@ async def generate_grounded_answer(
             "sources": [],
             "live_data": None,
             "suggested_actions": [],
+            "rag_ms": 0.0,
+            "llm_ms": 0.0,
+            "language_reason": "empty_fallback",
         }
 
-    # Detect Hindi query
-    is_hindi = (
-        language == "hi"
-        or any("\u0900" <= ch <= "\u097f" for ch in q)
-        or any(w in q.lower() for w in ["योजना", "ब्याज", "दर", "सोना", "चांदी", "शेयर", "रुपया"])
-    )
-    effective_lang = "hi" if is_hindi else "en"
+    # Auto-detect language (Devanagari, Hinglish keywords, explicit hints)
+    effective_lang, lang_reason = detect_language(q, language)
+    logger.info("Language auto-detection: '%s' -> %s (%s)", q[:45], effective_lang.upper(), lang_reason)
 
     # 1. Real-time Live Market Data
     live_data = None
@@ -425,9 +432,11 @@ async def generate_grounded_answer(
     except Exception as exc:
         logger.debug("Live data router check failed: %s", exc)
 
-    # 2. RAG Chunk Retrieval via Supabase
+    # 2. RAG Chunk Retrieval via Supabase with latency timing
     retrieved_chunks: List[Dict[str, Any]] = []
     sources: List[Dict[str, Any]] = []
+    rag_ms = 0.0
+    t0_rag = time.perf_counter()
     try:
         vector = await asyncio.to_thread(get_embedding_vector, q)
         if vector:
@@ -436,7 +445,8 @@ async def generate_grounded_answer(
                 match_count=5,
                 match_threshold=0.20,
             )
-            logger.info("RAG search for '%s' retrieved %d chunks", q, len(retrieved_chunks))
+            rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
+            logger.info("RAG search for '%s' retrieved %d chunks in %s ms", q[:40], len(retrieved_chunks), rag_ms)
             for c in retrieved_chunks:
                 sources.append({
                     "title": c.get("document_title") or c.get("source_name") or "DhanMITR Knowledge",
@@ -445,7 +455,10 @@ async def generate_grounded_answer(
                     "url": c.get("source_url") or "",
                     "similarity": c.get("similarity", 0.0),
                 })
+        else:
+            rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
     except Exception as exc:
+        rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
         logger.warning("RAG vector retrieval failed: %s", exc)
 
     # 3. Conditional Personal Finance Context Injection
@@ -468,24 +481,42 @@ async def generate_grounded_answer(
 
     # 5. Call Groq if API Key is available
     groq_api_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
+    llm_ms = 0.0
     if groq_api_key:
         try:
             from groq import Groq
             groq_client = Groq(api_key=groq_api_key)
 
-            # Build contexts
+            # Build contexts (without leaking internal chunk IDs or metadata to LLM text output)
             rag_context_text = "\n\n".join(
-                f"Document: {c.get('document_title')}\nSource: {c.get('source_name')}\nContent: {c.get('chunk_text')}"
+                f"Information: {c.get('chunk_text')}"
                 for c in retrieved_chunks
             ) if retrieved_chunks else "No specific policy document matched."
 
             live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
 
-            # Build user prompt with conditional personal context
+            # Build user prompt with conditional personal context & strict language directive
+            if effective_lang == "hi":
+                lang_directive = (
+                    "MANDATORY INSTRUCTIONS:\n"
+                    "1. LANGUAGE: The user communicated in Hindi. You MUST write the ENTIRE answer in natural, clear Hindi (Devanagari script). Do NOT reply in English.\n"
+                    "2. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
+                    "3. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+                    "4. Mention currency (INR/Rs.) when applicable."
+                )
+            else:
+                lang_directive = (
+                    "MANDATORY INSTRUCTIONS:\n"
+                    "1. LANGUAGE: Respond clearly in natural, conversational English.\n"
+                    "2. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
+                    "3. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+                    "4. Mention currency (INR/Rs.) when applicable."
+                )
+
             user_prompt_parts = [
-                f"Language: {effective_lang}",
+                f"Language: {effective_lang.upper()}",
                 "",
-                "RAG KNOWLEDGE CONTEXT:",
+                "KNOWLEDGE CONTEXT:",
                 rag_context_text,
                 "",
                 "LIVE MARKET DATA:",
@@ -501,14 +532,12 @@ async def generate_grounded_answer(
                 "USER QUESTION:",
                 q,
                 "",
-                "Answer clearly, accurately, and concisely in plain conversational text. "
-                "Do NOT use any Markdown formatting such as hashtags, asterisks, bold markers, bullet dashes, or backslashes. "
-                "Use plain numbered lists (1. 2. 3.) when listing items. "
-                "Mention currency (INR/Rs.) and sources when applicable.",
+                lang_directive,
             ])
 
             user_prompt = "\n".join(user_prompt_parts)
 
+            t0_llm = time.perf_counter()
             response = await asyncio.to_thread(
                 lambda: groq_client.chat.completions.create(
                     model=settings.GROQ_MODEL,
@@ -520,6 +549,7 @@ async def generate_grounded_answer(
                     max_tokens=600,
                 )
             )
+            llm_ms = round((time.perf_counter() - t0_llm) * 1000, 1)
             generated_answer = response.choices[0].message.content or ""
             if generated_answer.strip():
                 clean_answer = sanitize_plain_text(generated_answer)
@@ -532,6 +562,9 @@ async def generate_grounded_answer(
                     "sources": sources,
                     "live_data": live_data,
                     "suggested_actions": ["Ask another question", "Explore relevant schemes", "Check financial health"],
+                    "rag_ms": rag_ms,
+                    "llm_ms": llm_ms,
+                    "language_reason": lang_reason,
                 }
         except Exception as exc:
             logger.warning("Groq generation failed, using structured fallback: %s", exc)
@@ -571,14 +604,10 @@ async def generate_grounded_answer(
         text = top_chunk.get("chunk_text", "")
         answer_text = f"{title}\n\n{text}"
     else:
-        from backend.app.services.temporary_response_service import (
-            generate_temporary_financial_response,
-        )
-        answer_text, _, effective_lang = generate_temporary_financial_response(
-            query=q,
-            language_hint=effective_lang,
-            context=financial_context,
-        )
+        if effective_lang == "hi":
+            answer_text = "इस विषय पर कोई विशिष्ट नीति दस्तावेज़ नहीं मिला। कृपया अपने प्रश्न को थोड़ा स्पष्ट करके पूछें।"
+        else:
+            answer_text = "No specific policy guidelines were found matching your query. Please provide more details or ask another question."
 
     # Sanitize all output
     answer_text = sanitize_plain_text(answer_text)

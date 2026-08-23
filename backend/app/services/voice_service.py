@@ -27,11 +27,9 @@ import voice.config as voice_config
 import voice.stt as stt_module
 import voice.tts as tts_module
 from backend.app.services import rag_service
-from backend.app.services.temporary_response_service import (
-    generate_temporary_financial_response,
-)
 from shared.types.python.models import (
     FinancialContext,
+    KnowledgeSource,
     STTTelemetry,
     TTSTelemetry,
     VoiceHealthProviderStatus,
@@ -40,6 +38,8 @@ from shared.types.python.models import (
     VoiceResponse,
     VoiceTimingTelemetry,
 )
+from backend.app.core.language_detector import detect_language
+from backend.app.core.telemetry import log_pipeline_latency
 
 logger = logging.getLogger(__name__)
 
@@ -280,11 +280,12 @@ def _process_voice_sync(
         # 2. Transcode to 16 kHz mono WAV
         wav_tmp = audio_utils.to_wav16k_mono(raw_tmp)
 
-        # 3. Speech-to-Text Transcription with strictly configured provider
+        # 3. Speech-to-Text Transcription with automatic audio language detection
         stt_provider = voice_config.STT_PROVIDER
         try:
             stt_engine = stt_module.get_stt(stt_provider)
-            stt_result = stt_engine.transcribe(wav_tmp, language=language_hint)
+            stt_lang_hint = None if not language_hint or language_hint.strip().lower() in ("auto", "none") else language_hint
+            stt_result = stt_engine.transcribe(wav_tmp, language=stt_lang_hint)
         except Exception as stt_err:
             logger.error(
                 "Configured STT provider '%s' failed during transcription: %s",
@@ -299,15 +300,21 @@ def _process_voice_sync(
 
         transcript = (stt_result.text or "").strip()
 
+        rag_sources = []
+        rag_ms = 0.0
+        llm_ms = 0.0
+        lang_reason = "auto_detected"
+
         # If no speech was detected in the audio
         if not transcript:
+            effective_hint = (stt_result.language or language_hint or "").lower()
             answer_text = (
-                "No speech was detected. Please try speaking into the microphone again."
-                if language_hint != "hi"
-                else "कोई आवाज़ नहीं सुनाई दी। कृपया दोबारा बोलें।"
+                "कोई आवाज़ नहीं सुनाई दी। कृपया दोबारा बोलें।"
+                if effective_hint == "hi"
+                else "No speech was detected. Please try speaking into the microphone again."
             )
             spoken_reply = answer_text
-            reply_lang = "hi" if language_hint == "hi" else "en"
+            reply_lang = "hi" if effective_hint == "hi" else "en"
         else:
             # 4. Generate Grounded RAG / Live Market / Financial Response
             try:
@@ -317,23 +324,30 @@ def _process_voice_sync(
                     rag_service.generate_grounded_answer(
                         question=transcript,
                         financial_context=financial_context,
-                        language=language_hint or stt_result.language,
+                        language=stt_result.language or language_hint or "en",
                     )
                 )
                 loop.close()
                 answer_text = rag_out["answer"]
                 spoken_reply = rag_out["reply_text"]
                 reply_lang = rag_out["language"]
+                rag_sources = rag_out.get("sources", [])
+                rag_ms = rag_out.get("rag_ms", 0.0)
+                llm_ms = rag_out.get("llm_ms", 0.0)
+                lang_reason = rag_out.get("language_reason", f"stt_{stt_result.language or 'auto'}")
             except Exception as rag_err:
-                logger.warning("RAG answer generation fallback in voice pipeline: %s", rag_err)
-                answer_text, spoken_reply, reply_lang = generate_temporary_financial_response(
-                    query=transcript,
-                    language_hint=language_hint or stt_result.language,
-                    context=financial_context,
-                )
+                logger.error("RAG answer generation failed in voice pipeline: %s", rag_err, exc_info=True)
+                detected_lang, _ = detect_language(transcript, language_hint=stt_result.language)
+                if detected_lang == "hi":
+                    answer_text = "क्षमा करें, इस समय आपका अनुरोध प्रोसेस करने में समस्या आई। कृपया पुनः प्रयास करें।"
+                else:
+                    answer_text = "I apologize, but I encountered an error retrieving that financial information. Please try asking again."
+                spoken_reply = answer_text
+                reply_lang = detected_lang
 
         # 5. Text-to-Speech Synthesis with strictly configured provider
         tts_provider = voice_config.TTS_PROVIDER
+        t0_tts = time.perf_counter()
         try:
             tts_engine = tts_module.get_tts(tts_provider)
             tts_result = tts_engine.synthesize(
@@ -353,6 +367,7 @@ def _process_voice_sync(
                 code="TTS_PROVIDER_UNAVAILABLE",
             ) from tts_err
 
+        tts_ms = round((time.perf_counter() - t0_tts) * 1000, 1)
         tts_out = tts_result.audio_path
 
         # 6. Encode synthesized audio to base64
@@ -360,15 +375,35 @@ def _process_voice_sync(
 
         total_ms = round((time.perf_counter() - pipeline_start) * 1000, 1)
 
+        # Structured Console Performance Logging
+        log_pipeline_latency(
+            endpoint="/api/v1/voice/chat (Audio Voice Stream)",
+            query_text=transcript,
+            language=reply_lang,
+            language_reason=lang_reason,
+            total_ms=total_ms,
+            stt_provider=stt_result.provider,
+            stt_ms=stt_result.latency_ms,
+            rag_chunks_count=len(rag_sources),
+            rag_ms=rag_ms,
+            llm_model=voice_config.os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+            llm_ms=llm_ms,
+            tts_provider=tts_result.provider,
+            tts_voice=tts_result.voice,
+            tts_ms=tts_ms,
+            sources=rag_sources,
+        )
+
         return {
             "transcript": transcript,
             "answer": answer_text,
-            "reply_text": answer_text,
+            "reply_text": spoken_reply,
             "audio_base64": audio_b64_output,
             "audio_format": "audio/wav",
             "language": reply_lang,
             "duration_seconds": tts_result.audio_seconds,
             "latency_ms": total_ms,
+            "sources": rag_sources,
             "stt": {
                 "provider": stt_result.provider,
                 "latency_ms": stt_result.latency_ms,
@@ -423,11 +458,16 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             stt=STTTelemetry(**data["stt"]),
             tts=TTSTelemetry(**data["tts"]),
             timing=VoiceTimingTelemetry(**data["timing"]),
+            sources=[KnowledgeSource(**s) for s in data.get("sources", [])],
         )
 
     # Standalone text chat path
     text_input = (request.text or "").strip()
     t0 = time.perf_counter()
+    rag_sources = []
+    rag_ms = 0.0
+    llm_ms = 0.0
+    lang_reason = "text_auto_detected"
     try:
         rag_out = await rag_service.generate_grounded_answer(
             question=text_input,
@@ -437,15 +477,22 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
         answer_text = rag_out["answer"]
         spoken_reply = rag_out["reply_text"]
         reply_lang = rag_out["language"]
+        rag_sources = rag_out.get("sources", [])
+        rag_ms = rag_out.get("rag_ms", 0.0)
+        llm_ms = rag_out.get("llm_ms", 0.0)
+        lang_reason = rag_out.get("language_reason", "text_detected")
     except Exception as rag_err:
-        logger.warning("RAG answer generation fallback in text chat: %s", rag_err)
-        answer_text, spoken_reply, reply_lang = generate_temporary_financial_response(
-            query=text_input,
-            language_hint=request.language or "en",
-            context=parsed_context,
-        )
+        logger.error("RAG answer generation failed in text chat: %s", rag_err, exc_info=True)
+        detected_lang, _ = detect_language(text_input, request.language)
+        if detected_lang == "hi":
+            answer_text = "क्षमा करें, इस समय आपका अनुरोध प्रोसेस करने में समस्या आई। कृपया पुनः प्रयास करें।"
+        else:
+            answer_text = "I apologize, but I encountered an error retrieving that financial information. Please try asking again."
+        spoken_reply = answer_text
+        reply_lang = detected_lang
 
     tts_provider = voice_config.TTS_PROVIDER
+    t0_tts = time.perf_counter()
     try:
         tts_engine = tts_module.get_tts(tts_provider)
         tts_result = await asyncio.to_thread(
@@ -466,14 +513,34 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             code="TTS_PROVIDER_UNAVAILABLE",
         ) from tts_err
 
+    tts_ms = round((time.perf_counter() - t0_tts) * 1000, 1)
     b64 = audio_utils.wav_to_base64(tts_result.audio_path)
     audio_utils.cleanup(tts_result.audio_path)
     total_ms = round((time.perf_counter() - t0) * 1000, 1)
 
+    # Structured Console Performance Logging
+    log_pipeline_latency(
+        endpoint="/api/v1/voice/chat (Text Chat)",
+        query_text=text_input,
+        language=reply_lang,
+        language_reason=lang_reason,
+        total_ms=total_ms,
+        stt_provider="none",
+        stt_ms=0.0,
+        rag_chunks_count=len(rag_sources),
+        rag_ms=rag_ms,
+        llm_model=voice_config.os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+        llm_ms=llm_ms,
+        tts_provider=tts_result.provider,
+        tts_voice=tts_result.voice,
+        tts_ms=tts_ms,
+        sources=rag_sources,
+    )
+
     return VoiceResponse(
         transcript=text_input,
         answer=answer_text,
-        reply_text=answer_text,
+        reply_text=spoken_reply,
         audio_base64=b64,
         audio_format="audio/wav",
         language=reply_lang,
@@ -486,4 +553,5 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             latency_ms=tts_result.latency_ms,
         ),
         timing=VoiceTimingTelemetry(total_ms=total_ms),
+        sources=[KnowledgeSource(**s) for s in rag_sources],
     )

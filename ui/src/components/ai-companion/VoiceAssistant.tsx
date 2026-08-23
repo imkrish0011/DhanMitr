@@ -132,23 +132,46 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowLangMenu(!showLangMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 neumorph-chip rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3 py-1.5 neumorph-chip rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap cursor-pointer shadow-2xs hover:scale-102 transition-all"
             >
-              <span>{selectedLanguage === 'hi' ? '🇮🇳 HI' : '🌐 EN'}</span>
+              <span>
+                {selectedLanguage === 'auto'
+                  ? '✨ Auto'
+                  : selectedLanguage === 'hi'
+                  ? '🇮🇳 HI'
+                  : selectedLanguage === 'hinglish'
+                  ? '🇮🇳 Hinglish'
+                  : '🌐 EN'}
+              </span>
               <svg className="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
 
             {showLangMenu && (
-              <div className="absolute right-0 mt-2 w-36 neumorph-card rounded-2xl py-1.5 z-30 overflow-hidden text-xs">
+              <div className="absolute right-0 mt-2 w-44 neumorph-card rounded-2xl py-1.5 z-30 overflow-hidden text-xs shadow-lg border border-slate-200/50 dark:border-slate-800/50">
+                <button
+                  onClick={() => {
+                    setSelectedLanguage('auto');
+                    setShowLangMenu(false);
+                  }}
+                  className={`w-full text-left px-3.5 py-2 font-medium transition-colors cursor-pointer ${
+                    selectedLanguage === 'auto'
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  }`}
+                >
+                  ✨ Auto Detect (स्वतः)
+                </button>
                 <button
                   onClick={() => {
                     setSelectedLanguage('en');
                     setShowLangMenu(false);
                   }}
-                  className={`w-full text-left px-3.5 py-2 font-medium transition-colors ${
-                    selectedLanguage === 'en' ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  className={`w-full text-left px-3.5 py-2 font-medium transition-colors cursor-pointer ${
+                    selectedLanguage === 'en'
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   🌐 English
@@ -158,8 +181,10 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                     setSelectedLanguage('hi');
                     setShowLangMenu(false);
                   }}
-                  className={`w-full text-left px-3.5 py-2 font-medium transition-colors ${
-                    selectedLanguage === 'hi' ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  className={`w-full text-left px-3.5 py-2 font-medium transition-colors cursor-pointer ${
+                    selectedLanguage === 'hi'
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   🇮🇳 हिंदी (Hindi)

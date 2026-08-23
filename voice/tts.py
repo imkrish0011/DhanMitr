@@ -367,7 +367,6 @@ _PROVIDERS = {
     "edge": EdgeTTS,
     "edge_tts": EdgeTTS,
     "piper": PiperTTS,
-    "mock": MockTTS,
 }
 
 _cache: Dict[str, BaseTTS] = {}
