@@ -262,42 +262,43 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
 # Personal Finance Intent Detection & Context Formatting
 # ---------------------------------------------------------------------------
 
-# Keywords that signal the user is asking about their OWN finances,
-# subscriptions, spending, budget, or personal situation.
-_PERSONAL_INTENT_KEYWORDS_EN = {
-    "my", "i ", "i'm", "me", "mine",
-    "subscription", "subscriptions", "ott", "netflix", "spotify",
-    "prime", "hotstar", "disney", "youtube premium", "zee5", "jiocinema",
-    "expense", "expenses", "spending", "spend", "budget", "afford",
-    "savings", "saving", "salary", "income", "outflow",
-    "insurance", "premium", "emi", "loan", "debt",
-    "investment", "invested", "portfolio",
-    "cut cost", "reduce expense", "save more", "overspending",
-    "financial health", "net worth",
-}
-_PERSONAL_INTENT_KEYWORDS_HI = {
-    "मेरा", "मेरी", "मेरे", "मुझे", "मैं",
-    "खर्च", "खर्चा", "बचत", "बजट", "तनख्वाह", "आय",
-    "सब्सक्रिप्शन", "बीमा", "प्रीमियम", "किस्त", "लोन", "कर्ज",
-    "निवेश", "पोर्टफोलियो",
-}
+# Precise regex patterns that detect when a user is referring to THEIR OWN money,
+# budget, personal spending, OTT subscriptions, or financial situation.
+# Uses word boundaries (\b) to completely prevent false positives on general queries
+# (e.g., "tell me about gold", "home prices", "scheme", "prime rate").
+_PERSONAL_INTENT_REGEX_PATTERNS = [
+    # English possessive financial context
+    r"\bmy\s+(?:spending|expenses?|budget|subscriptions?|salary|income|savings?|portfolio|investments?|loans?|emis?|insurance|coverages?|net\s*worth|bills?|money|account|cards?|finances?|cashflow|emergency\s*fund|ott|netflix|spotify|prime|hotstar|rent)\b",
+    r"\b(?:what|show|check|tell)\s+(?:are|is|me)\s+my\b",
+    r"\bhow\s+much\s+(?:did\s+i\s+spend|am\s+i\s+spending|do\s+i\s+(?:spend|save|earn|have|owe|pay))\b",
+    r"\b(?:how\s+much\s+am\s+i\s+paying\s+for|what\s+is\s+my\s+active)\b",
+    r"\b(?:can|could|should)\s+i\s+afford\b",
+    r"\bwhere\s+(?:is\s+my\s+money\s+going|can\s+i\s+(?:cut|reduce|save)\s+(?:more|costs?|expenses?))\b",
+    r"\b(?:my\s+)(?:ott|netflix|spotify|hotstar|amazon\s*prime|disney|zee5|jiocinema|youtube\s*premium)\b",
+    r"\b(?:cut\s+my\s+expenses|reduce\s+my\s+costs?|my\s+financial\s+(?:health|summary|overview|status|snapshot))\b",
+
+    # Hindi possessive / personal patterns
+    r"\b(?:मेरा|मेरी|मेरे|मुझको|मुझे)\s+(?:खर्च|खर्चा|बचत|बजट|वेतन|सैलरी|आय|सब्सक्रिप्शन|बीमा|किस्त|ईएमआई|लोन|कर्ज|पैसे|खाता|इन्वेस्टमेंट|पोर्टफोलियो|नेटवर्थ|इमरजेंसी\s*फंड|रुपये)\b",
+    r"\b(?:मैं|हम)\s+(?:कितना\s+(?:बचा|खर्च|कमा)|क्या\s+(?:खरीद|अफोर्ड)\s+सकता)\b",
+    r"\bमेरी\s+वित्तीय\s+स्थिति\b",
+]
+
+_COMPILED_PERSONAL_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE) for pattern in _PERSONAL_INTENT_REGEX_PATTERNS
+]
 
 
 def detect_personal_finance_intent(question: str) -> bool:
-    """Return True if the user question relates to their personal finances.
+    """Return True ONLY if the user question explicitly refers to their personal finances.
 
-    Uses keyword matching on both English and Hindi terms. Only returns True
-    when the query clearly indicates the user wants information about their
-    own money, subscriptions, spending habits, budget, etc.
+    Uses strict word-boundary regex patterns to avoid false positives on general
+    market or educational queries (e.g., 'housing prices', 'gold rate', 'PMJJBY').
     """
-    q_lower = question.lower()
-    for keyword in _PERSONAL_INTENT_KEYWORDS_EN:
-        if keyword in q_lower:
-            return True
-    for keyword in _PERSONAL_INTENT_KEYWORDS_HI:
-        if keyword in question:
-            return True
-    return False
+    if not question:
+        return False
+    q_str = question.strip()
+    return any(p.search(q_str) is not None for p in _COMPILED_PERSONAL_PATTERNS)
+
 
 
 def format_user_financial_context(ctx: Any) -> str:
