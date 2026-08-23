@@ -375,6 +375,8 @@ def _process_voice_sync(
 
         total_ms = round((time.perf_counter() - pipeline_start) * 1000, 1)
 
+        stt_lang_prob = (stt_result.meta or {}).get("language_probability")
+
         # Structured Console Performance Logging
         log_pipeline_latency(
             endpoint="/api/v1/voice/chat (Audio Voice Stream)",
@@ -384,6 +386,10 @@ def _process_voice_sync(
             total_ms=total_ms,
             stt_provider=stt_result.provider,
             stt_ms=stt_result.latency_ms,
+            stt_language=stt_result.language,
+            stt_lang_prob=stt_lang_prob,
+            stt_audio_seconds=stt_result.audio_seconds,
+            stt_rtf=stt_result.rtf,
             rag_chunks_count=len(rag_sources),
             rag_ms=rag_ms,
             llm_model=voice_config.os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
@@ -407,6 +413,10 @@ def _process_voice_sync(
             "stt": {
                 "provider": stt_result.provider,
                 "latency_ms": stt_result.latency_ms,
+                "detected_language": stt_result.language,
+                "language_probability": stt_lang_prob,
+                "audio_duration_seconds": stt_result.audio_seconds,
+                "rtf": stt_result.rtf,
             },
             "tts": {
                 "provider": tts_result.provider,

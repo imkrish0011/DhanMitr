@@ -175,6 +175,10 @@ export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
 export interface STTTelemetry {
   provider: string;
   latency_ms: number;
+  detected_language?: string;
+  language_probability?: number;
+  audio_duration_seconds?: number;
+  rtf?: number;
 }
 
 export interface TTSTelemetry {

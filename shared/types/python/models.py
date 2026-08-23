@@ -234,6 +234,10 @@ class ChatStreamChunk(BaseModel):
 class STTTelemetry(BaseModel):
     provider: str = ""
     latency_ms: float = 0.0
+    detected_language: Optional[str] = None
+    language_probability: Optional[float] = None
+    audio_duration_seconds: Optional[float] = None
+    rtf: Optional[float] = None
 
 
 class TTSTelemetry(BaseModel):

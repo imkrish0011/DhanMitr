@@ -27,6 +27,10 @@ def log_pipeline_latency(
     total_ms: float,
     stt_provider: Optional[str] = None,
     stt_ms: Optional[float] = None,
+    stt_language: Optional[str] = None,
+    stt_lang_prob: Optional[float] = None,
+    stt_audio_seconds: Optional[float] = None,
+    stt_rtf: Optional[float] = None,
     rag_chunks_count: Optional[int] = None,
     rag_ms: Optional[float] = None,
     llm_model: Optional[str] = None,
@@ -51,7 +55,15 @@ def log_pipeline_latency(
     ]
 
     if stt_ms is not None and stt_ms > 0:
-        lines.append(f"   * STT Audio Transcribe:  {stt_ms:>7.1f} ms  [Engine: {stt_provider or 'unknown'}]")
+        stt_details = [f"Engine: {stt_provider or 'unknown'}"]
+        if stt_language:
+            prob_str = f" ({stt_lang_prob * 100:.0f}%)" if stt_lang_prob is not None and stt_lang_prob > 0 else ""
+            stt_details.append(f"Detected: {stt_language.upper()}{prob_str}")
+        if stt_audio_seconds:
+            stt_details.append(f"Audio: {stt_audio_seconds:.1f}s")
+        if stt_rtf:
+            stt_details.append(f"RTF: {stt_rtf:.2f}")
+        lines.append(f"   * STT Audio Transcribe:  {stt_ms:>7.1f} ms  [{' | '.join(stt_details)}]")
 
     if rag_ms is not None:
         matched_str = f"{rag_chunks_count or 0} chunks"
