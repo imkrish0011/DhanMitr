@@ -1,0 +1,389 @@
+{
+  "source_document": "National Pension System (NPS)",
+  "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+  "source_url": "https://financialservices.gov.in/national-pension-system",
+  "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+  "data_type": "periodic",
+  "chunks": [
+    {
+      "chunk_id": "National Pension System (NPS)-001",
+      "section": "What is National Pension System?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "National Pension System (NPS) is a defined contribution pension. NPS is voluntary for subscription by an individual to make contributions to his/her Individual Pension Account during the working life for creating a pension corpus from which regular income will be generated after retirement / working age. NPS is mandatory for the Central Government recruits w.e.f. 1st Jan 2004 (except armed forces) which replaced the earlier defined benefit pension and has been subsequently adopted by almost all State Governments for their employees."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-002",
+      "section": "What are the features of NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Regulated - NPS is regulated by PFRDA, which is established through an Act of Parliament. (PFRDA Act 2013) Pension for All - can be voluntarily subscribed by any Indian Citizen (resident/non- resident/overseas citizen). Low Cost – NPS is one of the lowest cost pension schemes in the world. Flexible - Subscribers have choices of Point of Presence (PoP), Central Recordkeeping Agency (CRA), Pension Fund and Asset Allocation. The choices exercised can be changed subsequently. Portable – NPS account can be transferred across employment, location/geography. Tax efficient – Tax incentives are available to subscribers under the Income Tax Act 1961. Optimum returns – Market linked returns based on investment choice made by the subscriber. Transparent – Subscribers can access their NPS accounts online 24X7 and public disclosures mandated."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-003",
+      "section": "What is the structure of NPS? Why there are different intermediaries in NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "NPS has a unique unbundled architecture wherein each intermediary (PoP, Pension Fund, Central Recordkeeping Agency, Trustee Bank, Annuity Service Provider, Retirement Advisors, Custodian, NPS Trust) is assigned a specialized activity by the Regulator. This ensures economies of scale and operational/intermediation costs at bare minimum to subscribers. This unique structure safeguards subscribers’ interest as the role of a particular intermediary is limited to the functions assigned to it and no single intermediary/entity has complete control over NPS as a System."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-004",
+      "section": "What is Corporate Sector? NPS caters to which all Sectors?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "NPS can be extended by an employer as a retirement benefit scheme to the employees and NPS Account having employer-employee relationship (non-government) are classified / categorized as Corporate Sector. An Employer can adopt NPS alongwith other retirement benefit schemes and contributions towards NPS in Corporate Sector can be either from employer/employee only or from both employer/employee in varied proportions. NPS caters to the Central Government (CG) Sector, State Government (SG) Sector, Corporate Sector and All Citizen Sector."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-005",
+      "section": "What are the modes through which employers can adopt NPS for their employees?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "For implementation of NPS for its employees, an employer has the following options: Obtain registration from the Authority as a Point of Presence (PoP) under Regulation 3 of PFRDA (Points of Presence) Regulations, 2018 and thereafter undertake NPS related activities for their employees directly with NPS architecture (such as employee registration, contribution upload, facilitating withdrawals/exit, grievance resolution, change in personal data etc). For eligibility to register as a PoP, please refer PFRDA (Points of Presence) Regulations, 2018. Register with Central Recordkeeping Agency (CRA) as employer/corporate under NPS Corporate Sector Model by submitting an application - CHO through a registered Point of Presence (PoP) and avail NPS services (such as employee registration, contribution upload, facilitating withdrawals/exit, grievance resolution, change in personal data etc) through the PoP by paying the prescribed fees/charges to PoP. In this model, the employer can avail services of any of the PoPs registered with PFRDA which can subsequently be changed, if need arises."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-006",
+      "section": "Which all entities are eligible to adopt NPS for their employees?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "The following entities are eligible to register as a corporate/employer under NPS Corporate Sector Model through a PoP: Entities registered under the Companies Act, 2013 or a cooperative society registered under any law relating to Co-operative societies Bodies established or incorporated under any act of Parliament or any law enacted by a State legislature or under any order/notification issued by the Central / State Government Public Sector Enterprises or any Government company Registered Partnership Firms Limited Liability Partnerships (LLPs) Proprietary Concerns Trusts / Society Foreign companies having registration u/s 591-608 of Companies Act 1956 in respect of their eligible Indian employee(s) Foreign / diplomatic missions operating in India (Embassy/High Commission/Consulate etc.) in respect of their eligible Indian employee(s) International Organizations operating in India (UN / WHO / World Bank / ADB / IMF etc.) in respect of their eligible Indian employee(s)"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-007",
+      "section": "Is it mandatory for an employer to offer NPS to its employees?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "NPS is mandatory for the Central Government recruits w.e.f. 1st Jan 2004 (except armed forces) which replaced the earlier defined benefit pension and almost all State Governments have adopted NPS for their employees and is applicable as per the terms and date notified by the State Government in their respective gazette notifications. NPS can be introduced by an employer / corporate (entity) for its employees (as a retirement benefit scheme) within the purview of their employer-employee relationship on a voluntary or a mandatory basis. In case the employer adopts NPS as a mandatory retirement benefit scheme for its employees, then all employees should join NPS from the date of adoption by the employer. In case of NPS being implemented on voluntary basis along with other retirement benefit schemes, choice of joining NPS would rest with the employee."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-008",
+      "section": "Can existing Approved Superannuation Fund be transferred to NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "The facility to transfer Approved Superannuation Fund to NPS has been enabled in NPS architecture. The transfer of corpus can be made in bulk as is where is basis or on an individual case to case basis. The relevant Circulars issued on the regard may be access from the following links: Circular dated 6th March 2017 Circular dated 1st June 2018 Circular dated 1st January 2019"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-009",
+      "section": "How much contribution should the employer is mandated to make?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Contributions to NPS are flexible and depending on the employer’s policy on compensation and retiral benefits extended to its employees. The NPS contribution can be either:- equal contributions by both employer and employee (say 10% each) or unequal by employer and employee (say 10% by employee and 14% by employer) or contribution by only employer or only employee There is no mandate for the employer to contribute to employees’ NPS account."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-010",
+      "section": "Does employer play any role in deciding management of corpus of their employees?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Pension Funds registered with PFRDA are responsible for managing pension corpus in accordance with PFRDA Act, rules, regulations and investment guidelines issued by the Authority, as amended from time to time. Employer adopting NPS has the option of:- Selecting any one Pension Fund (PF) out the PFs registered with PFRDA for managing the pension wealth of their employees and decide on the asset allocation (active or auto) based on which the NPS contributions will be invested by the Pension Fund. Employer can also allow its employees to exercise these choices (PF & Asset Allocation) at individual/employee level, if found suitable. If the Employer/Corporate exercises choice of Pension Fund and Asset Allocation on behalf of Employee/Subscriber, then such Employee/Subscriber will have the option to revise the choices after 1 (one) year (i.e. 365 days) or else will continue with the existing choices made by employer (applicable to corporates adopting NPS on or after 14th Nov 2018) To know more about selections of Pension Funds & Investment Choice please click here."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-011",
+      "section": "Does the employer required to create / have separate Trust for NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "On adoption of NPS by an employer for its employees, the underlying activities get implemented through NPS architecture / platform which obviates the requirement for creation / maintenance of a Trust by the employer."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-012",
+      "section": "Who will bear the charges associated with NPS accounts of employees? What are the charges under NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Charges related to NPS Tier-I account can be borne either by employer or employee, at the discretion of employer. Tier-II transaction charges are same as Tier-I and are borne by the subscriber. Each intermediary is entitled to recover the following prescribed charges towards the services rendered: Intermediary Charge head Service Charges* Method of Deduction Point of Presence Subscriber registration Initial Contribution Subsequent transactions Non-Financial transactions Processing of withdrawal / exit Minimum ₹200 to Maximum ₹400 (negotiable within slab only) 0.5% of contribution amount Minimum ₹30/- Maximum ₹25000/- (negotiable within slab only) ₹30 0.125% of corpus Minimum ₹125 Maximum ₹500 To be collected upfront Central Recordkeeping Agency Account Opening charges (One-time)* Account Maintenance Charges (Per Annum) Charge per transaction (Financial /Non-Financial) NSDL Karvy Rs 40 Rs 39.36 Rs. 69 Rs 57.63 Rs 3.75 Rs 3.36 Through cancellation of units Pension Fund Investment Management Fee 0.0467% - 0.09% Adjustment in NAV of Scheme NPS Trust Reimbursement of Expenses 0.005 % p.a. of Assets Managed Adjustment in NAV of Scheme Custodian Asset Servicing charges 0.000000001770% p.a. of assets in custody Adjustment in NAV of Scheme * In case a subscriber opts not to have a physical PRAN Card or Welcome Kit, reduced account opening charges of CRA are applicable as under: CRA Account opening with Physical PRAN card (in Rs.) Account opening with ePRAN card (in Rs.) Welcome kit sent in hardcopy Welcome kit sent vide email only NSDL eGov 40.00 35.00 18.00 Kfintech 39.36 39.36 4.00"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-013",
+      "section": "Are there any tax benefits available to employers?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Yes, the ‘employer contributions’ made in the NPS accounts of their employees (upto 10% of the salary) can be claimed for deduction as ‘Business Expense’ from Corporates Profit & Loss Account as per section 36(1)(iv)(a) of IT Act."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-014",
+      "section": "I have subscribed to EPF / PPF / Superannuation Fund / Provident Fund. Can I join NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Yes. NPS can be voluntarily subscribed alongwith any other pension scheme(s). However, an individual cannot have multiple NPS accounts."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-015",
+      "section": "How much pension will I receive in NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "The amount of pension will depend on the amount of contributions made, accrual/returns on the investments and the portion of corpus utilised by the subscriber for purchasing annuity plan from any of the Annuity Service Providers empanelled with PFRDA."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-016",
+      "section": "How can I open an NPS account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Employee may submit the duly filled application form to the employer for authorization and further submission to the PoP or CRA, as the case may be, for opening the individual pension account."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-017",
+      "section": "I already have an NPS account opened on my own. Should I open a new NPS account for my job?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Under NPS, the Pension Account is a unique identification number (Permanent Retirement Account Number - PRAN) allotted by CRA to each individual subscriber and the Pension Account (PRAN) can be transferred across employment or employer, location/geography. Employee already having an NPS Account can provide the PRAN to employer for tagging the existing PRAN to their employer. Employee can also transfer the pension account to the new employer (of any sector), if NPS is implemented in the new organization or may continue the NPS account under All Citizen Model through any registered PoP."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-018",
+      "section": "What are the types of accounts in NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Under NPS account there are two types of accounts – Tier I & Tier II. Tier-I is the Individual Pension Account, which is the default pension account having all the tax incentives under Income Tax Act. Tier-II is an optional investment account available to a subscriber having an active Tier-I account. This account has no withdrawal restrictions and tax benefits. Tier-II is not a Pension Account."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-019",
+      "section": "What are the features of Tier-I and Tier-II accounts?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Tier – I Tier – II Individual Pension Account Optional Account – Require an active Tier-I Withdrawal / exit as per rules/regulations only Unrestricted withdrawals Min. Contribution Rs. 500 Min. Contribution to open Rs. 1000 Min. Contribution per year Rs. 1000 Min. Contribution Rs. 250 Tax benefits are available No tax benefits on contribution/gains Any Citizen aged between 18-70 is eligible NRIs/OCIs are not eligible Choose any Pension Fund / Investment Pattern Choose any Pension Fund/ Investment Pattern * *Subscriber can select different Pension Fund and Investment Option for his/her NPS Tier I and Tier II accounts"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-020",
+      "section": "What documents are required to open an NPS account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "An employee can open the pension account through the employer by submitting the duly filled application form (CSRF/NSRF) to the employer or submit the data online alongwith the following documents:- For resident Individuals: One Recent Photograph PAN Card Proof of Address Proof for the Bank Account For NRIs and OCIs Non-resident Individual (NRI) Overseas Citizen of India (OCI) One Recent Photograph One Recent Photograph PAN Card PAN Card Indian Passport OCI Card Proof of address - India Proof of address - foreign country Proof for the Bank Account (NRE/NRO) Proof for the Bank Account (NRE/NRO) Refer instructions in the subscriber registration form, for the list of acceptable proofs."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-021",
+      "section": "How often can I change the choices I have made?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Subscribers can subsequently request to change the choices exercised as under: Choice Frequency Mode / method Pension Fund Once in a Financial Year i. Online – Login to your account or ii. Offline - Physical Application to PoP Investment Choice Four times in a Financial Year i. Online – Login to your account or ii. Offline - Physical Application to PoP If the Employer/Corporate exercises choice of Pension Fund and Asset Allocation on behalf of Employee/Subscriber, then such Employee/Subscriber will have the option to revise the choices after 1 (one) year (i.e 365 days) or else will continue with the existing choices made by employer (applicable to corporates adopting NPS on or after 14th Nov 2018)"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-022",
+      "section": "How do I access my NPS account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Subscriber can access their Pension Account through i. Physical mode – by visiting his/her service provider (Employer/PoP) ii. Online - using login credentials provided by CRA in the Account Opening Kit a. Web-based login b. Mobile Application iii. Telephone - using the T-Pin received in the Account Opening Kit. Toll Free numbers - NSDL 1800 222 080 and Kfintech 1800 208 1516"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-023",
+      "section": "How will my monthly contributions get invested? Can I make voluntary contribution to my account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "The contributions deducted from the salary of the employee will get invested as per the choices (Pension Fund and Asset allocation) recorded with CRA. The Pension Funds invest the funds according to the investment guidelines prescribed by PFRDA for each asset class. For detailed investment guidelines refer to the Circulars Section of PFRDA website. An employee can make additional contributions to his/her pension account on a voluntary basis apart from the salary deductions, without any restrictions on number of contributions and amount through any of the following modes: Physical mode – by visiting any of the registered service provider (PoP) and depositing cheque/cash alongwith the NPS contribution slip. Online mode - Web-based (i. login to your Pension Account ii. online facility provided by PoPs iii. eNPS platform of NPS Trust) NPS Mobile Application login"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-024",
+      "section": "When and how will my contributions reflect in my NPS account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "It normally takes three working days for the contributions to get reflected in your NPS account. The process flow entails: Receipt/realization of contribution in service provider’s (PoP) bank account Upload of details by service provider (PoP) to CRA and fund remittance to Trustee Bank Transfer of the funds by Trustee Bank to Pension Fund based on CRA instructions Investment of the funds by Pension Fund and declaration of scheme NAV Allocation of units by CRA for the contributed amount Reflection of corresponding units in the subscriber’s NPS account Subscribers will receive SMS & Email confirmations for credit of units in account. CRA is mandated to send a physical copy of the Statement of Transaction (SoT) of your Pension Account to the correspondence address as recorded with CRA, once in a year. SOT is also emailed to the registered email address of the subscriber on a periodic basis which can also be accessed online by login into your account."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-025",
+      "section": "How can I change my NPS account details?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "For changing the account details as recorded with CRA, subscriber has to submit the request to the Service Provider (PoP) or Employer, as the case may be:- Parameter of Change Mode / method to change Remark Name Physical Application – Form S2 Proof to be submitted Address Physical Application – Form S2 Proof to be submitted Contact Details i. Online – Login to your account or ii. Offline - Physical Application – Form S2 - Nomination Physical Application – Form S2 - Bank Details Physical Application – Form S2 Proof to be submitted Sector / Occupation Physical Application – Form ISS - *For correction of Date of Birth, authentication by employer is mandatory"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-026",
+      "section": "How do I know about the performance of my NPS investments?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "The performance of your NPS investments is available in the Statement of Transactions which can be accessed online through the subscriber web login or mobile app. Periodic statements are sent by the CRA to the registered email-id of the subscriber and a physical statement for the financial year is sent to the correspondence address of the subscriber."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-027",
+      "section": "How do I evaluate my NPS investments?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "The returns generated by the Pension Funds for each Asset Class is published on a weekly basis by NPS Trust and available at the following web link - http://npstrust.org.in/return-of-nps-scheme The portfolio of Asset Classes managed by each Pension Fund is periodically published by the Pension Funds on their websites - http://npstrust.org.in/content/scheme-portfolio"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-028",
+      "section": "Can my employer forfeit its contributions if I resign from job?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "The employer cannot forfeit pension corpus from NPS account, if employee resigns from the organization. However, in case of employer being owned and controlled, either by the Central / State Government or a Government company, if so specifically provided in the service rules governing the terms of employment of the subscriber with it, the employer has the right to withhold its co-contributions including accruals thereon, for the purpose of recovery of the whole or part of any pecuniary loss caused, provided such loss is established, in any departmental or judicial proceedings, initiated against such subscriber by such employer./"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-029",
+      "section": "Whether an employee has the facility to avail loan/advances from NPS?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "No"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-030",
+      "section": "When can I withdraw my money from NPS Account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "A subscriber can withdraw from NPS in the following circumstances/conditions: Partial Withdrawal - after completion of 3 years subscriber can withdraw 25% of his/her own contributions for specific reasons viz illness, disability, education or marriage of children, purchasing property, starting a new venture. A subscriber can partially withdraw upto a maximum of 3 times during his/her entire tenure in NPS. Premature Withdrawal - after completion of 5 years or before completion of 03 years (if subscriber joined NPS after attaining 60 years of age), subscriber can withdraw maximum 20% of the corpus as lumpsum and minimum 80% of the corpus has to be utilized for purchasing an annuity plan for receiving the pension. If the accumulated corpus is less than ₹2.5 lakh, the entire corpus is paid as lumpsum to the subscriber. Normal Withdrawal – on completion of 60 years of age (if subscriber has joined NPS before 60 years of age) or after completion of 03 years (if subscriber has joined NPS after 60 years of age), subscriber can withdraw maximum 60% of the corpus as lumpsum and minimum 40% of the corpus has to be utilized for purchasing an annuity plan for receiving the pension. If the accumulated corpus is less than ₹5 lakhs, the entire corpus is paid as lumpsum to the subscriber Subscriber also has the option to:- Continue in NPS till the age of 75 years or exit anytime after such continuance before 75 years. While exiting from NPS, subscriber can; defer receiving the lumpsum (60% corpus) till the age of 75 years or withdraw the same in installments till 75 years defer Annuity purchase (40% corpus) till the age of 75 years. In case of unfortunate event of death of a subscriber, the nominee/legal heir can withdraw the entire accumulated corpus. The nominee / family members of the deceased subscriber can also purchase annuity, if they so desire."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-031",
+      "section": "What if I don’t want to exit from NPS at age of 60 years / superannuation?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "On attaining the age of 60 years or superannuation, the NPS account of a corporate subscriber will be autocontinued under All Citizen Model upto 75 years of age. Subscriber can exercise the option of normal exit from NPS at any point of time he/she wishes, after attaining the age of 60 years / superannuation. At the age of 75 years, the account has to be closed mandatorily."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-032",
+      "section": "What are the specific reasons or conditions for partial withdrawals?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Partial withdrawals from your NPS account are allowed for dealing with contingency situations and following are the reasons/conditions for which partial withdrawal is allowed: Higher education of his/her children Marriage of his/her children Purchase or construction of residential house or flat Treatment of specified illnesses Disability of more than 75% Skill development/re-skilling or any other self-development activities Establishment of own venture or any start-ups"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-033",
+      "section": "How to request withdrawals from NPS Account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Requests for withdrawals from NPS can be initiated by the subscriber by login to his/her Pension Account or by submitting a physical form to the service provider (PoP) directly along with the specified documents. For more details please refer - https://www.pfrda.org.in/index1.cshtml?lsid=220"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-034",
+      "section": "How do I decide the Annuity Service Provider (ASP) and plan for receiving pension?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "For the details of the ASPs empanelled with PFRDA please click here. The broad variants of annuity plans offered by the ASPs are as under: Pension (Annuity) payable for life at a uniform rate to the annuitant only. Pension (Annuity) payable for 5, 10, 15 or 20 years certain and thereafter till the annuitant is alive. Pension (Annuity) payable for life increasing at a simple rate of 3% p.a. Pension (Annuity) for life with a provision of 50% of the annuity payable to spouse for upon death of the annuitant. Pension (Annuity) for life with a provision of 100% of the annuity payable to spouse upon death of the annuitant. Pension (Annuity) for life with return of purchase price on death of the annuitant. Pension (Annuity) for life with a provision of 100% of the annuity payable to spouse upon death of the annuitant and return of purchase price on death of the spouse. The pension amount would vary based on the annuity plan and the ASP chosen by the subscriber. For a comparative analysis of the annuity plans and the ASPs, please visit https://cransdl.com/CRAOnline/aspQuote.html"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-035",
+      "section": "How will I receive my pension?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Subscriber will receive pension from the Annuity Service Provider (ASP) according to the Annuity Plan chosen and purchased by the subscriber from the ASP (Insurance Company) and the terms and conditions therein."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-036",
+      "section": "What are the rules for withdrawal from Tier-II account?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "Withdrawal from NPS Tier-II account is permitted at any point of time, without any restrictions. You may also transfer the funds from your Tier-II account to Tier-I account (One-way Switch). In case of closure of NPS Tier-I (pension account), balance outstanding in NPS Tier-II account will get withdrawn simultaneously and thereafter transferred to your Bank account."
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-037",
+      "section": "Whom should I approach if I have a complaint /grievance?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "For resolving subscriber grievances, the Authority has notified the PFRDA (Redressal of Subscriber Grievance) Regulations, 2015 and an online platform ‘Central Grievance Management System (CGMS)’ has been hosted for subscriber to lodge grievance online by logging to his/her NPS account. A complaint/grievance has to be resolved by the intermediary concerned at the earliest and within a maximum period of 30 days of the receipt of the complaint. If a subscriber is not satisfied with the resolution provided, he/she can escalate his grievance to the next higher level for resolution and the escalation matrix is as under:- Tier-I account – Tax benefits on Contributions NPS Contributions are eligible for tax deduction u/s 80 CCD (1) of Income Tax Act upto 10% of basic + DA or upto 20% of Gross Income for self-employed within the overall ceiling of Rs. 1.50 Lacs under Sec. 80 CCE. An additional deduction upto Rs. 50,000/- is available u/s 80CCD 1(B) of Income Tax Act. In case the subscriber receives contributions from the employer also, tax deduction under section 80 CCD (2) of Income Tax Act may be claimed by the subscriber in addition to the tax benefits available under Sec. 80 CCE, subject to an aggregate limit of Rs. 7.5 lakh of contributions made towards NPS, Recognized Provident Fund and Approved Superannuation Fund. ‘Employer contributions’ made by an in the NPS accounts of their employees (upto 10% of the salary) can be claimed for deduction as ‘Business Expense’ from Corporates Profit & Loss Account as per section 36(1)(iv)(a) of IT Act. Tier-I account – Tax implications on Withdrawals / Exit Maximum 60% of the total corpus received as lumpsum at the time of exit is not treated as income u/s 10 (12A) of Income Tax Act Amount utilized for purchase of annuity plan from ASP on exit (minimum 40% mandatory upto 100% of corpus) is not treated as income u/s 80CCD (5) of Income Tax Act Goods and Service Tax (currently 1.8%) is not applicable on annuity plan purchased"
+    },
+    {
+      "chunk_id": "National Pension System (NPS)-038",
+      "section": "Whom should I approach if I have a complaint /grievance?",
+      "source_document": "National Pension System (NPS)",
+      "source_name": "Department of Financial Services, Ministry of Finance, Government of India",
+      "source_url": "https://financialservices.gov.in/national-pension-system",
+      "retrieved_at": "2026-08-17T12:05:30.640707+00:00",
+      "data_type": "periodic",
+      "text": "through NPS on exit. Amount received from partial withdrawal are tax exempt u/s 10 (12B) of Income Tax Act. Tier-II account: No tax benefits are available on contributions made in an NPS Tier-II account. No tax rebates/special treatment for the gains arising out of investment in NPS Tier-II. The assessee shall be liable for taxation as per the marginal tax rate applicable to him/her."
+    }
+  ]
+}
