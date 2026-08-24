@@ -500,17 +500,19 @@ async def generate_grounded_answer(
                 lang_directive = (
                     "MANDATORY INSTRUCTIONS:\n"
                     "1. LANGUAGE: The user communicated in Hindi. You MUST write the ENTIRE answer in natural, clear Hindi (Devanagari script). Do NOT reply in English.\n"
-                    "2. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
-                    "3. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-                    "4. Mention currency (INR/Rs.) when applicable."
+                    "2. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral / inclusive tone. NEVER use 1st-person masculine Hindi verbs or endings (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा', 'बताऊँगा'). Prefer objective, elegant phrasing like 'यहाँ विवरण प्रस्तुत है', 'आइए समझते हैं', 'धनमित्र आपकी सहायता के लिए उपस्थित है', 'सलाह दी जाती है'. Do not assume the user's gender.\n"
+                    "3. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
+                    "4. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+                    "5. Mention currency (INR/Rs.) when applicable."
                 )
             else:
                 lang_directive = (
                     "MANDATORY INSTRUCTIONS:\n"
                     "1. LANGUAGE: Respond clearly in natural, conversational English.\n"
-                    "2. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
-                    "3. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-                    "4. Mention currency (INR/Rs.) when applicable."
+                    "2. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone. Avoid gendered assumptions for both the assistant and the user.\n"
+                    "3. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
+                    "4. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+                    "5. Mention currency (INR/Rs.) when applicable."
                 )
 
             user_prompt_parts = [
