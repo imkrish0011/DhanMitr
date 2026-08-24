@@ -129,19 +129,6 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
             <ChatMessageBubble key={msg.id} message={msg} />
           ))}
 
-          {isGeneratingResponse && (
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-full neumorph-chip flex items-center justify-center">
-                <DhanMitrLogo className="w-3.5 h-3.5" />
-              </div>
-              <div className="px-3 py-2 neumorph-flat rounded-xl rounded-tl-xs flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.2s]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.4s]" />
-              </div>
-            </div>
-          )}
-
           <div ref={messagesEndRef} />
         </div>
 

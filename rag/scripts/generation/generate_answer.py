@@ -43,7 +43,7 @@ SYSTEM_PROMPT_FILE = (
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-MODEL_NAME = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+MODEL_NAME = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 
 
 # ================================================================

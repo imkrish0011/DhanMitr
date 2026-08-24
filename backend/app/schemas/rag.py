@@ -79,6 +79,9 @@ class RAGAskRequest(BaseModel):
     language: Optional[str] = Field(
         default="en", description="Target response language ('en', 'hi', 'hinglish')"
     )
+    history: Optional[list[dict[str, str]]] = Field(
+        default=None, description="Recent conversation turns [{'role': 'user'|'assistant', 'content': '...'}]"
+    )
 
 
 class RAGAskResponse(BaseModel):

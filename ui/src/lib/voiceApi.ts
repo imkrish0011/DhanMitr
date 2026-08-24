@@ -77,3 +77,87 @@ export async function fetchVoiceHealth(): Promise<VoiceHealthResponse> {
     throw new VoiceApiError(message, 503);
   }
 }
+
+export interface StreamChatCallbacks {
+  onMetadata?: (meta: { sources?: any[]; language?: string; live_data?: any; rag_ms?: number }) => void;
+  onDelta?: (text: string) => void;
+  onDone?: (timing: { total_ms?: number; rag_ms?: number; llm_ms?: number }) => void;
+  onError?: (err: Error) => void;
+}
+
+/**
+ * Streams grounded answers token-by-token using Server-Sent Events (SSE).
+ */
+export async function streamRagChat(
+  payload: {
+    question: string;
+    financial_context?: Record<string, unknown>;
+    language?: string;
+    history?: { role: 'user' | 'assistant'; content: string }[];
+  },
+  callbacks: StreamChatCallbacks
+): Promise<void> {
+  const url = `${BACKEND_URL}/api/v1/rag/stream`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Streaming request failed: ${response.status} ${response.statusText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body stream is unavailable.');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      let currentEvent = 'message';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          currentEvent = 'message';
+          continue;
+        }
+
+        if (trimmed.startsWith('event:')) {
+          currentEvent = trimmed.slice(6).trim();
+        } else if (trimmed.startsWith('data:')) {
+          const rawData = trimmed.slice(5).trim();
+          try {
+            const parsed = JSON.parse(rawData);
+            if (currentEvent === 'metadata') {
+              callbacks.onMetadata?.(parsed);
+            } else if (currentEvent === 'delta') {
+              callbacks.onDelta?.(parsed.text || '');
+            } else if (currentEvent === 'done') {
+              callbacks.onDone?.(parsed);
+            }
+          } catch (e) {
+            console.debug('Failed to parse SSE JSON:', rawData, e);
+          }
+        }
+      }
+    }
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    callbacks.onError?.(error);
+    throw error;
+  }
+}

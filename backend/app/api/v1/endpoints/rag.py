@@ -50,6 +50,8 @@ async def search_rag_chunks(request: RAGSearchRequest) -> RAGSearchResponse:
     )
 
 
+from fastapi.responses import StreamingResponse
+
 @router.post("/ask", response_model=RAGAskResponse, summary="Grounded Q&A via RAG + Live Data + Groq LLM")
 async def ask_rag_question(request: RAGAskRequest) -> RAGAskResponse:
     """End-to-end grounded question answering for personal finance & government schemes.
@@ -63,6 +65,7 @@ async def ask_rag_question(request: RAGAskRequest) -> RAGAskResponse:
             question=request.question,
             financial_context=request.financial_context,
             language=request.language or "en",
+            history=request.history,
         )
         return RAGAskResponse(
             question=result["question"],
@@ -81,3 +84,22 @@ async def ask_rag_question(request: RAGAskRequest) -> RAGAskResponse:
             status_code=500,
             detail=f"Failed to generate RAG answer: {exc}",
         ) from exc
+
+
+@router.post("/stream", summary="Real-time SSE token stream for grounded Q&A")
+async def stream_rag_question(request: RAGAskRequest):
+    """Stream grounded answers token-by-token using Server-Sent Events (SSE) with <200ms TTFT."""
+    return StreamingResponse(
+        rag_service.stream_grounded_answer(
+            question=request.question,
+            financial_context=request.financial_context,
+            language=request.language or "en",
+            history=request.history,
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

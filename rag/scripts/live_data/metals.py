@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
 
-
+ROOT_DIR = Path(__file__).resolve().parents[3]
+load_dotenv(ROOT_DIR / ".env")
 load_dotenv()
 
 METALS_URL = "https://api.metals.dev/v1/latest"

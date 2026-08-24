@@ -6,6 +6,7 @@ and orchestrates grounded answer generation with Groq and speech-friendly summar
 """
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -42,6 +43,7 @@ class RAGServiceError(Exception):
 # ---------------------------------------------------------------------------
 _supabase_client: Client | None = None
 _sentence_transformer_model = None
+_groq_client = None
 
 
 def _get_supabase_client() -> Client:
@@ -60,14 +62,26 @@ def _get_supabase_client() -> Client:
     return _supabase_client
 
 
+def _get_groq_client():
+    """Return a persistent Groq client with an active HTTP keep-alive connection pool."""
+    global _groq_client
+    if _groq_client is None:
+        key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
+        if key:
+            from groq import Groq
+            _groq_client = Groq(api_key=key)
+    return _groq_client
+
+
 def reset_client() -> None:
     """Reset the cached client (useful for testing)."""
-    global _supabase_client
+    global _supabase_client, _groq_client
     _supabase_client = None
+    _groq_client = None
 
 
 def warmup_rag_model() -> None:
-    """Pre-loads the BGE-M3 embedding model in background during startup."""
+    """Pre-loads the BGE-M3 embedding model and warms the Groq client during startup."""
     global _sentence_transformer_model
     try:
         logger.info("Pre-warming BGE-M3 SentenceTransformer model...")
@@ -78,6 +92,12 @@ def warmup_rag_model() -> None:
         logger.info("BGE-M3 SentenceTransformer model successfully pre-warmed.")
     except Exception as exc:
         logger.warning("BGE-M3 pre-warm failed or skipped: %s", exc)
+
+    try:
+        _get_groq_client()
+        logger.info("Groq client pre-warmed with persistent HTTP connection pool.")
+    except Exception as exc:
+        logger.warning("Groq pre-warm failed: %s", exc)
 
 
 def get_embedding_vector(text: str) -> Optional[List[float]]:
@@ -274,6 +294,72 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
     """Format live market data dict into clean contextual string."""
     if not live_data:
         return "No live data available."
+
+    provider = live_data.get("provider", "")
+    asset = live_data.get("asset", "")
+
+    if "metals" in provider or asset in ("Gold", "Silver"):
+        price = live_data.get("price", 0.0)
+        currency = live_data.get("currency", "INR")
+        unit = live_data.get("unit", "g")
+        ten_gram_price = price * 10
+        return (
+            f"REAL-TIME LIVE PRECIOUS METALS DATA (OFFICIAL LIVE FEED):\n"
+            f"- Asset: {asset}\n"
+            f"- Current Market Price: Rs. {price:,.2f} per {unit} ({currency})\n"
+            f"- Price per 10 grams: Rs. {ten_gram_price:,.2f} ({currency})\n"
+            f"- Data Source: Metals.Dev (Live Spot Price)\n"
+            f"- Freshness: Live real-time market quote\n"
+            f"INSTRUCTION: Answer the user's question directly stating this current live market price (Rs. {price:,.2f}/g or Rs. {ten_gram_price:,.0f} per 10g)."
+        )
+
+    if "coingecko" in provider:
+        price = live_data.get("price", 0.0)
+        currency = live_data.get("currency", "INR").upper()
+        change_24h = live_data.get("change_24h", 0.0)
+        return (
+            f"REAL-TIME LIVE CRYPTOCURRENCY DATA (OFFICIAL LIVE FEED):\n"
+            f"- Asset: {asset}\n"
+            f"- Current Price: Rs. {price:,.2f} {currency}\n"
+            f"- 24-Hour Change: {change_24h:+.2f}%\n"
+            f"- Data Source: CoinGecko (Live Price)\n"
+            f"INSTRUCTION: Answer the user's question directly stating this current live crypto price."
+        )
+
+    if "twelve_data" in provider:
+        rate = live_data.get("rate", 0.0)
+        base = live_data.get("base_currency", "USD")
+        quote = live_data.get("quote_currency", "INR")
+        return (
+            f"REAL-TIME LIVE FOREX DATA (OFFICIAL LIVE FEED):\n"
+            f"- Currency Pair: {base}/{quote}\n"
+            f"- Current Exchange Rate: 1 {base} = Rs. {rate:,.4f} {quote}\n"
+            f"- Data Source: Twelve Data (Live Exchange Rate)\n"
+            f"INSTRUCTION: Answer the user's question directly stating this current exchange rate."
+        )
+
+    if "yfinance" in provider or live_data.get("symbol"):
+        symbol = live_data.get("symbol", "")
+        price = live_data.get("price", 0.0)
+        exchange = live_data.get("exchange", "NSE")
+        return (
+            f"REAL-TIME LIVE STOCK MARKET DATA (OFFICIAL LIVE FEED):\n"
+            f"- Stock Symbol: {symbol} ({exchange})\n"
+            f"- Current Share Price: Rs. {price:,.2f} INR\n"
+            f"- Data Source: Live Market Feed\n"
+            f"INSTRUCTION: Answer the user's question directly stating this current share price."
+        )
+
+    if "rbi" in provider or live_data.get("rates"):
+        rates = live_data.get("rates", {})
+        rates_str = ", ".join(f"{k.replace('_', ' ').title()}: {v}%" for k, v in rates.items())
+        return (
+            f"REAL-TIME RBI POLICY RATES (OFFICIAL LIVE FEED):\n"
+            f"- Policy Rates: {rates_str}\n"
+            f"- Data Source: Reserve Bank of India\n"
+            f"INSTRUCTION: Answer the user's question directly stating these current official RBI policy rates."
+        )
+
     lines = ["LIVE MARKET DATA:", "-----------------"]
     for k, v in live_data.items():
         if isinstance(v, dict):
@@ -289,25 +375,25 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
 # Personal Finance Intent Detection & Context Formatting
 # ---------------------------------------------------------------------------
 
-# Precise regex patterns that detect when a user is referring to THEIR OWN money,
-# budget, personal spending, OTT subscriptions, or financial situation.
-# Uses word boundaries (\b) to completely prevent false positives on general queries
-# (e.g., "tell me about gold", "home prices", "scheme", "prime rate").
 _PERSONAL_INTENT_REGEX_PATTERNS = [
-    # English possessive financial context
-    r"\bmy\s+(?:spending|expenses?|budget|subscriptions?|salary|income|savings?|portfolio|investments?|loans?|emis?|insurance|coverages?|net\s*worth|bills?|money|account|cards?|finances?|cashflow|emergency\s*fund|ott|netflix|spotify|prime|hotstar|rent)\b",
-    r"\b(?:what|show|check|tell)\s+(?:are|is|me)\s+my\b",
+    # English possessive financial context (matches "my biggest expenses", "my spending breakdown", "show my budget", etc.)
+    r"\b(?:my|i|me|mine|our)\b.*\b(?:spending|expenses?|budget|subscriptions?|salary|income|savings?|portfolio|investments?|loans?|emis?|insurance|coverages?|net\s*worth|bills?|money|account|cards?|finances?|cashflow|emergency\s*fund|ott|netflix|spotify|prime|hotstar|rent|groceries|shopping|outflow|surplus|runway|goals?|transactions?)\b",
+    r"\b(?:what|show|check|tell|list|display|analyze|analyse|explain|breakdown|categorize)\b.*\b(?:my|i\s+spend|i\s+have|i\s+pay|i\s+earn|i\s+save)\b",
     r"\bhow\s+much\s+(?:did\s+i\s+spend|am\s+i\s+spending|do\s+i\s+(?:spend|save|earn|have|owe|pay))\b",
     r"\b(?:how\s+much\s+am\s+i\s+paying\s+for|what\s+is\s+my\s+active)\b",
     r"\b(?:can|could|should)\s+i\s+afford\b",
     r"\bwhere\s+(?:is\s+my\s+money\s+going|can\s+i\s+(?:cut|reduce|save)\s+(?:more|costs?|expenses?))\b",
     r"\b(?:my\s+)(?:ott|netflix|spotify|hotstar|amazon\s*prime|disney|zee5|jiocinema|youtube\s*premium)\b",
     r"\b(?:cut\s+my\s+expenses|reduce\s+my\s+costs?|my\s+financial\s+(?:health|summary|overview|status|snapshot))\b",
+    r"\b(?:biggest|highest|largest|top)\s+(?:expenses?|spending|costs?|outflows?)\b",
+    r"\b(?:spending|expense)\s+breakdown\b",
+    r"\b(?:active|all)\s+subscriptions?\b",
 
     # Hindi possessive / personal patterns
-    r"\b(?:मेरा|मेरी|मेरे|मुझको|मुझे)\s+(?:खर्च|खर्चा|बचत|बजट|वेतन|सैलरी|आय|सब्सक्रिप्शन|बीमा|किस्त|ईएमआई|लोन|कर्ज|पैसे|खाता|इन्वेस्टमेंट|पोर्टफोलियो|नेटवर्थ|इमरजेंसी\s*फंड|रुपये)\b",
+    r"\b(?:मेरा|मेरी|मेरे|मुझको|मुझे|मैं|हम|हमारा|हमारी|हमारे)\b.*\b(?:खर्च|खर्चा|खर्चे|बचत|बजट|वेतन|सैलरी|आय|सब्सक्रिप्शन|बीमा|किस्त|ईएमआई|लोन|कर्ज|पैसे|खाता|इन्वेस्टमेंट|पोर्टफोलियो|नेटवर्थ|इमरजेंसी\s*फंड|रुपये|पैसा|खर्चों)\b",
     r"\b(?:मैं|हम)\s+(?:कितना\s+(?:बचा|खर्च|कमा)|क्या\s+(?:खरीद|अफोर्ड)\s+सकता)\b",
     r"\bमेरी\s+वित्तीय\s+स्थिति\b",
+    r"\b(?:सबसे\s+बड़ा\s+खर्चा|खर्चों\s+का\s+विवरण|सक्रिय\s+सब्सक्रिप्शन)\b",
 ]
 
 _COMPILED_PERSONAL_PATTERNS = [
@@ -316,11 +402,7 @@ _COMPILED_PERSONAL_PATTERNS = [
 
 
 def detect_personal_finance_intent(question: str) -> bool:
-    """Return True ONLY if the user question explicitly refers to their personal finances.
-
-    Uses strict word-boundary regex patterns to avoid false positives on general
-    market or educational queries (e.g., 'housing prices', 'gold rate', 'PMJJBY').
-    """
+    """Return True if the user question refers to their personal finances, spending, or budget."""
     if not question:
         return False
     q_str = question.strip()
@@ -329,15 +411,10 @@ def detect_personal_finance_intent(question: str) -> bool:
 
 
 def format_user_financial_context(ctx: Any) -> str:
-    """Format a FinancialContext (or dict) into a plain-text snapshot for the LLM.
-
-    The snapshot is injected into the prompt under the section
-    'USER PERSONAL FINANCIAL SNAPSHOT' only when personal intent is detected.
-    """
+    """Format a FinancialContext (or dict) into a rich, itemized plain-text snapshot for the LLM."""
     if ctx is None:
         return ""
 
-    # Accept both dict and pydantic model
     if hasattr(ctx, "model_dump"):
         d = ctx.model_dump()
     elif isinstance(ctx, dict):
@@ -349,39 +426,80 @@ def format_user_financial_context(ctx: Any) -> str:
 
     # Profile summary
     profile = d.get("profile") or {}
-    income = profile.get("monthly_income", 0)
-    expenses = profile.get("monthly_expenses", 0)
+    income = profile.get("monthly_income", 0) or d.get("monthly_income", 0)
+    expenses = profile.get("monthly_expenses", 0) or d.get("monthly_expenses", 0)
     net_surplus = d.get("net_surplus", income - expenses)
     savings_rate = d.get("savings_rate_percentage", 0)
     net_worth = d.get("net_worth", 0)
+    runway = d.get("runway_months", 0)
 
     if income or expenses:
         lines.append(
             f"Monthly Income: Rs.{income:,.0f} | Monthly Expenses: Rs.{expenses:,.0f} | "
             f"Net Surplus: Rs.{net_surplus:,.0f} ({savings_rate:.1f}% savings rate)"
         )
+    if runway:
+        lines.append(f"Emergency Fund Runway: {runway:.1f} months")
     if net_worth:
         lines.append(f"Estimated Net Worth: Rs.{net_worth:,.0f}")
 
-    # Active subscriptions total
-    subs_total = d.get("active_subscriptions_total", 0)
-    if subs_total:
-        lines.append(f"Active Subscriptions Total: Rs.{subs_total:,.0f}/month")
-
-    # Insurance coverages
-    coverages = d.get("active_insurance_coverages") or []
-    if coverages:
-        lines.append(f"Active Insurance Policies: {', '.join(coverages)}")
-
-    # Top spending categories
+    # Top spending categories breakdown
     categories = d.get("top_spending_categories") or []
     if categories:
-        lines.append("Top Spending Categories:")
+        lines.append("Top Spending Categories Breakdown:")
         for cat in categories[:6]:
             name = cat.get("category", "Other") if isinstance(cat, dict) else getattr(cat, "category", "Other")
             amt = cat.get("amount", 0) if isinstance(cat, dict) else getattr(cat, "amount", 0)
             pct = cat.get("percentage", 0) if isinstance(cat, dict) else getattr(cat, "percentage", 0)
-            lines.append(f"  {name}: Rs.{amt:,.0f} ({pct:.0f}%)")
+            lines.append(f"  - {name}: Rs.{amt:,.0f} ({pct:.1f}% of total outflow)")
+
+    # Active itemized subscriptions
+    subscriptions = d.get("subscriptions_list") or []
+    if subscriptions:
+        lines.append("Active Subscriptions List:")
+        for s in subscriptions:
+            name = s.get("name", "Service")
+            amt = s.get("amount", 0)
+            cycle = s.get("billing_cycle", "monthly")
+            cat = s.get("category", "Entertainment")
+            lines.append(f"  - {name}: Rs.{amt:,.0f}/{cycle} ({cat})")
+    elif d.get("active_subscriptions_total"):
+        lines.append(f"Active Subscriptions Total: Rs.{d.get('active_subscriptions_total'):,.0f}/month")
+
+    # Recent Transactions / Top Outflow Items
+    transactions = d.get("recent_transactions") or []
+    if transactions:
+        lines.append("Recent Major Outflows / Transactions:")
+        for tx in transactions[:8]:
+            title = tx.get("title", "Expense")
+            amt = tx.get("amount", 0)
+            cat = tx.get("category", "General")
+            lines.append(f"  - {title}: Rs.{amt:,.0f} ({cat})")
+
+    # Category Budgets
+    budget_items = d.get("budget_items") or []
+    if budget_items:
+        lines.append("Budget vs Actuals:")
+        for b in budget_items[:6]:
+            cat = b.get("category", "Other")
+            budgeted = b.get("budgeted_amount", 0)
+            actual = b.get("actual_spent", 0)
+            lines.append(f"  - {cat}: Budget Rs.{budgeted:,.0f} | Actual Spent Rs.{actual:,.0f}")
+
+    # Active Goals
+    goals = d.get("goals_list") or []
+    if goals:
+        lines.append("Active Financial Goals:")
+        for g in goals:
+            title = g.get("title", "Goal")
+            target = g.get("target_amount", 0)
+            current = g.get("current_amount", 0)
+            lines.append(f"  - {title}: Rs.{current:,.0f} saved of Rs.{target:,.0f} target")
+
+    # Insurance policies
+    coverages = d.get("active_insurance_coverages") or []
+    if coverages:
+        lines.append(f"Active Insurance Policies: {', '.join(coverages)}")
 
     # Risk tolerance & employment
     risk = profile.get("risk_tolerance", "")
@@ -392,19 +510,38 @@ def format_user_financial_context(ctx: Any) -> str:
             parts.append(f"Risk Tolerance: {risk}")
         if emp:
             parts.append(f"Employment: {emp}")
-        lines.append(" | ".join(parts))
+        lines.append("Profile Details: " + " | ".join(parts))
 
     return "\n".join(lines) if len(lines) > 1 else ""
 
 
 from backend.app.core.language_detector import detect_language
 
+
+def _build_groq_messages(
+    system_prompt_text: str,
+    user_prompt: str,
+    history: Optional[List[Any]] = None,
+) -> List[Dict[str, str]]:
+    """Builds the Groq messages payload including system prompt, multi-turn history, and the current user prompt."""
+    messages = [{"role": "system", "content": system_prompt_text}]
+    if history:
+        for turn in history[-6:]:
+            role = getattr(turn, "role", None) or (turn.get("role") if isinstance(turn, dict) else "user")
+            content = getattr(turn, "content", None) or (turn.get("content") or turn.get("text") if isinstance(turn, dict) else "")
+            if content and role in ("user", "assistant"):
+                messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": user_prompt})
+    return messages
+
+
 async def generate_grounded_answer(
     question: str,
     financial_context: Optional[Any] = None,
     language: str = "en",
+    history: Optional[List[Any]] = None,
 ) -> Dict[str, Any]:
-    """Orchestrates end-to-end grounded answer generation with language auto-detection and telemetry."""
+    """Orchestrates end-to-end grounded answer generation with language auto-detection, multi-turn history, and telemetry."""
     q = (question or "").strip()
     if not q:
         return {
@@ -440,13 +577,14 @@ async def generate_grounded_answer(
     try:
         vector = await asyncio.to_thread(get_embedding_vector, q)
         if vector:
-            retrieved_chunks = await search_similar_chunks(
+            raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
                 match_count=5,
-                match_threshold=0.20,
+                match_threshold=0.45,
             )
+            retrieved_chunks = [c for c in raw_chunks if c.get("similarity", 0.0) >= 0.45]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
-            logger.info("RAG search for '%s' retrieved %d chunks in %s ms", q[:40], len(retrieved_chunks), rag_ms)
+            logger.info("RAG search for '%s' retrieved %d relevant chunks in %s ms", q[:40], len(retrieved_chunks), rag_ms)
             for c in retrieved_chunks:
                 sources.append({
                     "title": c.get("document_title") or c.get("source_name") or "DhanMITR Knowledge",
@@ -464,10 +602,11 @@ async def generate_grounded_answer(
     # 3. Conditional Personal Finance Context Injection
     is_personal = detect_personal_finance_intent(q)
     user_context_text = ""
-    if is_personal and financial_context:
+    if financial_context:
+        # If user explicitly asked a personal query OR if financial snapshot has non-zero details
         user_context_text = format_user_financial_context(financial_context)
-        if user_context_text:
-            logger.debug("Personal finance intent detected — attaching user financial snapshot.")
+        if user_context_text and is_personal:
+            logger.debug("Personal finance intent detected — attaching rich user financial snapshot.")
 
     # 4. Load system prompt from file
     _system_prompt_path = ROOT_DIR / "rag" / "scripts" / "prompts" / "system_prompt.txt"
@@ -480,18 +619,15 @@ async def generate_grounded_answer(
         )
 
     # 5. Call Groq if API Key is available
-    groq_api_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
+    groq_client = _get_groq_client()
     llm_ms = 0.0
-    if groq_api_key:
+    if groq_client:
         try:
-            from groq import Groq
-            groq_client = Groq(api_key=groq_api_key)
-
             # Build contexts (without leaking internal chunk IDs or metadata to LLM text output)
             rag_context_text = "\n\n".join(
                 f"Information: {c.get('chunk_text')}"
                 for c in retrieved_chunks
-            ) if retrieved_chunks else "No specific policy document matched."
+            ) if retrieved_chunks else "No specific local scheme document matched. Answer using verified Indian government schemes, official portals (such as scholarships.gov.in), and financial education."
 
             live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
 
@@ -515,18 +651,26 @@ async def generate_grounded_answer(
                     "5. Mention currency (INR/Rs.) when applicable."
                 )
 
-            user_prompt_parts = [
-                f"Language: {effective_lang.upper()}",
-                "",
-                "KNOWLEDGE CONTEXT:",
-                rag_context_text,
-                "",
-                "LIVE MARKET DATA:",
-                live_context_text,
-            ]
+            if live_data:
+                user_prompt_parts = [
+                    f"Language: {effective_lang.upper()}",
+                    "",
+                    "REAL-TIME LIVE MARKET DATA (PRIMARY SOURCE OF TRUTH - USE THIS DATA DIRECTLY):",
+                    live_context_text,
+                    "",
+                    "ADDITIONAL BACKGROUND CONTEXT:",
+                    rag_context_text,
+                ]
+            else:
+                user_prompt_parts = [
+                    f"Language: {effective_lang.upper()}",
+                    "",
+                    "KNOWLEDGE CONTEXT:",
+                    rag_context_text,
+                ]
 
-            # Only inject personal finances when intent is detected
-            if user_context_text:
+            # Inject personal finance snapshot
+            if user_context_text and (is_personal or not retrieved_chunks):
                 user_prompt_parts.extend(["", user_context_text])
 
             user_prompt_parts.extend([
@@ -538,17 +682,17 @@ async def generate_grounded_answer(
             ])
 
             user_prompt = "\n".join(user_prompt_parts)
+            groq_messages = _build_groq_messages(system_prompt_text, user_prompt, history)
 
             t0_llm = time.perf_counter()
             response = await asyncio.to_thread(
                 lambda: groq_client.chat.completions.create(
                     model=settings.GROQ_MODEL,
-                    messages=[
-                        {"role": "system", "content": system_prompt_text},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=0.1,
-                    max_tokens=600,
+                    messages=groq_messages,
+                    temperature=0.2,
+                    max_tokens=800,
+                    reasoning_effort="low",
+                    extra_body={"reasoning_format": "hidden"},
                 )
             )
             llm_ms = round((time.perf_counter() - t0_llm) * 1000, 1)
@@ -556,12 +700,32 @@ async def generate_grounded_answer(
             if generated_answer.strip():
                 clean_answer = sanitize_plain_text(generated_answer)
                 spoken_reply = sanitize_plain_text(generated_answer)
+
+                # Clear sources if this is a personal finance query or off-topic redirection
+                is_explicit_scheme_query = any(kw in q.lower() for kw in [
+                    "yojana", "scheme", "policy", "portal", "eligibility", "apply", "subsidy", "nps", "epf", "ppf", "pmjjby", "pmsby", "pmkisan", "pm-kisan", "pmay", "scholarship", "योजना"
+                ])
+                off_topic_indicators = [
+                    "dedicated assistant",
+                    "dedicated indian personal finance",
+                    "dedicated personal finance",
+                    "financial and government scheme",
+                    "can only assist with",
+                    "can only help with",
+                    "केवल वित्तीय",
+                    "समर्पित भारतीय",
+                    "केवल व्यक्तिगत वित्त",
+                ]
+                effective_sources = sources
+                if (is_personal and not is_explicit_scheme_query) or any(phrase in clean_answer.lower() for phrase in off_topic_indicators):
+                    effective_sources = []
+
                 return {
                     "question": q,
                     "answer": clean_answer,
                     "reply_text": spoken_reply,
                     "language": effective_lang,
-                    "sources": sources,
+                    "sources": effective_sources,
                     "live_data": live_data,
                     "suggested_actions": ["Ask another question", "Explore relevant schemes", "Check financial health"],
                     "rag_ms": rag_ms,
@@ -570,7 +734,6 @@ async def generate_grounded_answer(
                 }
         except Exception as exc:
             logger.warning("Groq generation failed, using structured fallback: %s", exc)
-
     # 6. Structured Fallback Generation (when Groq key is not provided or offline)
     if live_data:
         provider = live_data.get("provider")
@@ -624,3 +787,167 @@ async def generate_grounded_answer(
         "live_data": live_data,
         "suggested_actions": ["Analyze my spending", "Compare tax regimes", "Show investment tips"],
     }
+
+
+async def stream_grounded_answer(
+    question: str,
+    financial_context: Optional[Any] = None,
+    language: str = "en",
+    history: Optional[List[Any]] = None,
+):
+    """Async generator yielding Server-Sent Events (SSE) for low-latency streaming responses (<200ms TTFT)."""
+    q = (question or "").strip()
+    if not q:
+        yield f"event: delta\ndata: {json.dumps({'text': 'Please provide a question or topic.'})}\n\n"
+        yield f"event: done\ndata: {json.dumps({'total_ms': 0})}\n\n"
+        return
+
+    pipeline_start = time.perf_counter()
+    effective_lang, lang_reason = detect_language(q, language)
+
+    # 1. Live market data
+    live_data = None
+    try:
+        from rag.scripts.live_data.live_router import get_live_data
+        live_data = await asyncio.to_thread(get_live_data, q)
+    except Exception as exc:
+        logger.debug("Live data router check failed: %s", exc)
+
+    # 2. Vector search
+    retrieved_chunks: List[Dict[str, Any]] = []
+    sources: List[Dict[str, Any]] = []
+    rag_ms = 0.0
+    t0_rag = time.perf_counter()
+    try:
+        vector = await asyncio.to_thread(get_embedding_vector, q)
+        if vector:
+            raw_chunks = await search_similar_chunks(
+                query_embedding=vector,
+                match_count=5,
+                match_threshold=0.45,
+            )
+            retrieved_chunks = [c for c in raw_chunks if c.get("similarity", 0.0) >= 0.45]
+            rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
+            for c in retrieved_chunks:
+                sources.append({
+                    "title": c.get("document_title") or c.get("source_name") or "DhanMITR Knowledge",
+                    "source_type": c.get("data_type") or "scheme",
+                    "snippet": (c.get("chunk_text") or "")[:200] + "...",
+                    "url": c.get("source_url") or "",
+                    "similarity": c.get("similarity", 0.0),
+                })
+        else:
+            rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
+    except Exception as exc:
+        rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
+        logger.warning("RAG retrieval failed: %s", exc)
+
+    # 3. Personal Finance & Scheme Intent Filtering
+    is_personal = detect_personal_finance_intent(q)
+    is_explicit_scheme_query = any(kw in q.lower() for kw in [
+        "yojana", "scheme", "policy", "portal", "eligibility", "apply", "subsidy", "nps", "epf", "ppf", "pmjjby", "pmsby", "pmkisan", "pm-kisan", "pmay", "scholarship", "योजना"
+    ])
+    effective_sources = sources
+    if is_personal and not is_explicit_scheme_query:
+        effective_sources = []
+
+    # Yield initial metadata event immediately to UI
+    yield f"event: metadata\ndata: {json.dumps({'sources': effective_sources, 'language': effective_lang, 'live_data': live_data, 'rag_ms': rag_ms})}\n\n"
+
+    # 4. Personal Finance Snapshot
+    user_context_text = ""
+    if financial_context:
+        user_context_text = format_user_financial_context(financial_context)
+
+    # 5. Load prompt
+    _system_prompt_path = ROOT_DIR / "rag" / "scripts" / "prompts" / "system_prompt.txt"
+    try:
+        system_prompt_text = _system_prompt_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        system_prompt_text = "You are DhanMITR, a helpful and precise Indian financial assistant."
+
+    rag_context_text = "\n\n".join(
+        f"Information: {c.get('chunk_text')}" for c in retrieved_chunks
+    ) if retrieved_chunks else "No specific local scheme document matched. Answer using verified Indian government schemes, official portals (such as scholarships.gov.in), and financial education."
+
+    live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
+
+    if effective_lang == "hi":
+        lang_directive = (
+            "MANDATORY INSTRUCTIONS:\n"
+            "1. LANGUAGE: You MUST write the ENTIRE answer in natural, clear Hindi (Devanagari script).\n"
+            "2. GENDER & TONE: DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral tone. NEVER use 1st-person masculine Hindi verbs (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा').\n"
+            "3. PRIVACY: Do NOT disclose internal dataset names or chunk IDs. State information directly.\n"
+            "4. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+            "5. Mention currency (INR/Rs.) when applicable."
+        )
+    else:
+        lang_directive = (
+            "MANDATORY INSTRUCTIONS:\n"
+            "1. LANGUAGE: Respond clearly in natural, conversational English.\n"
+            "2. GENDER & TONE: DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone.\n"
+            "3. PRIVACY: Do NOT disclose internal dataset names or chunk IDs. State information directly.\n"
+            "4. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+            "5. Mention currency (INR/Rs.) when applicable."
+        )
+
+    if live_data:
+        user_prompt_parts = [
+            f"Language: {effective_lang.upper()}",
+            "",
+            "REAL-TIME LIVE MARKET DATA (PRIMARY SOURCE OF TRUTH):",
+            live_context_text,
+            "",
+            "ADDITIONAL BACKGROUND CONTEXT:",
+            rag_context_text,
+        ]
+    else:
+        user_prompt_parts = [
+            f"Language: {effective_lang.upper()}",
+            "",
+            "KNOWLEDGE CONTEXT:",
+            rag_context_text,
+        ]
+
+    if user_context_text and (is_personal or not retrieved_chunks):
+        user_prompt_parts.extend(["", user_context_text])
+
+    user_prompt_parts.extend([
+        "",
+        "USER QUESTION:",
+        q,
+        "",
+        lang_directive,
+    ])
+
+    user_prompt = "\n".join(user_prompt_parts)
+    groq_messages = _build_groq_messages(system_prompt_text, user_prompt, history)
+
+    groq_client = _get_groq_client()
+    accumulated_text = []
+    t0_llm = time.perf_counter()
+    if groq_client:
+        try:
+            stream = groq_client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=groq_messages,
+                temperature=0.2,
+                max_tokens=800,
+                stream=True,
+                reasoning_effort="low",
+                extra_body={"reasoning_format": "hidden"},
+            )
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    token_text = chunk.choices[0].delta.content
+                    accumulated_text.append(token_text)
+                    yield f"event: delta\ndata: {json.dumps({'text': token_text})}\n\n"
+        except Exception as exc:
+            logger.warning("Groq stream exception: %s", exc)
+            fallback = "I encountered a momentary issue generating the response. Please try again."
+            yield f"event: delta\ndata: {json.dumps({'text': fallback})}\n\n"
+
+    total_ms = round((time.perf_counter() - pipeline_start) * 1000, 1)
+    llm_ms = round((time.perf_counter() - t0_llm) * 1000, 1)
+
+    yield f"event: done\ndata: {json.dumps({'total_ms': total_ms, 'rag_ms': rag_ms, 'llm_ms': llm_ms})}\n\n"

@@ -159,6 +159,11 @@ export interface FinancialGoal {
   is_completed: boolean;
 }
 
+export interface ChatMessageTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'assistant';
@@ -168,6 +173,7 @@ export interface ChatMessage {
   widgetType?: 'expense_summary' | 'subscription_alert' | 'investment_tip' | 'none';
   widgetData?: SpendingCategorySummary[] | Subscription[] | Record<string, unknown> | null;
   sources?: KnowledgeSource[];
+  isStreaming?: boolean;
 }
 
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
@@ -214,6 +220,7 @@ export interface VoiceRequest {
   language?: string;
   stream_output?: boolean;
   user_id?: string;
+  history?: ChatMessageTurn[];
   financial_context?: Record<string, unknown>;
 }
 

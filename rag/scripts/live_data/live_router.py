@@ -247,6 +247,15 @@ GOLD_KEYWORDS = [
     "gold rates",
     "24k gold",
     "22k gold",
+    "18k gold",
+    "bullion",
+    "सोना",
+    "सोने",
+    "स्वर्ण",
+    "sone ka bhav",
+    "sone ka rate",
+    "sona",
+    "sone",
 ]
 
 SILVER_KEYWORDS = [
@@ -254,6 +263,11 @@ SILVER_KEYWORDS = [
     "silver price",
     "silver rate",
     "silver rates",
+    "चांदी",
+    "चाँदी",
+    "chandi ka bhav",
+    "chandi ka rate",
+    "chandi",
 ]
 
 

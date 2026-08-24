@@ -121,6 +121,11 @@ class SpendingCategorySummary(BaseModel):
     percentage: float = 0.0
 
 
+class ChatMessageTurn(BaseModel):
+    role: str = "user"  # 'user' | 'assistant'
+    content: str = ""
+
+
 class FinancialContext(BaseModel):
     model_config = {"extra": "allow"}
 
@@ -134,6 +139,10 @@ class FinancialContext(BaseModel):
     active_goals_count: Optional[int] = None
     active_subscriptions_total: Optional[float] = None
     active_insurance_coverages: Optional[List[str]] = None
+    subscriptions_list: Optional[List[Dict[str, Any]]] = None
+    recent_transactions: Optional[List[Dict[str, Any]]] = None
+    budget_items: Optional[List[Dict[str, Any]]] = None
+    goals_list: Optional[List[Dict[str, Any]]] = None
 
 
 
@@ -210,6 +219,7 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = None
     stream: bool = False
     language: str = "en"
+    history: Optional[List[ChatMessageTurn]] = None
     financial_context: Optional[FinancialContext] = None
 
 
@@ -279,6 +289,7 @@ class VoiceRequest(BaseModel):
     language: str = "en"
     stream_output: bool = False
     user_id: Optional[str] = None
+    history: Optional[List[ChatMessageTurn]] = None
     financial_context: Optional[Any] = None
 
 

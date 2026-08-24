@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { ChatMessage, VoiceState } from '@/types';
 import { useFinance } from './FinanceContext';
 import { useAuth } from './AuthContext';
-import { sendVoiceChat } from '@/lib/voiceApi';
+import { sendVoiceChat, streamRagChat } from '@/lib/voiceApi';
 
 export type SupportedLanguage = 'auto' | 'en' | 'hi' | 'hinglish';
 
@@ -42,10 +42,14 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     spendingCategories,
     subscriptions,
     insurances,
+    transactions,
+    budgetItems,
+    goals,
     totalIncome,
     totalOutflow,
     netSurplus,
     savingsRate,
+    emergencyRunwayMonths,
     profile,
   } = useFinance();
 
@@ -115,7 +119,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
         setAudioFrequencyData(simulated);
       } else {
-        setAudioFrequencyData(new Array(24).fill(8));
+        setAudioFrequencyData(new Array(24).fill(10));
       }
       animationFrameRef.current = requestAnimationFrame(animateFrequencies);
     };
@@ -135,26 +139,25 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  // Select best supported MIME type for MediaRecorder
+  // Audio format check for browser MediaRecorder
   const getSupportedMimeType = (): string => {
-    if (typeof MediaRecorder === 'undefined') return '';
-    const preferredTypes = [
+    const types = [
       'audio/webm;codecs=opus',
       'audio/webm',
       'audio/ogg;codecs=opus',
-      'audio/ogg',
       'audio/mp4',
       'audio/aac',
+      'audio/wav',
     ];
-    for (const type of preferredTypes) {
-      if (MediaRecorder.isTypeSupported(type)) {
+    for (const type of types) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) {
         return type;
       }
     }
     return '';
   };
 
-  // Helper to assemble structured financial context
+  // Helper to assemble rich, itemized financial context
   const buildFinancialContext = () => {
     return {
       profile: profile
@@ -174,6 +177,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       net_worth: (profile?.total_investments || 0) + (profile?.emergency_fund_balance || 0) - (profile?.total_liabilities || 0),
       net_surplus: netSurplus,
       savings_rate_percentage: savingsRate,
+      runway_months: emergencyRunwayMonths,
       active_subscriptions_total: subscriptions
         .filter((s) => s.is_active)
         .reduce((sum, s) => sum + (s.billing_cycle === 'monthly' ? s.amount : Math.round(s.amount / 12)), 0),
@@ -182,6 +186,33 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         category: c.categoryKey || c.category,
         amount: c.amount,
         percentage: c.percentage,
+      })),
+      subscriptions_list: subscriptions
+        .filter((s) => s.is_active)
+        .map((s) => ({
+          name: s.name,
+          amount: s.amount,
+          billing_cycle: s.billing_cycle,
+          category: s.category || 'Entertainment',
+          next_renewal_date: s.next_renewal_date,
+        })),
+      recent_transactions: (transactions || []).slice(0, 10).map((t) => ({
+        title: t.title,
+        amount: t.amount,
+        category: t.category,
+        type: t.type,
+        date: t.date,
+      })),
+      budget_items: (budgetItems || []).map((b) => ({
+        category: b.category,
+        budgeted_amount: b.allocated,
+        actual_spent: b.spent,
+      })),
+      goals_list: (goals || []).map((g) => ({
+        title: g.title,
+        target_amount: g.target_amount,
+        current_amount: g.current_amount,
+        target_date: g.target_date,
       })),
     };
   };
@@ -228,7 +259,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // Fallback direct text synthesis via backend or speech
-  const speakText = async (text: string, lang: 'en' | 'hi' | 'hinglish' = 'en') => {
+  const speakText = async (text: string, lang: SupportedLanguage = 'en') => {
     if (!text.trim()) return;
     try {
       stopAudioPlayback();
@@ -236,7 +267,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const response = await sendVoiceChat({
         text,
-        language: lang,
+        language: lang === 'auto' ? undefined : lang,
         user_id: profile?.user_id,
         financial_context: buildFinancialContext(),
       });
@@ -301,10 +332,16 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             return;
           }
 
+          const historyPayload = messages.slice(-6).map((m) => ({
+            role: m.sender,
+            content: m.text,
+          }));
+
           const response = await sendVoiceChat({
             audio_base64: base64Data,
             language: selectedLanguage === 'auto' ? undefined : selectedLanguage,
             user_id: profile?.user_id,
+            history: historyPayload,
             financial_context: buildFinancialContext(),
           });
 
@@ -339,7 +376,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setMessages((prev) => [...prev, assistantMsg]);
           }
 
-          // 3. Play Kokoro synthesized audio
+          // 3. Play synthesized audio
           if (response.audio_base64) {
             playSynthesizedAudio(response.audio_base64, response.audio_format || 'audio/wav');
           } else {
@@ -441,7 +478,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Send message from chat box
+  // Send message from chat box with real-time SSE token streaming (<200ms TTFT)
   const sendMessage = async (text: string, language?: SupportedLanguage) => {
     if (!text.trim()) return;
 
@@ -462,39 +499,96 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       language: effectiveLang,
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const assistantMsgId = generateMsgId('msg_a');
+    const initialAssistantMsg: ChatMessage = {
+      id: assistantMsgId,
+      sender: 'assistant',
+      text: '',
+      timestamp: getTimestampStr(),
+      language: effectiveLang === 'auto' ? 'en' : effectiveLang,
+      isStreaming: true,
+      sources: [],
+    };
+
+    // Extract history of last 6 messages
+    const historyPayload = messages.slice(-6).map((m) => ({
+      role: m.sender,
+      content: m.text,
+    }));
+
+    setMessages((prev) => [...prev, userMsg, initialAssistantMsg]);
     setIsGeneratingResponse(true);
 
     try {
-      const response = await sendVoiceChat({
-        text,
-        language: effectiveLang === 'auto' ? undefined : effectiveLang,
-        user_id: profile?.user_id,
-        financial_context: buildFinancialContext(),
-      });
-
-      const replyText = response.answer || response.reply_text || '';
-      const detectedLang = (response.language as 'en' | 'hi' | 'hinglish') || (effectiveLang === 'auto' ? 'en' : effectiveLang);
-      const assistantMsg: ChatMessage = {
-        id: generateMsgId('msg_a'),
-        sender: 'assistant',
-        text: replyText,
-        timestamp: getTimestampStr(),
-        language: detectedLang,
-        sources: response.sources,
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
+      await streamRagChat(
+        {
+          question: text,
+          language: effectiveLang === 'auto' ? undefined : effectiveLang,
+          financial_context: buildFinancialContext(),
+          history: historyPayload,
+        },
+        {
+          onMetadata: (meta) => {
+            if (meta.sources && meta.sources.length > 0) {
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMsgId ? { ...msg, sources: meta.sources } : msg
+                )
+              );
+            }
+            if (meta.language) {
+              const detected = meta.language as 'en' | 'hi' | 'hinglish';
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMsgId ? { ...msg, language: detected } : msg
+                )
+              );
+            }
+          },
+          onDelta: (chunkText) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMsgId ? { ...msg, text: msg.text + chunkText } : msg
+              )
+            );
+          },
+          onDone: () => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMsgId ? { ...msg, isStreaming: false } : msg
+              )
+            );
+            setIsGeneratingResponse(false);
+          },
+          onError: (err) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMsgId
+                  ? {
+                      ...msg,
+                      text: msg.text || `Unable to complete response: ${err.message}`,
+                      isStreaming: false,
+                    }
+                  : msg
+              )
+            );
+            setIsGeneratingResponse(false);
+          },
+        }
+      );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Please try again.';
-      const errorMsg: ChatMessage = {
-        id: generateMsgId('msg_err'),
-        sender: 'assistant',
-        text: `Unable to process message: ${message}`,
-        timestamp: getTimestampStr(),
-        language: effectiveLang,
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMsgId
+            ? {
+                ...msg,
+                text: msg.text || `Unable to process message: ${message}`,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
     } finally {
       setIsGeneratingResponse(false);
     }

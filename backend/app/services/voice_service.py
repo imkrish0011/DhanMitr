@@ -392,7 +392,7 @@ def _process_voice_sync(
             stt_rtf=stt_result.rtf,
             rag_chunks_count=len(rag_sources),
             rag_ms=rag_ms,
-            llm_model=voice_config.os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+            llm_model=voice_config.os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
             llm_ms=llm_ms,
             tts_provider=tts_result.provider,
             tts_voice=tts_result.voice,
@@ -483,6 +483,7 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             question=text_input,
             financial_context=parsed_context,
             language=request.language or "en",
+            history=request.history,
         )
         answer_text = rag_out["answer"]
         spoken_reply = rag_out["reply_text"]
@@ -503,6 +504,12 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
 
     tts_provider = voice_config.TTS_PROVIDER
     t0_tts = time.perf_counter()
+    b64 = None
+    audio_secs = 0.0
+    tts_ms = 0.0
+    actual_tts_provider = "none"
+    actual_tts_voice = ""
+
     try:
         tts_engine = tts_module.get_tts(tts_provider)
         tts_result = await asyncio.to_thread(
@@ -511,21 +518,19 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             reply_lang,
             request.voice_id,
         )
+        tts_ms = round((time.perf_counter() - t0_tts) * 1000, 1)
+        b64 = audio_utils.wav_to_base64(tts_result.audio_path)
+        audio_secs = tts_result.audio_seconds or 0.0
+        actual_tts_provider = tts_result.provider
+        actual_tts_voice = tts_result.voice
+        audio_utils.cleanup(tts_result.audio_path)
     except Exception as tts_err:
-        logger.error(
-            "Configured TTS provider '%s' failed in text chat synthesis: %s",
+        logger.warning(
+            "TTS provider '%s' failed in text chat synthesis: %s (returning text-only)",
             tts_provider,
             tts_err,
-            exc_info=True,
         )
-        raise TTSProviderError(
-            message="Configured TTS provider is unavailable.",
-            code="TTS_PROVIDER_UNAVAILABLE",
-        ) from tts_err
 
-    tts_ms = round((time.perf_counter() - t0_tts) * 1000, 1)
-    b64 = audio_utils.wav_to_base64(tts_result.audio_path)
-    audio_utils.cleanup(tts_result.audio_path)
     total_ms = round((time.perf_counter() - t0) * 1000, 1)
 
     # Structured Console Performance Logging
@@ -539,10 +544,10 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
         stt_ms=0.0,
         rag_chunks_count=len(rag_sources),
         rag_ms=rag_ms,
-        llm_model=voice_config.os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+        llm_model=voice_config.os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
         llm_ms=llm_ms,
-        tts_provider=tts_result.provider,
-        tts_voice=tts_result.voice,
+        tts_provider=actual_tts_provider,
+        tts_voice=actual_tts_voice,
         tts_ms=tts_ms,
         sources=rag_sources,
     )
@@ -554,13 +559,13 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
         audio_base64=b64,
         audio_format="audio/wav",
         language=reply_lang,
-        duration_seconds=tts_result.audio_seconds,
+        duration_seconds=audio_secs,
         latency_ms=total_ms,
         stt=STTTelemetry(provider="none", latency_ms=0.0),
         tts=TTSTelemetry(
-            provider=tts_result.provider,
-            voice=tts_result.voice,
-            latency_ms=tts_result.latency_ms,
+            provider=actual_tts_provider,
+            voice=actual_tts_voice,
+            latency_ms=tts_ms,
         ),
         timing=VoiceTimingTelemetry(total_ms=total_ms),
         sources=[KnowledgeSource(**s) for s in rag_sources],

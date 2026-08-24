@@ -82,8 +82,22 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
                 : 'px-4 py-2.5 neumorph-bubble-assistant text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-xs shadow-xs'
             }`}
           >
-            {/* Formatted Text */}
-            <div className="space-y-1">{renderFormattedText(message.text)}</div>
+            {/* Formatted Text with Streaming Cursor */}
+            {message.isStreaming && !message.text ? (
+              <div className="flex items-center gap-1.5 py-1 text-slate-500 dark:text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="text-[11px] font-medium ml-1">Analyzing...</span>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {renderFormattedText(message.text)}
+                {message.isStreaming && (
+                  <span className="inline-block w-1.5 h-3.5 bg-emerald-500 rounded-xs animate-pulse ml-0.5 align-middle" />
+                )}
+              </div>
+            )}
 
             {/* Embedded Interactive Expense Breakdown Widget */}
             {message.widgetType === 'expense_summary' && Array.isArray(message.widgetData) && (
@@ -110,8 +124,8 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
               </div>
             )}
 
-            {/* RAG Source Citation Badges / Pills */}
-            {message.sources && message.sources.length > 0 && (
+            {/* RAG Source Citation Badges / Pills (Only shown after response has finished generating) */}
+            {!message.isStreaming && Boolean(message.text?.trim()) && message.sources && message.sources.length > 0 && (
               <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 space-y-1.5">
                 <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400">
                   <BookOpen className="w-3 h-3 text-emerald-500" />
@@ -134,8 +148,8 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
             )}
           </div>
 
-          {/* Action Bar (Only for Assistant messages) */}
-          {!isUser && (
+          {/* Action Bar (Only for Assistant messages when completed) */}
+          {!isUser && !message.isStreaming && Boolean(message.text?.trim()) && (
             <div className="flex items-center gap-1 mt-1 px-1 text-slate-400 dark:text-slate-500">
               {/* Copy Button */}
               <button
