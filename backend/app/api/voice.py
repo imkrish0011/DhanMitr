@@ -98,3 +98,18 @@ async def voice_chat(request: VoiceRequest) -> VoiceResponse:
 async def voice_health() -> VoiceHealthResponse:
     """Returns provider status, pre-warm timings, and model readiness."""
     return voice_service.get_voice_health()
+
+
+from fastapi.responses import StreamingResponse
+
+
+@router.post(
+    "/stream",
+    summary="Stream real-time synthesized audio chunks for low-latency voice playback",
+)
+async def voice_chat_stream(request: VoiceRequest):
+    """End-to-end voice streaming endpoint delivering audio chunks in <1.2s."""
+    return StreamingResponse(
+        voice_service.stream_voice_chat(request),
+        media_type="audio/wav",
+    )

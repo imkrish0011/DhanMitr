@@ -115,6 +115,15 @@ def make_silence_wav(seconds: float = 1.0, sample_rate: Optional[int] = None) ->
     return dst
 
 
+def samples_to_wav_bytes(samples, sample_rate: int = 24000) -> bytes:
+    """Encodes float samples into in-memory 16-bit PCM WAV bytes without disk I/O."""
+    import io
+    import soundfile as sf
+    buf = io.BytesIO()
+    sf.write(buf, samples, sample_rate, format="WAV", subtype="PCM_16")
+    return buf.getvalue()
+
+
 def cleanup(*paths: Optional[Path]) -> None:
     """Best-effort removal of temporary files.
 

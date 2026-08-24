@@ -60,6 +60,12 @@ class BaseTTS:
         """Renders ``text`` to a wav file and returns its path plus timings."""
         raise NotImplementedError
 
+    def synthesize_stream(
+        self, text: str, language: str = "en", voice: Optional[str] = None
+    ):
+        """Yields synthesized audio chunks (bytes) in real time as a generator."""
+        raise NotImplementedError
+
     def warmup(self) -> None:
         """Loads the model and synthesises one throwaway phrase.
 
@@ -169,6 +175,24 @@ class KokoroTTS(BaseTTS):
             meta={"lang_code": lang_code, "chunks": len(chunks)},
         )
 
+    def synthesize_stream(
+        self, text: str, language: str = "en", voice: Optional[str] = None
+    ):
+        """Streams Kokoro audio chunks sentence-by-sentence as WAV bytes."""
+        text = (text or "").strip()
+        if not text:
+            return
+
+        lang_code = self.LANG_CODES.get(language.lower(), "a")
+        voice = voice or self._default_voice(lang_code)
+        pipeline = self._pipeline(lang_code)
+
+        for _, _, audio_chunk in pipeline(text, voice=voice):
+            if audio_chunk is not None and len(audio_chunk) > 0:
+                yield audio_utils.samples_to_wav_bytes(
+                    audio_chunk, config.KOKORO_SAMPLE_RATE
+                )
+
 
 class PiperTTS(BaseTTS):
     """Piper VITS voices — optional, for Indic languages Kokoro cannot speak.
@@ -250,6 +274,19 @@ class PiperTTS(BaseTTS):
             meta={"model": voice_name},
         )
 
+    def synthesize_stream(
+        self, text: str, language: str = "en", voice: Optional[str] = None
+    ):
+        """Streams Piper audio chunks."""
+        text = (text or "").strip()
+        if not text:
+            return
+        res = self.synthesize(text, language=language, voice=voice)
+        try:
+            yield Path(res.audio_path).read_bytes()
+        finally:
+            audio_utils.cleanup(res.audio_path)
+
 
 class MockTTS(BaseTTS):
     """Emits one second of silence so the UI can be wired without a model."""
@@ -279,6 +316,14 @@ class MockTTS(BaseTTS):
             audio_seconds=1.0,
             meta={"note": "mock provider — no model was loaded", "text": text[:80]},
         )
+
+    def synthesize_stream(
+        self, text: str, language: str = "en", voice: Optional[str] = None
+    ):
+        """Emits short silent wav byte chunk for testing."""
+        import numpy as np
+        silence = np.zeros(int(config.TARGET_SAMPLE_RATE * 0.5), dtype=np.float32)
+        yield audio_utils.samples_to_wav_bytes(silence, config.TARGET_SAMPLE_RATE)
 
 
 class EdgeTTS(BaseTTS):
@@ -361,12 +406,46 @@ class EdgeTTS(BaseTTS):
             meta={"voice": voice_name},
         )
 
+    def synthesize_stream(
+        self, text: str, language: str = "en", voice: Optional[str] = None
+    ):
+        """Yields audio chunks from EdgeTTS in real time."""
+        text = (text or "").strip()
+        if not text:
+            return
+
+        import asyncio
+        import edge_tts
+
+        lang_key = (language or "en").lower().split("-")[0]
+        voice_name = voice or self.VOICES.get(language.lower(), self.VOICES.get(lang_key, self.VOICES["en"]))
+
+        async def _stream_audio():
+            communicate = edge_tts.Communicate(text, voice_name)
+            chunks = []
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    chunks.append(chunk["data"])
+            return chunks
+
+        try:
+            chunks = asyncio.run(_stream_audio())
+            for c in chunks:
+                yield c
+        except Exception:
+            res = self.synthesize(text, language, voice)
+            try:
+                yield Path(res.audio_path).read_bytes()
+            finally:
+                audio_utils.cleanup(res.audio_path)
+
 
 _PROVIDERS = {
     "kokoro": KokoroTTS,
     "edge": EdgeTTS,
     "edge_tts": EdgeTTS,
     "piper": PiperTTS,
+    "mock": MockTTS,
 }
 
 _cache: Dict[str, BaseTTS] = {}

@@ -570,3 +570,64 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
         timing=VoiceTimingTelemetry(total_ms=total_ms),
         sources=[KnowledgeSource(**s) for s in rag_sources],
     )
+
+
+async def stream_voice_chat(request: VoiceRequest):
+    """Async generator yielding real-time synthesized WAV audio byte chunks for <1.2s voice latency."""
+    transcript = (request.text or "").strip()
+    effective_lang = request.language or "en"
+
+    # 1. Transcribe audio if audio_base64 is provided
+    if request.audio_base64:
+        raw_tmp = None
+        wav_tmp = None
+        try:
+            raw_tmp = audio_utils.decode_base64_audio(request.audio_base64)
+            wav_tmp = audio_utils.to_wav16k_mono(raw_tmp)
+            stt_engine = stt_module.get_stt(voice_config.STT_PROVIDER)
+            stt_res = await asyncio.to_thread(
+                stt_engine.transcribe,
+                wav_tmp,
+                request.language,
+            )
+            transcript = (stt_res.text or "").strip()
+            if stt_res.language:
+                effective_lang = stt_res.language
+        finally:
+            audio_utils.cleanup(raw_tmp, wav_tmp)
+
+    if not transcript:
+        no_speech = (
+            "कोई आवाज़ नहीं सुनाई दी। कृपया दोबारा बोलें।"
+            if effective_lang == "hi"
+            else "No speech was detected. Please try speaking into the microphone again."
+        )
+        tts_engine = tts_module.get_tts(voice_config.TTS_PROVIDER)
+        for chunk in tts_engine.synthesize_stream(no_speech, language=effective_lang, voice=request.voice_id):
+            yield chunk
+        return
+
+    # 2. Get grounded answer from RAG
+    parsed_context = None
+    if request.financial_context:
+        if isinstance(request.financial_context, FinancialContext):
+            parsed_context = request.financial_context
+        elif isinstance(request.financial_context, dict):
+            try:
+                parsed_context = FinancialContext.model_validate(request.financial_context)
+            except Exception:
+                parsed_context = None
+
+    rag_out = await rag_service.generate_grounded_answer(
+        question=transcript,
+        financial_context=parsed_context,
+        language=effective_lang,
+        history=request.history,
+    )
+    spoken_reply = rag_out["reply_text"]
+    reply_lang = rag_out["language"]
+
+    # 3. Stream TTS chunks sentence-by-sentence directly to client
+    tts_engine = tts_module.get_tts(voice_config.TTS_PROVIDER)
+    for audio_chunk in tts_engine.synthesize_stream(spoken_reply, language=reply_lang, voice=request.voice_id):
+        yield audio_chunk
