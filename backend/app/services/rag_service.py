@@ -298,10 +298,31 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
     provider = live_data.get("provider", "")
     asset = live_data.get("asset", "")
 
-    if "metals" in provider or asset in ("Gold", "Silver"):
-        price = live_data.get("price", 0.0)
+    # Handle multi-feed compound queries (e.g. Gold + RBI in the same question)
+    if provider == "multi_live_feed":
+        feeds = live_data.get("feeds", [])
+        sections = [_format_live_data_text(feed) for feed in feeds]
+        return "\n\n".join(sections)
+
+    if "metals" in provider or asset in ("Gold", "Silver", "Gold & Silver"):
         currency = live_data.get("currency", "INR")
         unit = live_data.get("unit", "g")
+
+        if asset == "Gold & Silver":
+            gold_price = live_data.get("gold_price", 0.0)
+            silver_price = live_data.get("silver_price", 0.0)
+            return (
+                f"REAL-TIME LIVE PRECIOUS METALS DATA (OFFICIAL LIVE FEED):\n"
+                f"- Gold Current Market Price: Rs. {gold_price:,.2f} per {unit} ({currency})\n"
+                f"- Gold Price per 10 grams: Rs. {gold_price * 10:,.2f} ({currency})\n"
+                f"- Silver Current Market Price: Rs. {silver_price:,.2f} per {unit} ({currency})\n"
+                f"- Silver Price per 10 grams: Rs. {silver_price * 10:,.2f} ({currency})\n"
+                f"- Data Source: Metals.Dev (Live Spot Price)\n"
+                f"- Freshness: Live real-time market quote\n"
+                f"INSTRUCTION: Answer the user's question directly stating these current live market prices."
+            )
+
+        price = live_data.get("price", 0.0)
         ten_gram_price = price * 10
         return (
             f"REAL-TIME LIVE PRECIOUS METALS DATA (OFFICIAL LIVE FEED):\n"
@@ -369,6 +390,7 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
         else:
             lines.append(f"{k}: {v}")
     return "\n".join(lines)
+
 
 
 # ---------------------------------------------------------------------------
@@ -535,6 +557,166 @@ def _build_groq_messages(
     return messages
 
 
+# ---------------------------------------------------------------------------
+# Hard Pre-LLM Off-Topic Gate
+# ---------------------------------------------------------------------------
+# If a query is clearly non-financial and matches blocked categories,
+# return an instant refusal without burning an LLM call.
+
+_FINANCE_ALLOW_KEYWORDS = {
+    # Core finance
+    "finance", "financial", "money", "bank", "banking", "loan", "emi", "interest",
+    "credit", "debit", "savings", "saving", "invest", "investment", "investing",
+    "mutual", "fund", "sip", "stock", "share", "market", "nifty", "sensex",
+    "portfolio", "dividend", "equity", "bond", "fixed deposit", "fd", "rd",
+    "recurring", "deposit", "withdrawal", "account", "upi", "neft", "rtgs",
+    "imps", "cheque", "atm",
+
+    # Tax
+    "tax", "taxes", "itr", "income tax", "gst", "tds", "hra", "80c", "80d",
+    "deduction", "exemption", "regime", "slab", "rebate", "refund",
+
+    # Insurance
+    "insurance", "lic", "premium", "claim", "policy", "term plan", "health insurance",
+    "life insurance", "bima", "pmjjby", "pmsby",
+
+    # Government schemes & welfare
+    "scheme", "yojana", "yojna", "subsidy", "pension", "nps", "epf", "ppf",
+    "gratuity", "provident", "pm kisan", "pmkisan", "pmay", "mudra", "scholarship",
+    "sukanya", "atal", "jan dhan", "fasal", "kisan", "ayushman", "ujjwala",
+    "digital india", "sarkari", "government", "welfare", "benefit", "portal",
+    "eligibility", "apply", "registration",
+
+    # Budgeting & personal finance
+    "budget", "expense", "expenses", "spending", "income", "salary", "emi",
+    "rent", "groceries", "subscription", "net worth", "emergency fund",
+    "cashflow", "surplus", "deficit", "debt", "karz", "bachat",
+
+    # Live market data
+    "gold", "silver", "bitcoin", "crypto", "ethereum", "forex", "dollar",
+    "usd", "inr", "euro", "rupee", "rupaya", "repo rate", "rbi", "sebi",
+    "nse", "bse", "commodity", "crude", "oil", "bullion",
+
+    # Hindi financial terms
+    "पैसा", "पैसे", "बचत", "खर्च", "वेतन", "सैलरी", "बजट", "निवेश", "कर्ज",
+    "ब्याज", "बीमा", "योजना", "लोन", "किस्त", "खाता", "बैंक", "सोना", "चांदी",
+    "आय", "वित्तीय", "सरकारी", "पेंशन", "छात्रवृत्ति",
+}
+
+_BLOCKED_TOPIC_KEYWORDS = {
+    # Sports
+    "cricket", "ipl", "football", "soccer", "tennis", "basketball", "hockey",
+    "world cup", "t20", "odi", "test match", "fifa", "olympic", "olympics",
+    "champion", "league", "match", "tournament", "player", "batsman", "bowler",
+    "goal", "wicket", "run chase", "innings", "stadium", "kohli", "dhoni",
+    "messi", "ronaldo", "nba", "nfl", "premier league",
+
+    # Entertainment & movies
+    "movie", "movies", "film", "bollywood", "hollywood", "actor", "actress",
+    "director", "song", "songs", "music", "singer", "album", "netflix series",
+    "tv show", "web series", "anime", "manga", "cartoon", "celebrity",
+    "shah rukh", "salman", "aamir", "oscar", "grammy", "avengers", "marvel",
+
+    # Food & cooking
+    "recipe", "recipes", "cook", "cooking", "food", "dish", "cuisine",
+    "restaurant", "biryani", "pizza", "burger", "cake", "dessert",
+    "ingredients", "calories", "diet plan",
+
+    # Science & tech (non-finance)
+    "nasa", "space", "planet", "mars", "moon landing", "black hole",
+    "quantum", "atom", "chemistry", "physics", "biology", "dna",
+    "programming", "python code", "javascript", "html", "css", "react code",
+    "machine learning", "artificial intelligence", "chatgpt",
+
+    # General trivia & history
+    "president", "prime minister", "capital of", "tallest", "longest",
+    "deepest", "oldest", "fastest", "biggest", "smallest", "population",
+    "geography", "continent", "country", "flag", "anthem", "language of",
+    "invented", "discovered", "who is", "who was", "who won",
+
+    # Weather & travel
+    "weather", "temperature", "forecast", "rain", "monsoon",
+    "flight", "hotel", "tourist", "travel", "vacation", "holiday destination",
+
+    # Gaming
+    "game", "gaming", "pubg", "fortnite", "minecraft", "gta", "valorant",
+    "esports", "playstation", "xbox", "nintendo",
+
+    # Relationships & lifestyle
+    "love", "dating", "relationship", "marriage advice", "horoscope",
+    "astrology", "zodiac", "kundli", "rashifal",
+}
+
+_HINDI_FINANCE_KEYWORDS = [
+    "पैसा", "पैसे", "बचत", "खर्च", "खर्चे", "वेतन", "सैलरी", "बजट", "निवेश", "कर्ज",
+    "ब्याज", "बीमा", "योजना", "लोन", "किस्त", "खाता", "बैंक", "सोना", "चांदी",
+    "आय", "वित्तीय", "सरकारी", "पेंशन", "छात्रवृत्ति", "टैक्स", "कर",
+]
+
+_HINDI_BLOCKED_KEYWORDS = [
+    "क्रिकेट", "मैच", "आईपीएल", "फुटबॉल", "वर्ल्ड कप", "खिलाड़ी", "फिल्म", "मूवी",
+    "गाना", "गाने", "एक्टर", "अभिनेता", "अभिनेत्री", "सिनेमा", "बॉलीवुड", "रेसिपी",
+    "खाना", "बिरयानी", "मौसम", "बारिश", "तापमान", "राष्ट्रपति", "प्रधानमंत्री",
+]
+
+# Compile for fast matching
+_FINANCE_ALLOW_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(k) for k in sorted(_FINANCE_ALLOW_KEYWORDS, key=len, reverse=True)) + r")\b",
+    re.IGNORECASE,
+)
+_BLOCKED_TOPIC_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(k) for k in sorted(_BLOCKED_TOPIC_KEYWORDS, key=len, reverse=True)) + r")\b",
+    re.IGNORECASE,
+)
+
+_OFF_TOPIC_REFUSAL_EN = (
+    "I'm DhanMitra, your dedicated Indian personal finance and government schemes assistant. "
+    "I can help you with budgeting, savings, investments, taxes, loans, insurance, "
+    "government welfare schemes, and live market data like gold prices, stock prices, and RBI rates. "
+    "Please feel free to ask me any financial question!"
+)
+_OFF_TOPIC_REFUSAL_HI = (
+    "नमस्ते! धनमित्र आपकी व्यक्तिगत वित्त और सरकारी योजनाओं की सहायक है। "
+    "बजट, बचत, निवेश, कर, लोन, बीमा, सरकारी कल्याणकारी योजनाएँ, "
+    "और सोने की कीमत, शेयर बाज़ार, आरबीआई दरों जैसी लाइव मार्केट जानकारी में सहायता कर सकती हूँ। "
+    "कृपया कोई भी वित्तीय प्रश्न पूछें!"
+)
+
+
+def _check_off_topic(question: str, lang: str) -> Optional[Dict[str, Any]]:
+    """Return a canned refusal dict if the question is clearly off-topic, else None."""
+    q_lower = question.lower()
+
+    has_finance = bool(_FINANCE_ALLOW_RE.search(q_lower)) or any(k in question for k in _HINDI_FINANCE_KEYWORDS)
+    has_blocked = bool(_BLOCKED_TOPIC_RE.search(q_lower)) or any(k in question for k in _HINDI_BLOCKED_KEYWORDS)
+
+    # If the query has finance keywords, always let it through (even if it also mentions cricket)
+    if has_finance:
+        return None
+
+    # If it has blocked keywords and zero finance signals, block it
+    if has_blocked:
+        refusal = _OFF_TOPIC_REFUSAL_HI if lang == "hi" else _OFF_TOPIC_REFUSAL_EN
+        return {
+            "question": question,
+            "answer": refusal,
+            "reply_text": refusal,
+            "language": lang,
+            "sources": [],
+            "live_data": None,
+            "suggested_actions": [
+                "Ask about government schemes",
+                "Check gold or stock prices",
+                "Ask about budgeting or tax",
+            ],
+            "rag_ms": 0.0,
+            "llm_ms": 0.0,
+        }
+
+    return None
+
+
+
 async def generate_grounded_answer(
     question: str,
     financial_context: Optional[Any] = None,
@@ -560,6 +742,17 @@ async def generate_grounded_answer(
     # Auto-detect language (Devanagari, Hinglish keywords, explicit hints)
     effective_lang, lang_reason = detect_language(q, language)
     logger.info("Language auto-detection: '%s' -> %s (%s)", q[:45], effective_lang.upper(), lang_reason)
+
+    # ── Hard Pre-LLM Topic Gate ──────────────────────────────────────────
+    # Block obviously off-topic queries BEFORE they reach the LLM.
+    # If the query matches blocked topics and has zero finance signals,
+    # return an instant refusal without wasting an LLM call.
+    off_topic_result = _check_off_topic(q, effective_lang)
+    if off_topic_result is not None:
+        logger.info("Off-topic gate triggered for: '%s'", q[:60])
+        off_topic_result["language_reason"] = lang_reason
+        return off_topic_result
+    # ─────────────────────────────────────────────────────────────────────
 
     # 1. Real-time Live Market Data
     live_data = None
@@ -638,8 +831,9 @@ async def generate_grounded_answer(
                     "1. LANGUAGE: The user communicated in Hindi. You MUST write the ENTIRE answer in natural, clear Hindi (Devanagari script). Do NOT reply in English.\n"
                     "2. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral / inclusive tone. NEVER use 1st-person masculine Hindi verbs or endings (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा', 'बताऊँगा'). Prefer objective, elegant phrasing like 'यहाँ विवरण प्रस्तुत है', 'आइए समझते हैं', 'धनमित्र आपकी सहायता के लिए उपस्थित है', 'सलाह दी जाती है'. Do not assume the user's gender.\n"
                     "3. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
-                    "4. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-                    "5. Mention currency (INR/Rs.) when applicable."
+                    "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors, movies, cricket, sports, general trivia, e.g. 'who is Salman Khan'), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+                    "5. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+                    "6. Mention currency (INR/Rs.) when applicable."
                 )
             else:
                 lang_directive = (
@@ -647,8 +841,9 @@ async def generate_grounded_answer(
                     "1. LANGUAGE: Respond clearly in natural, conversational English.\n"
                     "2. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone. Avoid gendered assumptions for both the assistant and the user.\n"
                     "3. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
-                    "4. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-                    "5. Mention currency (INR/Rs.) when applicable."
+                    "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors, movies, cricket, sports, general trivia, e.g. 'who is Salman Khan'), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+                    "5. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+                    "6. Mention currency (INR/Rs.) when applicable."
                 )
 
             if live_data:
@@ -805,6 +1000,17 @@ async def stream_grounded_answer(
     pipeline_start = time.perf_counter()
     effective_lang, lang_reason = detect_language(q, language)
 
+    # ── Hard Pre-LLM Off-Topic Gate ──────────────────────────────────────
+    off_topic_result = _check_off_topic(q, effective_lang)
+    if off_topic_result is not None:
+        logger.info("Off-topic gate triggered in stream for: '%s'", q[:60])
+        refusal_text = off_topic_result["answer"]
+        yield f"event: metadata\ndata: {json.dumps({'sources': [], 'language': effective_lang, 'live_data': None, 'rag_ms': 0.0})}\n\n"
+        yield f"event: delta\ndata: {json.dumps({'text': refusal_text})}\n\n"
+        yield f"event: done\ndata: {json.dumps({'total_ms': 0.0, 'rag_ms': 0.0, 'llm_ms': 0.0})}\n\n"
+        return
+    # ─────────────────────────────────────────────────────────────────────
+
     # 1. Live market data
     live_data = None
     try:
@@ -878,8 +1084,9 @@ async def stream_grounded_answer(
             "1. LANGUAGE: You MUST write the ENTIRE answer in natural, clear Hindi (Devanagari script).\n"
             "2. GENDER & TONE: DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral tone. NEVER use 1st-person masculine Hindi verbs (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा').\n"
             "3. PRIVACY: Do NOT disclose internal dataset names or chunk IDs. State information directly.\n"
-            "4. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-            "5. Mention currency (INR/Rs.) when applicable."
+            "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors like Salman Khan, movies, cricket, sports, general trivia), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+            "5. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+            "6. Mention currency (INR/Rs.) when applicable."
         )
     else:
         lang_directive = (
@@ -887,8 +1094,9 @@ async def stream_grounded_answer(
             "1. LANGUAGE: Respond clearly in natural, conversational English.\n"
             "2. GENDER & TONE: DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone.\n"
             "3. PRIVACY: Do NOT disclose internal dataset names or chunk IDs. State information directly.\n"
-            "4. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-            "5. Mention currency (INR/Rs.) when applicable."
+            "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors like Salman Khan, movies, cricket, sports, general trivia), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+            "5. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+            "6. Mention currency (INR/Rs.) when applicable."
         )
 
     if live_data:

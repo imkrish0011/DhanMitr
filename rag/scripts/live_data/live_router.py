@@ -248,6 +248,10 @@ GOLD_KEYWORDS = [
     "24k gold",
     "22k gold",
     "18k gold",
+    "24 karat gold",
+    "22 karat gold",
+    "24kt gold",
+    "22kt gold",
     "bullion",
     "सोना",
     "सोने",
@@ -256,6 +260,7 @@ GOLD_KEYWORDS = [
     "sone ka rate",
     "sona",
     "sone",
+    "sonaa",
 ]
 
 SILVER_KEYWORDS = [
@@ -268,21 +273,24 @@ SILVER_KEYWORDS = [
     "chandi ka bhav",
     "chandi ka rate",
     "chandi",
+    "chandee",
 ]
 
 
 def detect_metals(question: str) -> str | None:
-    """Detect whether a question is about gold or silver."""
+    """Detect whether a question is about gold, silver, or both."""
 
     question_lower = question.lower()
 
-    for keyword in GOLD_KEYWORDS:
-        if keyword in question_lower:
-            return "gold"
+    has_gold = any(keyword in question_lower for keyword in GOLD_KEYWORDS)
+    has_silver = any(keyword in question_lower for keyword in SILVER_KEYWORDS)
 
-    for keyword in SILVER_KEYWORDS:
-        if keyword in question_lower:
-            return "silver"
+    if has_gold and has_silver:
+        return "both"
+    if has_gold:
+        return "gold"
+    if has_silver:
+        return "silver"
 
     return None
 
@@ -296,6 +304,18 @@ def get_live_metals_data(question: str) -> dict | None:
         return None
 
     data = get_metals_prices()
+
+    if metal == "both":
+        return {
+            "provider": data["provider"],
+            "asset": "Gold & Silver",
+            "currency": data["currency"],
+            "unit": data["unit"],
+            "gold_price": data["gold_price"],
+            "silver_price": data["silver_price"],
+            "timestamp": data["timestamp"],
+            "is_live": data["is_live"],
+        }
 
     if metal == "gold":
         return {
@@ -325,22 +345,15 @@ def get_live_metals_data(question: str) -> dict | None:
 
 def get_live_data(question: str) -> dict | None:
     """
-    Route a question to the appropriate live-data provider.
-
-    Priority:
-
-    1. Crypto
-    2. RBI
-    3. Forex
-    4. Stocks
-    5. Gold/Silver
-    6. None -> RAG can handle the question
+    Route a question to the appropriate live-data provider(s).
+    Supports multiple simultaneous providers for compound questions (e.g. Gold + RBI).
     """
 
     if not question or not question.strip():
         return None
 
     question = question.strip()
+    matched_feeds = []
 
     # ---------------------------------------------------------------
     # 1. Crypto
@@ -348,7 +361,7 @@ def get_live_data(question: str) -> dict | None:
     try:
         crypto_data = get_live_crypto_data(question)
         if crypto_data:
-            return crypto_data
+            matched_feeds.append(crypto_data)
     except Exception:
         pass
 
@@ -358,7 +371,7 @@ def get_live_data(question: str) -> dict | None:
     try:
         rbi_data = get_live_rbi_data(question)
         if rbi_data:
-            return rbi_data
+            matched_feeds.append(rbi_data)
     except Exception:
         pass
 
@@ -368,7 +381,7 @@ def get_live_data(question: str) -> dict | None:
     try:
         forex_data = get_live_forex_data(question)
         if forex_data:
-            return forex_data
+            matched_feeds.append(forex_data)
     except Exception:
         pass
 
@@ -378,7 +391,7 @@ def get_live_data(question: str) -> dict | None:
     try:
         stock_data = get_live_stock_data(question)
         if stock_data:
-            return stock_data
+            matched_feeds.append(stock_data)
     except Exception:
         pass
 
@@ -388,14 +401,22 @@ def get_live_data(question: str) -> dict | None:
     try:
         metals_data = get_live_metals_data(question)
         if metals_data:
-            return metals_data
+            matched_feeds.append(metals_data)
     except Exception:
         pass
 
-    # ---------------------------------------------------------------
-    # 6. No live-data provider matched
-    # ---------------------------------------------------------------
-    return None
+    if not matched_feeds:
+        return None
+
+    if len(matched_feeds) == 1:
+        return matched_feeds[0]
+
+    return {
+        "provider": "multi_live_feed",
+        "feeds": matched_feeds,
+        "is_live": True,
+    }
+
 
 
 # ===================================================================
