@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from supabase import Client, create_client
 
 from backend.app.core.config import settings
+from rag.scripts.live_data.tavily_search import search_web, build_web_context
 
 logger = logging.getLogger(__name__)
 
@@ -391,6 +392,65 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
             lines.append(f"{k}: {v}")
     return "\n".join(lines)
 
+
+
+# ---------------------------------------------------------------------------
+# Tavily Web Search Fallback
+# ---------------------------------------------------------------------------
+
+def _search_tavily_fallback(
+    question: str,
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Search Tavily when local RAG has no relevant result."""
+    try:
+        results = search_web(
+            question,
+            max_results=5,
+            search_depth="basic",
+        )
+        if not results:
+            return [], ""
+
+        cleaned_results: List[Dict[str, Any]] = []
+        for result in results:
+            title = result.get("title") or "Web result"
+            url = result.get("url") or ""
+            content = result.get("content") or ""
+
+            if not content and not url:
+                continue
+
+            cleaned_results.append(
+                {
+                    "title": title,
+                    "url": url,
+                    "content": content[:4000],
+                }
+            )
+
+        if not cleaned_results:
+            return [], ""
+
+        return cleaned_results, build_web_context(cleaned_results)
+
+    except Exception as exc:
+        logger.warning("Tavily fallback search failed: %s", exc)
+        return [], ""
+
+
+def _format_web_sources(
+    web_results: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Convert Tavily results into the application's source format."""
+    return [
+        {
+            "title": result.get("title") or "Web result",
+            "source_type": "web",
+            "snippet": (result.get("content") or "")[:200] + "...",
+            "url": result.get("url") or "",
+        }
+        for result in web_results
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -773,9 +833,12 @@ async def generate_grounded_answer(
             raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
                 match_count=5,
-                match_threshold=0.45,
+               match_threshold=0.50,
             )
-            retrieved_chunks = [c for c in raw_chunks if c.get("similarity", 0.0) >= 0.45]
+            retrieved_chunks = [
+             c for c in raw_chunks
+             if c.get("similarity", 0.0) >= 0.50
+]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             logger.info("RAG search for '%s' retrieved %d relevant chunks in %s ms", q[:40], len(retrieved_chunks), rag_ms)
             for c in retrieved_chunks:
@@ -792,7 +855,25 @@ async def generate_grounded_answer(
         rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
         logger.warning("RAG vector retrieval failed: %s", exc)
 
-    # 3. Conditional Personal Finance Context Injection
+    # 3. Tavily Web Search Fallback
+    # The hard off-topic gate runs before this, so blocked questions never
+    # reach Tavily.
+    web_results: List[Dict[str, Any]] = []
+    web_context_text = ""
+
+    if not retrieved_chunks and not live_data:
+        web_results, web_context_text = await asyncio.to_thread(
+            _search_tavily_fallback,
+            q,
+        )
+        if web_results:
+            sources.extend(_format_web_sources(web_results))
+            logger.info(
+                "RAG had no relevant chunks; Tavily returned %d web results.",
+                len(web_results),
+            )
+
+    # 4. Conditional Personal Finance Context Injection
     is_personal = detect_personal_finance_intent(q)
     user_context_text = ""
     if financial_context:
@@ -820,9 +901,18 @@ async def generate_grounded_answer(
             rag_context_text = "\n\n".join(
                 f"Information: {c.get('chunk_text')}"
                 for c in retrieved_chunks
-            ) if retrieved_chunks else "No specific local scheme document matched. Answer using verified Indian government schemes, official portals (such as scholarships.gov.in), and financial education."
+            ) if retrieved_chunks else "No relevant local knowledge-base information was retrieved."
 
             live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
+
+            web_context_for_prompt = (
+                "CURRENT WEB SEARCH RESULTS (TAVILY FALLBACK):\n"
+                "Use these results only when they directly support the user's question. "
+                "Do not invent facts that are not present in the results.\n\n"
+                + web_context_text
+                if web_context_text
+                else "No web-search fallback results were retrieved."
+            )
 
             # Build user prompt with conditional personal context & strict language directive
             if effective_lang == "hi":
@@ -854,6 +944,16 @@ async def generate_grounded_answer(
                     live_context_text,
                     "",
                     "ADDITIONAL BACKGROUND CONTEXT:",
+                    rag_context_text,
+                ]
+            elif web_context_text:
+                user_prompt_parts = [
+                    f"Language: {effective_lang.upper()}",
+                    "",
+                    "WEB SEARCH CONTEXT (TAVILY FALLBACK):",
+                    web_context_for_prompt,
+                    "",
+                    "LOCAL KNOWLEDGE-BASE CONTEXT:",
                     rag_context_text,
                 ]
             else:
@@ -922,6 +1022,7 @@ async def generate_grounded_answer(
                     "language": effective_lang,
                     "sources": effective_sources,
                     "live_data": live_data,
+                    "web_data": web_results,
                     "suggested_actions": ["Ask another question", "Explore relevant schemes", "Check financial health"],
                     "rag_ms": rag_ms,
                     "llm_ms": llm_ms,
@@ -963,6 +1064,13 @@ async def generate_grounded_answer(
         title = top_chunk.get("document_title") or "Financial Scheme Knowledge"
         text = top_chunk.get("chunk_text", "")
         answer_text = f"{title}\n\n{text}"
+    elif web_results:
+        first = web_results[0]
+        answer_text = (
+            f"{first.get('title', 'Web result')}\n\n"
+            f"{first.get('content', 'No readable web content was returned.')}\n\n"
+            f"Source: {first.get('url', '')}"
+        )
     else:
         if effective_lang == "hi":
             answer_text = "इस विषय पर कोई विशिष्ट नीति दस्तावेज़ नहीं मिला। कृपया अपने प्रश्न को थोड़ा स्पष्ट करके पूछें।"
@@ -1030,9 +1138,12 @@ async def stream_grounded_answer(
             raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
                 match_count=5,
-                match_threshold=0.45,
-            )
-            retrieved_chunks = [c for c in raw_chunks if c.get("similarity", 0.0) >= 0.45]
+                match_threshold=0.50,
+            ) 
+            retrieved_chunks = [
+                c for c in raw_chunks
+                if c.get("similarity", 0.0) >= 0.50
+        ]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             for c in retrieved_chunks:
                 sources.append({
@@ -1048,7 +1159,25 @@ async def stream_grounded_answer(
         rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
         logger.warning("RAG retrieval failed: %s", exc)
 
-    # 3. Personal Finance & Scheme Intent Filtering
+    # 3. Tavily Web Search Fallback
+    # The hard off-topic gate has already run, so blocked questions never
+    # reach Tavily.
+    web_results: List[Dict[str, Any]] = []
+    web_context_text = ""
+
+    if not retrieved_chunks and not live_data:
+        web_results, web_context_text = await asyncio.to_thread(
+            _search_tavily_fallback,
+            q,
+        )
+        if web_results:
+            sources.extend(_format_web_sources(web_results))
+            logger.info(
+                "Streaming path: RAG had no relevant chunks; Tavily returned %d web results.",
+                len(web_results),
+            )
+
+    # 4. Personal Finance & Scheme Intent Filtering
     is_personal = detect_personal_finance_intent(q)
     is_explicit_scheme_query = any(kw in q.lower() for kw in [
         "yojana", "scheme", "policy", "portal", "eligibility", "apply", "subsidy", "nps", "epf", "ppf", "pmjjby", "pmsby", "pmkisan", "pm-kisan", "pmay", "scholarship", "योजना"
@@ -1058,7 +1187,7 @@ async def stream_grounded_answer(
         effective_sources = []
 
     # Yield initial metadata event immediately to UI
-    yield f"event: metadata\ndata: {json.dumps({'sources': effective_sources, 'language': effective_lang, 'live_data': live_data, 'rag_ms': rag_ms})}\n\n"
+    yield f"event: metadata\ndata: {json.dumps({'sources': effective_sources, 'language': effective_lang, 'live_data': live_data, 'web_data': web_results, 'rag_ms': rag_ms})}\n\n"
 
     # 4. Personal Finance Snapshot
     user_context_text = ""
@@ -1074,9 +1203,18 @@ async def stream_grounded_answer(
 
     rag_context_text = "\n\n".join(
         f"Information: {c.get('chunk_text')}" for c in retrieved_chunks
-    ) if retrieved_chunks else "No specific local scheme document matched. Answer using verified Indian government schemes, official portals (such as scholarships.gov.in), and financial education."
+    ) if retrieved_chunks else "No relevant local knowledge-base information was retrieved."
 
     live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
+
+    web_context_for_prompt = (
+        "CURRENT WEB SEARCH RESULTS (TAVILY FALLBACK):\n"
+        "Use these results only when they directly support the user's question. "
+        "Do not invent facts that are not present in the results.\n\n"
+        + web_context_text
+        if web_context_text
+        else "No web-search fallback results were retrieved."
+    )
 
     if effective_lang == "hi":
         lang_directive = (
@@ -1107,6 +1245,16 @@ async def stream_grounded_answer(
             live_context_text,
             "",
             "ADDITIONAL BACKGROUND CONTEXT:",
+            rag_context_text,
+        ]
+    elif web_context_text:
+        user_prompt_parts = [
+            f"Language: {effective_lang.upper()}",
+            "",
+            "WEB SEARCH CONTEXT (TAVILY FALLBACK):",
+            web_context_for_prompt,
+            "",
+            "LOCAL KNOWLEDGE-BASE CONTEXT:",
             rag_context_text,
         ]
     else:
