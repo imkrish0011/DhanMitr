@@ -557,6 +557,71 @@ def _build_groq_messages(
     return messages
 
 
+def _extract_answer_and_reply(raw_text: str) -> Tuple[str, str]:
+    """Robustly extracts 'answer' and 'reply_text' from LLM output, handling malformed JSON, unescaped characters, or markdown fences."""
+    raw = (raw_text or "").strip()
+    answer = ""
+    reply = ""
+
+    cleaned = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s*```$", "", cleaned)
+
+    try:
+        data = json.loads(cleaned, strict=False)
+        if isinstance(data, dict):
+            answer = str(data.get("answer") or "").strip()
+            reply = str(data.get("reply_text") or "").strip()
+    except Exception:
+        pass
+
+    if not answer and not reply:
+        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+        if match:
+            try:
+                data = json.loads(match.group(0), strict=False)
+                if isinstance(data, dict):
+                    answer = str(data.get("answer") or "").strip()
+                    reply = str(data.get("reply_text") or "").strip()
+            except Exception:
+                pass
+
+    if not answer:
+        ans_match = re.search(r'"answer"\s*:\s*"((?:[^"\\]|\\.)*)"', cleaned, re.DOTALL)
+        if ans_match:
+            try:
+                answer = ans_match.group(1).encode("utf-8").decode("unicode_escape")
+            except Exception:
+                answer = ans_match.group(1)
+
+    if not reply:
+        rep_match = re.search(r'"reply_text"\s*:\s*"((?:[^"\\]|\\.)*)"', cleaned, re.DOTALL)
+        if rep_match:
+            try:
+                reply = rep_match.group(1).encode("utf-8").decode("unicode_escape")
+            except Exception:
+                reply = rep_match.group(1)
+
+    if not answer:
+        answer = re.sub(r'^\s*\{\s*"answer"\s*:\s*"?', '', cleaned)
+        answer = re.sub(r'"?\s*,\s*"reply_text"\s*:.*$', '', answer, flags=re.DOTALL)
+        answer = answer.strip()
+        if not answer:
+            answer = cleaned
+
+    if not reply:
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?।\n])\s+', answer) if s.strip()]
+        if sentences:
+            short = " ".join(sentences[:2])
+            words = short.split()
+            if len(words) > 40:
+                short = " ".join(words[:38]) + "..."
+            reply = short
+        else:
+            reply = answer[:150]
+
+    return answer, reply
+
+
 # ---------------------------------------------------------------------------
 # Hard Pre-LLM Off-Topic Gate
 # ---------------------------------------------------------------------------
@@ -828,22 +893,32 @@ async def generate_grounded_answer(
             if effective_lang == "hi":
                 lang_directive = (
                     "MANDATORY INSTRUCTIONS:\n"
-                    "1. LANGUAGE: The user communicated in Hindi. You MUST write the ENTIRE answer in natural, clear Hindi (Devanagari script). Do NOT reply in English.\n"
-                    "2. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral / inclusive tone. NEVER use 1st-person masculine Hindi verbs or endings (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा', 'बताऊँगा'). Prefer objective, elegant phrasing like 'यहाँ विवरण प्रस्तुत है', 'आइए समझते हैं', 'धनमित्र आपकी सहायता के लिए उपस्थित है', 'सलाह दी जाती है'. Do not assume the user's gender.\n"
-                    "3. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
-                    "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors, movies, cricket, sports, general trivia, e.g. 'who is Salman Khan'), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
-                    "5. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-                    "6. Mention currency (INR/Rs.) when applicable."
+                    "1. OUTPUT FORMAT: You MUST return a valid JSON object with exactly two keys:\n"
+                    '   {\n'
+                    '     "answer": "<Full detailed explanation for UI screen>",\n'
+                    '     "reply_text": "<Concise 2 to 3 sentence spoken summary>"\n'
+                    '   }\n'
+                    "2. 'answer': Full, detailed, comprehensive information for the UI screen in natural Hindi (Devanagari script). Plain text, clean formatting with simple numbered lists (1. 2. 3.) if needed. NO Markdown (#, **, *).\n"
+                    "3. 'reply_text': A concise, friendly, warm spoken summary (strictly 2 to 3 natural sentences, under 35-45 words) in Hindi (Devanagari script) designed specifically for voice Text-to-Speech playback (e.g., 'यहाँ शिक्षा और वित्तीय सहायता के लिए 2 प्रमुख योजनाएँ उपलब्ध हैं: पीएम यशस्वी और स्टैंड अप इंडिया। पूरा विवरण आपकी स्क्रीन पर प्रदर्शित है।').\n"
+                    "4. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral / inclusive tone. NEVER use 1st-person masculine Hindi verbs or endings (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा', 'बताऊँगा'). Prefer objective, elegant phrasing like 'यहाँ विवरण प्रस्तुत है', 'आइए समझते हैं', 'धनमित्र आपकी सहायता के लिए उपस्थित है', 'सलाह दी जाती है'. Do not assume the user's gender.\n"
+                    "5. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
+                    "6. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors, movies, cricket, sports, general trivia, e.g. 'who is Salman Khan'), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+                    "7. Mention currency (INR/Rs.) when applicable."
                 )
             else:
                 lang_directive = (
                     "MANDATORY INSTRUCTIONS:\n"
-                    "1. LANGUAGE: Respond clearly in natural, conversational English.\n"
-                    "2. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone. Avoid gendered assumptions for both the assistant and the user.\n"
-                    "3. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
-                    "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors, movies, cricket, sports, general trivia, e.g. 'who is Salman Khan'), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
-                    "5. FORMATTING: Plain conversational text only. NO Markdown (#, **, *, -, `), NO bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-                    "6. Mention currency (INR/Rs.) when applicable."
+                    "1. OUTPUT FORMAT: You MUST return a valid JSON object with exactly two keys:\n"
+                    '   {\n'
+                    '     "answer": "<Full detailed explanation for UI screen>",\n'
+                    '     "reply_text": "<Concise 2 to 3 sentence spoken summary>"\n'
+                    '   }\n'
+                    "2. 'answer': Full, detailed, comprehensive information for the UI screen in clear, natural English. Plain text, clean formatting with simple numbered lists (1. 2. 3.) if needed. NO Markdown (#, **, *).\n"
+                    "3. 'reply_text': A concise, friendly, warm spoken summary (strictly 2 to 3 natural sentences, under 35-45 words) designed specifically for voice Text-to-Speech playback (e.g., 'Here are 2 major schemes available for education and financial assistance: PM Yashasvi and Stand Up India. The full eligibility details are displayed on your screen.').\n"
+                    "4. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone. Avoid gendered assumptions for both the assistant and the user.\n"
+                    "5. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
+                    "6. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors, movies, cricket, sports, general trivia, e.g. 'who is Salman Khan'), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+                    "7. Mention currency (INR/Rs.) when applicable."
                 )
 
             if live_data:
@@ -886,15 +961,14 @@ async def generate_grounded_answer(
                     messages=groq_messages,
                     temperature=0.2,
                     max_tokens=800,
-                    reasoning_effort="low",
-                    extra_body={"reasoning_format": "hidden"},
                 )
             )
             llm_ms = round((time.perf_counter() - t0_llm) * 1000, 1)
-            generated_answer = response.choices[0].message.content or ""
-            if generated_answer.strip():
-                clean_answer = sanitize_plain_text(generated_answer)
-                spoken_reply = sanitize_plain_text(generated_answer)
+            generated_raw = (response.choices[0].message.content or "").strip()
+            if generated_raw:
+                raw_ans, raw_rep = _extract_answer_and_reply(generated_raw)
+                clean_answer = sanitize_plain_text(raw_ans)
+                spoken_reply = sanitize_plain_text(raw_rep)
 
                 # Clear sources if this is a personal finance query or off-topic redirection
                 is_explicit_scheme_query = any(kw in q.lower() for kw in [
@@ -943,6 +1017,11 @@ async def generate_grounded_answer(
                 f"5. Reverse Repo Rate: {rates.get('reverse_repo_rate', 'N/A')}%\n\n"
                 f"Source: Reserve Bank of India"
             )
+            spoken_reply = (
+                f"The current RBI repo rate is {rates.get('repo_rate', 'N/A')} percent. The complete policy rate breakdown is displayed on your screen."
+                if effective_lang != "hi"
+                else f"वर्तमान आरबीआई रेपो दर {rates.get('repo_rate', 'N/A')}% है। संपूर्ण विवरण आपकी स्क्रीन पर प्रदर्शित है।"
+            )
         elif provider == "coingecko":
             asset = live_data.get("asset", "Crypto")
             price = live_data.get("price", 0)
@@ -952,26 +1031,48 @@ async def generate_grounded_answer(
                 f"Price: Rs.{price:,.2f} INR\n"
                 f"24h Change: {change:+.2f}%"
             )
+            spoken_reply = (
+                f"The current price of {asset} is Rs.{price:,.2f} with a 24-hour change of {change:+.2f}%. Details are on your screen."
+                if effective_lang != "hi"
+                else f"{asset} की वर्तमान कीमत Rs.{price:,.2f} है। पूरा विवरण स्क्रीन पर उपलब्ध है।"
+            )
         elif provider == "yfinance":
             symbol = live_data.get("symbol", "Stock")
             price = live_data.get("price", 0)
             answer_text = f"Current {symbol} Stock Price: Rs.{price:,.2f} INR (via Live NSE/BSE Feed)"
+            spoken_reply = (
+                f"The current stock price of {symbol} is Rs.{price:,.2f}. Details are on your screen."
+                if effective_lang != "hi"
+                else f"{symbol} का शेयर मूल्य Rs.{price:,.2f} है।"
+            )
         else:
             answer_text = f"Live Financial Data:\n{_format_live_data_text(live_data)}"
+            spoken_reply = (
+                "Here is the requested live financial market data. The complete details are shown on your screen."
+                if effective_lang != "hi"
+                else "यह रहा आपका लाइव मार्केट डेटा। संपूर्ण विवरण स्क्रीन पर है।"
+            )
     elif retrieved_chunks:
         top_chunk = retrieved_chunks[0]
         title = top_chunk.get("document_title") or "Financial Scheme Knowledge"
         text = top_chunk.get("chunk_text", "")
         answer_text = f"{title}\n\n{text}"
+        spoken_reply = (
+            f"Here is the key information regarding {title}. The full guidelines are displayed on your screen."
+            if effective_lang != "hi"
+            else f"यहाँ {title} से संबंधित महत्वपूर्ण जानकारी प्रस्तुत है। पूरा विवरण स्क्रीन पर है।"
+        )
     else:
         if effective_lang == "hi":
             answer_text = "इस विषय पर कोई विशिष्ट नीति दस्तावेज़ नहीं मिला। कृपया अपने प्रश्न को थोड़ा स्पष्ट करके पूछें।"
+            spoken_reply = answer_text
         else:
             answer_text = "No specific policy guidelines were found matching your query. Please provide more details or ask another question."
+            spoken_reply = answer_text
 
     # Sanitize all output
     answer_text = sanitize_plain_text(answer_text)
-    spoken_reply = sanitize_plain_text(answer_text)
+    spoken_reply = sanitize_plain_text(spoken_reply)
 
     return {
         "question": q,
@@ -981,6 +1082,9 @@ async def generate_grounded_answer(
         "sources": sources,
         "live_data": live_data,
         "suggested_actions": ["Analyze my spending", "Compare tax regimes", "Show investment tips"],
+        "rag_ms": rag_ms,
+        "llm_ms": llm_ms,
+        "language_reason": lang_reason,
     }
 
 
@@ -1142,8 +1246,6 @@ async def stream_grounded_answer(
                 temperature=0.2,
                 max_tokens=800,
                 stream=True,
-                reasoning_effort="low",
-                extra_body={"reasoning_format": "hidden"},
             )
             for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
