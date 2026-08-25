@@ -5,10 +5,15 @@ and Supabase RPC test queries with mocks.
 """
 
 import json
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from rag.scripts.ingest.ingest_to_supabase import (
     EXPECTED_EMBEDDING_DIM,
@@ -58,7 +63,7 @@ def _create_sample_dataset(
 
 class TestDatasetValidation:
     def test_valid_actual_file(self):
-        file_path = Path("rag/processed/embeddings/rag_embeddings.json")
+        file_path = ROOT_DIR / "rag" / "processed" / "embeddings" / "rag_embeddings.json"
         data = read_and_validate_dataset(file_path)
         assert data["count"] == len(data["records"])
         assert data["count"] >= 36
