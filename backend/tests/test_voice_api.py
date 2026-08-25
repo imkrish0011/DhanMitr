@@ -86,13 +86,20 @@ class TestVoiceChatEndpoint:
             audio_seconds=2.0,
         )
 
-        with patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("raw.webm")), \
+        with patch("backend.app.services.voice_service.rag_service.generate_grounded_answer") as mock_rag, \
+             patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("raw.webm")), \
              patch("backend.app.services.voice_service.audio_utils.to_wav16k_mono", return_value=Path("wav.wav")), \
              patch("backend.app.services.voice_service.stt_module.get_stt") as mock_get_stt, \
              patch("backend.app.services.voice_service.tts_module.get_tts") as mock_get_tts, \
              patch("backend.app.services.voice_service.audio_utils.wav_to_base64", return_value="c3ludGhlc2l6ZWRfd2F2X2Jhc2U2NA=="), \
              patch("backend.app.services.voice_service.audio_utils.cleanup"):
 
+            mock_rag.return_value = {
+                "answer": "Your budget is active",
+                "reply_text": "Your budget is active",
+                "language": "en",
+                "sources": [],
+            }
             mock_stt = MagicMock()
             mock_stt.transcribe.return_value = mock_stt_result
             mock_stt.name = "sravaani"
@@ -134,10 +141,17 @@ class TestVoiceChatEndpoint:
             audio_seconds=1.5,
         )
 
-        with patch("backend.app.services.voice_service.tts_module.get_tts") as mock_get_tts, \
+        with patch("backend.app.services.voice_service.rag_service.generate_grounded_answer") as mock_rag, \
+             patch("backend.app.services.voice_service.tts_module.get_tts") as mock_get_tts, \
              patch("backend.app.services.voice_service.audio_utils.wav_to_base64", return_value="bW9ja190dHNfd2F2"), \
              patch("backend.app.services.voice_service.audio_utils.cleanup"):
 
+            mock_rag.return_value = {
+                "answer": "नमस्ते!",
+                "reply_text": "नमस्ते!",
+                "language": "hi",
+                "sources": [],
+            }
             mock_tts = MagicMock()
             mock_tts.synthesize.return_value = mock_tts_result
             mock_tts.name = "kokoro"
@@ -155,6 +169,25 @@ class TestVoiceChatEndpoint:
             assert body["transcript"] == "नमस्ते धनमित्र"
             assert body["audio_base64"] == "bW9ja190dHNfd2F2"
             assert body["language"] == "hi"
+
+    def test_voice_chat_stream_endpoint(self):
+        with patch("backend.app.services.voice_service.rag_service.generate_grounded_answer") as mock_rag, \
+             patch("backend.app.services.voice_service.tts_module.get_tts") as mock_get_tts:
+
+            mock_rag.return_value = {
+                "answer": "Streamed answer",
+                "reply_text": "Streamed speech",
+                "language": "en",
+                "sources": [],
+            }
+            mock_tts = MagicMock()
+            mock_tts.synthesize_stream.return_value = [b"chunk1", b"chunk2"]
+            mock_get_tts.return_value = mock_tts
+
+            resp = client.post("/api/v1/voice/stream", json={"text": "Hello", "language": "en"})
+            assert resp.status_code == 200
+            assert resp.headers["content-type"] == "audio/wav"
+            assert resp.content == b"chunk1chunk2"
 
     def test_voice_chat_empty_body_returns_422(self):
         resp = client.post(VOICE_CHAT_URL, json={})
@@ -190,12 +223,19 @@ class TestVoiceChatEndpoint:
             audio_seconds=1.5,
         )
 
-        with patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("in.webm")), \
+        with patch("backend.app.services.voice_service.rag_service.generate_grounded_answer") as mock_rag, \
+             patch("backend.app.services.voice_service.audio_utils.decode_base64_audio", return_value=Path("in.webm")), \
              patch("backend.app.services.voice_service.audio_utils.to_wav16k_mono", return_value=Path("in.wav")), \
              patch("backend.app.services.voice_service.stt_module.get_stt") as mock_get_stt, \
              patch("backend.app.services.voice_service.tts_module.get_tts", side_effect=RuntimeError("Kokoro model failed")), \
              patch("backend.app.services.voice_service.audio_utils.cleanup"):
 
+            mock_rag.return_value = {
+                "answer": "Budget status",
+                "reply_text": "Budget status",
+                "language": "en",
+                "sources": [],
+            }
             mock_stt = MagicMock()
             mock_stt.transcribe.return_value = mock_stt_result
             mock_stt.name = "sravaani"

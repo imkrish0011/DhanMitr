@@ -161,3 +161,39 @@ export async function streamRagChat(
     throw error;
   }
 }
+
+/**
+ * Streams synthesized WAV audio byte chunks from /api/v1/voice/stream in real time.
+ */
+export async function streamVoiceAudio(
+  payload: VoiceRequest,
+  onAudioChunk: (chunk: Uint8Array) => void
+): Promise<void> {
+  const url = `${BACKEND_URL}/api/v1/voice/stream`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new VoiceApiError(`Voice streaming failed with status ${response.status}`, response.status);
+  }
+
+  if (!response.body) {
+    throw new VoiceApiError('Voice stream response body is unavailable', 500);
+  }
+
+  const reader = response.body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value && value.length > 0) {
+      onAudioChunk(value);
+    }
+  }
+}
+

@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { ChatMessage, VoiceState } from '@/types';
 import { useFinance } from './FinanceContext';
 import { useAuth } from './AuthContext';
-import { sendVoiceChat, streamRagChat } from '@/lib/voiceApi';
+import { sendVoiceChat, streamRagChat, streamVoiceAudio } from '@/lib/voiceApi';
 
 export type SupportedLanguage = 'auto' | 'en' | 'hi' | 'hinglish';
 
@@ -71,6 +71,9 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentAudioUrlRef = useRef<string | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const activeSourceNodesRef = useRef<AudioBufferSourceNode[]>([]);
+  const nextPlayTimeRef = useRef<number>(0);
 
   // Stop currently playing audio and revoke object URL
   const stopAudioPlayback = () => {
@@ -83,7 +86,23 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       URL.revokeObjectURL(currentAudioUrlRef.current);
       currentAudioUrlRef.current = null;
     }
+    if (activeSourceNodesRef.current.length > 0) {
+      activeSourceNodesRef.current.forEach((node) => {
+        try {
+          node.stop();
+          node.disconnect();
+        } catch {}
+      });
+      activeSourceNodesRef.current = [];
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      try {
+        audioContextRef.current.suspend();
+      } catch {}
+    }
+    nextPlayTimeRef.current = 0;
   };
+
 
   // Cleanup tracks in microphone stream
   const cleanupStream = () => {
@@ -258,29 +277,98 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Fallback direct text synthesis via backend or speech
+  // Real-time streaming voice synthesis and playback via Web Audio API
   const speakText = async (text: string, lang: SupportedLanguage = 'en') => {
     if (!text.trim()) return;
     try {
       stopAudioPlayback();
       setVoiceState('processing');
 
-      const response = await sendVoiceChat({
-        text,
-        language: lang === 'auto' ? undefined : lang,
-        user_id: profile?.user_id,
-        financial_context: buildFinancialContext(),
-      });
+      const AudioCtxClass =
+        typeof window !== 'undefined'
+          ? window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+          : null;
 
-      if (response.audio_base64) {
-        playSynthesizedAudio(response.audio_base64, response.audio_format || 'audio/wav');
-      } else {
+      if (!AudioCtxClass) {
+        const response = await sendVoiceChat({
+          text,
+          language: lang === 'auto' ? undefined : lang,
+          user_id: profile?.user_id,
+          financial_context: buildFinancialContext(),
+        });
+
+        if (response.audio_base64) {
+          playSynthesizedAudio(response.audio_base64, response.audio_format || 'audio/wav');
+        } else {
+          setVoiceState('idle');
+        }
+        return;
+      }
+
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        audioContextRef.current = new AudioCtxClass();
+      }
+      const audioCtx = audioContextRef.current;
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+
+      nextPlayTimeRef.current = audioCtx.currentTime;
+      let hasStartedSpeaking = false;
+      let chunkCount = 0;
+
+      await streamVoiceAudio(
+        {
+          text,
+          language: lang === 'auto' ? undefined : lang,
+          user_id: profile?.user_id,
+          financial_context: buildFinancialContext(),
+        },
+        async (chunk) => {
+          try {
+            chunkCount++;
+            const arrayBuffer = chunk.buffer.slice(
+              chunk.byteOffset,
+              chunk.byteOffset + chunk.byteLength
+            ) as ArrayBuffer;
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+            if (!hasStartedSpeaking) {
+              hasStartedSpeaking = true;
+              setVoiceState('speaking');
+            }
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioCtx.destination);
+
+            const startTime = Math.max(audioCtx.currentTime, nextPlayTimeRef.current);
+            source.start(startTime);
+            nextPlayTimeRef.current = startTime + audioBuffer.duration;
+
+            activeSourceNodesRef.current.push(source);
+
+            source.onended = () => {
+              activeSourceNodesRef.current = activeSourceNodesRef.current.filter((n) => n !== source);
+              if (activeSourceNodesRef.current.length === 0 && audioCtx.currentTime >= nextPlayTimeRef.current - 0.1) {
+                setVoiceState('idle');
+              }
+            };
+          } catch (decodeErr) {
+            console.debug('Streaming audio chunk decode failed (ignoring corrupt chunk):', decodeErr);
+          }
+        }
+      );
+
+      if (chunkCount === 0) {
         setVoiceState('idle');
       }
-    } catch {
+    } catch (err) {
+      console.warn('Streaming voice playback encountered an issue:', err);
       setVoiceState('idle');
     }
   };
+
 
   // Stop voice recording and submit audio
   const stopVoiceListening = () => {
