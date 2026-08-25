@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     # LLM / Groq & Live Data
     GROQ_API_KEY: str = Field(default="", validation_alias="GROQ_API_KEY")
     GROQ_MODEL: str = Field(
-        default="openai/gpt-oss-20b", validation_alias="GROQ_MODEL"
+        default="llama-3.1-8b-instant", validation_alias="GROQ_MODEL"
     )
     COINGECKO_API_KEY: str = Field(
         default="", validation_alias="COINGECKO_API_KEY"
