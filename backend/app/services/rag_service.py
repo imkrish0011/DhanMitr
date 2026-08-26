@@ -1068,7 +1068,7 @@ async def generate_grounded_answer(
                     model=settings.GROQ_MODEL,
                     messages=groq_messages,
                     temperature=0.2,
-                    max_tokens=800,
+                    max_tokens=2500,
                     extra_body={"reasoning_format": "hidden"},
                 )
             )
@@ -1409,7 +1409,7 @@ async def stream_grounded_answer(
                 model=settings.GROQ_MODEL,
                 messages=groq_messages,
                 temperature=0.2,
-                max_tokens=800,
+                max_tokens=2500,
                 stream=True,
                 extra_body={"reasoning_format": "hidden"},
             )
