@@ -494,6 +494,22 @@ def detect_personal_finance_intent(question: str) -> bool:
     return any(p.search(q_str) is not None for p in _COMPILED_PERSONAL_PATTERNS)
 
 
+_DETAIL_REQUEST_KEYWORDS = [
+    "detail", "detailed", "details", "explain in detail", "full explanation", "full details",
+    "step by step", "in-depth", "deep dive", "elaborate", "comprehensive", "everything about",
+    "complete guide", "all rules", "exhaustively", "bistar se", "bistar",
+    "विस्तार से", "पूरी जानकारी", "विस्तृत", "पूरा विवरण", "स्टेप बाय स्टेप", "गहराई से",
+    "पूरी तरह", "सब कुछ बताएं", "विस्तारपूर्वक", "पूरा बताओ",
+]
+
+def wants_detailed_explanation(question: str) -> bool:
+    """Return True if the user explicitly requested a full, detailed, or in-depth explanation."""
+    if not question:
+        return False
+    q_lower = question.lower()
+    return any(kw in q_lower for kw in _DETAIL_REQUEST_KEYWORDS)
+
+
 
 def format_user_financial_context(ctx: Any) -> str:
     """Format a FinancialContext (or dict) into a rich, itemized plain-text snapshot for the LLM."""
@@ -988,15 +1004,21 @@ async def generate_grounded_answer(
             )
 
             # Build user prompt with conditional personal context & strict language directive
+            is_detail = wants_detailed_explanation(q)
             if effective_lang == "hi":
+                answer_detail_rule_hi = (
+                    "2. 'answer': The user explicitly asked for full / detailed explanation. Provide a comprehensive, in-depth breakdown covering eligibility, benefits, and steps in natural Hindi (Devanagari script). Plain text, clean formatting with simple numbered lists (1. 2. 3.) if needed. NO Markdown (#, **, *).\n"
+                    if is_detail else
+                    "2. 'answer': PROGRESSIVE DISCLOSURE (CONCISE & CURATED FIRST): Keep the answer SHORT, CRISP, AND CURATED (strictly under 60-100 words, 2-3 concise points). State the direct core answer, key amount/percentage, or primary rule immediately without lengthy essay paragraphs. At the end, add a brief 1-sentence offer: 'यदि आप इसके नियम, आवेदन प्रक्रिया या दस्तावेजों का विस्तृत विवरण चाहते हैं, तो कृपया बताएं।'. Plain text in natural Hindi (Devanagari script), NO Markdown (#, **, *).\n"
+                )
                 lang_directive = (
                     "MANDATORY INSTRUCTIONS:\n"
                     "1. OUTPUT FORMAT: You MUST return a valid JSON object with exactly two keys:\n"
                     '   {\n'
-                    '     "answer": "<Full detailed explanation for UI screen>",\n'
+                    '     "answer": "<Explanation for UI screen>",\n'
                     '     "reply_text": "<Concise 2 to 3 sentence spoken summary>"\n'
                     '   }\n'
-                    "2. 'answer': Full, detailed, comprehensive information for the UI screen in natural Hindi (Devanagari script). Plain text, clean formatting with simple numbered lists (1. 2. 3.) if needed. NO Markdown (#, **, *).\n"
+                    + answer_detail_rule_hi +
                     "3. 'reply_text': A concise, friendly, warm spoken summary (strictly 2 to 3 natural sentences, under 35-45 words) in Hindi (Devanagari script) designed specifically for voice Text-to-Speech playback (e.g., 'यहाँ शिक्षा और वित्तीय सहायता के लिए 2 प्रमुख योजनाएँ उपलब्ध हैं: पीएम यशस्वी और स्टैंड अप इंडिया। पूरा विवरण आपकी स्क्रीन पर प्रदर्शित है।').\n"
                     "4. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral / inclusive tone. NEVER use 1st-person masculine Hindi verbs or endings (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा', 'बताऊँगा'). Prefer objective, elegant phrasing like 'यहाँ विवरण प्रस्तुत है', 'आइए समझते हैं', 'धनमित्र आपकी सहायता के लिए उपस्थित है', 'सलाह दी जाती है'. Do not assume the user's gender.\n"
                     "5. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
@@ -1004,14 +1026,19 @@ async def generate_grounded_answer(
                     "7. Mention currency (INR/Rs.) when applicable."
                 )
             else:
+                answer_detail_rule_en = (
+                    "2. 'answer': The user explicitly asked for full / detailed explanation. Provide a comprehensive, in-depth breakdown covering eligibility, benefits, and steps in clear, natural English. Plain text, clean formatting with simple numbered lists (1. 2. 3.) if needed. NO Markdown (#, **, *).\n"
+                    if is_detail else
+                    "2. 'answer': PROGRESSIVE DISCLOSURE (CONCISE & CURATED FIRST): Keep the answer SHORT, CRISP, AND CURATED (strictly under 60-100 words, 2-3 concise points). State the direct core answer, key amount/percentage, or primary rule immediately without lengthy essay paragraphs. At the end, add a brief 1-sentence offer: 'Let me know if you would like a detailed breakdown, step-by-step application steps, or required documents.' Plain text in clear English, NO Markdown (#, **, *).\n"
+                )
                 lang_directive = (
                     "MANDATORY INSTRUCTIONS:\n"
                     "1. OUTPUT FORMAT: You MUST return a valid JSON object with exactly two keys:\n"
                     '   {\n'
-                    '     "answer": "<Full detailed explanation for UI screen>",\n'
+                    '     "answer": "<Explanation for UI screen>",\n'
                     '     "reply_text": "<Concise 2 to 3 sentence spoken summary>"\n'
                     '   }\n'
-                    "2. 'answer': Full, detailed, comprehensive information for the UI screen in clear, natural English. Plain text, clean formatting with simple numbered lists (1. 2. 3.) if needed. NO Markdown (#, **, *).\n"
+                    + answer_detail_rule_en +
                     "3. 'reply_text': A concise, friendly, warm spoken summary (strictly 2 to 3 natural sentences, under 35-45 words) designed specifically for voice Text-to-Speech playback (e.g., 'Here are 2 major schemes available for education and financial assistance: PM Yashasvi and Stand Up India. The full eligibility details are displayed on your screen.').\n"
                     "4. GENDER & TONE (VOICE ALIGNMENT): DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone. Avoid gendered assumptions for both the assistant and the user.\n"
                     "5. PRIVACY & DISCRETION: Do NOT mention or disclose internal dataset names, document names, or chunk IDs (never say 'according to the dataset' or 'from the provided documents'). State the information directly and naturally.\n"
@@ -1337,25 +1364,38 @@ async def stream_grounded_answer(
         else "No web-search fallback results were retrieved."
     )
 
+    is_detail = wants_detailed_explanation(q)
     if effective_lang == "hi":
+        detail_rule_hi = (
+            "4. DEPTH: The user explicitly asked for full / detailed explanation. Provide a comprehensive, in-depth breakdown covering eligibility, benefits, and steps using simple numbered lists."
+            if is_detail else
+            "4. PROGRESSIVE DISCLOSURE (CONCISE FIRST): Keep the answer SHORT, CRISP, AND CURATED (strictly under 60-100 words, 2-3 concise points). State the core answer and key numbers immediately without long essay paragraphs. End with a brief 1-sentence offer: 'यदि आप इसके नियम, आवेदन प्रक्रिया या दस्तावेजों का विस्तृत विवरण चाहते हैं, तो कृपया बताएं।'"
+        )
         lang_directive = (
             "MANDATORY INSTRUCTIONS:\n"
             "1. LANGUAGE: You MUST write the ENTIRE answer in natural, clear Hindi (Devanagari script).\n"
             "2. GENDER & TONE: DhanMitra speaks with a female Indian voice (Swara). Maintain a polite, warm, and gender-neutral tone. NEVER use 1st-person masculine Hindi verbs (e.g. NEVER say 'करता हूँ', 'बताता हूँ', 'सकता हूँ', 'करूँगा').\n"
             "3. PRIVACY: Do NOT disclose internal dataset names or chunk IDs. State information directly.\n"
-            "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors like Salman Khan, movies, cricket, sports, general trivia), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
-            "5. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-            "6. Mention currency (INR/Rs.) when applicable."
+            + detail_rule_hi + "\n"
+            "5. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors like Salman Khan, movies, cricket, sports, general trivia), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+            "6. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+            "7. Mention currency (INR/Rs.) when applicable."
         )
     else:
+        detail_rule_en = (
+            "4. DEPTH: The user explicitly asked for full / detailed explanation. Provide a comprehensive, in-depth breakdown covering eligibility, benefits, and steps using simple numbered lists."
+            if is_detail else
+            "4. PROGRESSIVE DISCLOSURE (CONCISE FIRST): Keep the answer SHORT, CRISP, AND CURATED (strictly under 60-100 words, 2-3 concise points). State the core answer and key numbers immediately without long essay paragraphs. End with a brief 1-sentence offer: 'Let me know if you would like a detailed breakdown, step-by-step application steps, or required documents.'"
+        )
         lang_directive = (
             "MANDATORY INSTRUCTIONS:\n"
             "1. LANGUAGE: Respond clearly in natural, conversational English.\n"
             "2. GENDER & TONE: DhanMitra speaks with a female Indian voice (Neerja). Maintain a warm, polite, objective, and gender-neutral tone.\n"
             "3. PRIVACY: Do NOT disclose internal dataset names or chunk IDs. State information directly.\n"
-            "4. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors like Salman Khan, movies, cricket, sports, general trivia), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
-            "5. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
-            "6. Mention currency (INR/Rs.) when applicable."
+            + detail_rule_en + "\n"
+            "5. STRICT DOMAIN BOUNDARY (HYBRID QUERY RULE): Answer ONLY the financial, banking, or government scheme portion. If the user also asks about non-financial topics (such as celebrity biographies, actors like Salman Khan, movies, cricket, sports, general trivia), you MUST refuse that non-financial portion in one sentence and NOT provide any biographical or entertainment information.\n"
+            "6. FORMATTING: Plain conversational text only. NO Markdown headers or bullet asterisks. Use simple numbered lists (1. 2. 3.) when listing items.\n"
+            "7. Mention currency (INR/Rs.) when applicable."
         )
 
     if live_data:
