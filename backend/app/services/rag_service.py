@@ -316,26 +316,16 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
             gold_price = live_data.get("gold_price", 0.0)
             silver_price = live_data.get("silver_price", 0.0)
             return (
-                f"REAL-TIME LIVE PRECIOUS METALS DATA (OFFICIAL LIVE FEED):\n"
-                f"- Gold Current Market Price: Rs. {gold_price:,.2f} per {unit} ({currency})\n"
-                f"- Gold Price per 10 grams: Rs. {gold_price * 10:,.2f} ({currency})\n"
-                f"- Silver Current Market Price: Rs. {silver_price:,.2f} per {unit} ({currency})\n"
-                f"- Silver Price per 10 grams: Rs. {silver_price * 10:,.2f} ({currency})\n"
-                f"- Data Source: Metals.Dev (Live Spot Price)\n"
-                f"- Freshness: Live real-time market quote\n"
-                f"INSTRUCTION: Answer the user's question directly stating these current live market prices."
+                f"Live Precious Metals Rates:\n"
+                f"- Gold (24K): Rs. {gold_price:,.2f} per {unit} (Rs. {gold_price * 10:,.2f} per 10g {currency})\n"
+                f"- Silver: Rs. {silver_price:,.2f} per {unit} (Rs. {silver_price * 10:,.2f} per 10g {currency})"
             )
 
         price = live_data.get("price", 0.0)
         ten_gram_price = price * 10
         return (
-            f"REAL-TIME LIVE PRECIOUS METALS DATA (OFFICIAL LIVE FEED):\n"
-            f"- Asset: {asset}\n"
-            f"- Current Market Price: Rs. {price:,.2f} per {unit} ({currency})\n"
-            f"- Price per 10 grams: Rs. {ten_gram_price:,.2f} ({currency})\n"
-            f"- Data Source: Metals.Dev (Live Spot Price)\n"
-            f"- Freshness: Live real-time market quote\n"
-            f"INSTRUCTION: Answer the user's question directly stating this current live market price (Rs. {price:,.2f}/g or Rs. {ten_gram_price:,.0f} per 10g)."
+            f"Live Market Rate for {asset}:\n"
+            f"- Spot Price: Rs. {price:,.2f} per {unit} (Rs. {ten_gram_price:,.2f} per 10 grams {currency})"
         )
 
     if "coingecko" in provider:
@@ -343,49 +333,28 @@ def _format_live_data_text(live_data: Dict[str, Any]) -> str:
         currency = live_data.get("currency", "INR").upper()
         change_24h = live_data.get("change_24h", 0.0)
         return (
-            f"REAL-TIME LIVE CRYPTOCURRENCY DATA (OFFICIAL LIVE FEED):\n"
-            f"- Asset: {asset}\n"
-            f"- Current Price: Rs. {price:,.2f} {currency}\n"
-            f"- 24-Hour Change: {change_24h:+.2f}%\n"
-            f"- Data Source: CoinGecko (Live Price)\n"
-            f"INSTRUCTION: Answer the user's question directly stating this current live crypto price."
+            f"Live Rate for {asset}:\n"
+            f"- Spot Price: Rs. {price:,.2f} {currency} (24-Hour Change: {change_24h:+.2f}%)"
         )
 
     if "twelve_data" in provider:
         rate = live_data.get("rate", 0.0)
         base = live_data.get("base_currency", "USD")
         quote = live_data.get("quote_currency", "INR")
-        return (
-            f"REAL-TIME LIVE FOREX DATA (OFFICIAL LIVE FEED):\n"
-            f"- Currency Pair: {base}/{quote}\n"
-            f"- Current Exchange Rate: 1 {base} = Rs. {rate:,.4f} {quote}\n"
-            f"- Data Source: Twelve Data (Live Exchange Rate)\n"
-            f"INSTRUCTION: Answer the user's question directly stating this current exchange rate."
-        )
+        return f"Live Forex Exchange Rate:\n- 1 {base} = Rs. {rate:,.4f} {quote}"
 
     if "yfinance" in provider or live_data.get("symbol"):
         symbol = live_data.get("symbol", "")
         price = live_data.get("price", 0.0)
         exchange = live_data.get("exchange", "NSE")
-        return (
-            f"REAL-TIME LIVE STOCK MARKET DATA (OFFICIAL LIVE FEED):\n"
-            f"- Stock Symbol: {symbol} ({exchange})\n"
-            f"- Current Share Price: Rs. {price:,.2f} INR\n"
-            f"- Data Source: Live Market Feed\n"
-            f"INSTRUCTION: Answer the user's question directly stating this current share price."
-        )
+        return f"Live Share Price for {symbol} ({exchange}): Rs. {price:,.2f} INR"
 
     if "rbi" in provider or live_data.get("rates"):
         rates = live_data.get("rates", {})
         rates_str = ", ".join(f"{k.replace('_', ' ').title()}: {v}%" for k, v in rates.items())
-        return (
-            f"REAL-TIME RBI POLICY RATES (OFFICIAL LIVE FEED):\n"
-            f"- Policy Rates: {rates_str}\n"
-            f"- Data Source: Reserve Bank of India\n"
-            f"INSTRUCTION: Answer the user's question directly stating these current official RBI policy rates."
-        )
+        return f"Current Official RBI Policy Rates:\n- {rates_str}"
 
-    lines = ["LIVE MARKET DATA:", "-----------------"]
+    lines = ["Live Market Rates:"]
     for k, v in live_data.items():
         if isinstance(v, dict):
             lines.append(f"{k}:")
@@ -1095,7 +1064,7 @@ async def generate_grounded_answer(
                     model=settings.GROQ_MODEL,
                     messages=groq_messages,
                     temperature=0.2,
-                    max_tokens=2500,
+                    max_tokens=700,
                     extra_body={"reasoning_format": "hidden"},
                 )
             )
@@ -1159,6 +1128,44 @@ async def generate_grounded_answer(
                 if effective_lang != "hi"
                 else f"वर्तमान आरबीआई रेपो दर {rates.get('repo_rate', 'N/A')}% है। संपूर्ण विवरण आपकी स्क्रीन पर प्रदर्शित है।"
             )
+        elif provider == "metals_dev" or live_data.get("asset") in ("Gold", "Silver", "Gold & Silver", "gold", "silver", "both"):
+            asset = live_data.get("asset", "Precious Metal")
+            unit = live_data.get("unit", "g")
+            if asset in ("Gold & Silver", "both"):
+                gold_price = live_data.get("gold_price", 0.0)
+                silver_price = live_data.get("silver_price", 0.0)
+                answer_text = (
+                    f"Current Live Precious Metal Prices:\n"
+                    f"1. Gold (24K): Rs. {gold_price:,.2f} per gram (Rs. {gold_price * 10:,.0f} per 10g)\n"
+                    f"2. Silver: Rs. {silver_price:,.2f} per gram (Rs. {silver_price * 10:,.0f} per 10g)"
+                )
+                spoken_reply = (
+                    f"Current 24K Gold is Rs.{gold_price * 10:,.0f} per 10g and Silver is Rs.{silver_price * 10:,.0f} per 10g. Complete details are on your screen."
+                    if effective_lang != "hi"
+                    else f"वर्तमान 24 कैरेट सोने का भाव Rs.{gold_price * 10:,.0f} प्रति 10 ग्राम और चांदी का भाव Rs.{silver_price * 10:,.0f} प्रति 10 ग्राम है।"
+                )
+            else:
+                price = live_data.get("price", 0.0)
+                ten_gram = price * 10
+                answer_text = (
+                    f"Current Live {asset.title()} Price:\n"
+                    f"- Spot Rate: Rs. {price:,.2f} per {unit} (Rs. {ten_gram:,.0f} per 10 grams)"
+                )
+                spoken_reply = (
+                    f"The current live price for {asset} is Rs.{price:,.2f} per gram or Rs.{ten_gram:,.0f} per 10 grams."
+                    if effective_lang != "hi"
+                    else f"{asset} का वर्तमान भाव Rs.{price:,.2f} प्रति ग्राम या Rs.{ten_gram:,.0f} प्रति 10 ग्राम है।"
+                )
+        elif provider == "twelve_data":
+            rate = live_data.get("rate", 0.0)
+            base = live_data.get("base_currency", "USD")
+            quote = live_data.get("quote_currency", "INR")
+            answer_text = f"Current Live Forex Rate: 1 {base} = Rs. {rate:,.4f} {quote}"
+            spoken_reply = (
+                f"The current exchange rate is 1 {base} equals Rs. {rate:,.2f} {quote}."
+                if effective_lang != "hi"
+                else f"वर्तमान विनिमय दर 1 {base} = Rs. {rate:,.2f} {quote} है।"
+            )
         elif provider == "coingecko":
             asset = live_data.get("asset", "Crypto")
             price = live_data.get("price", 0)
@@ -1183,7 +1190,7 @@ async def generate_grounded_answer(
                 else f"{symbol} का शेयर मूल्य Rs.{price:,.2f} है।"
             )
         else:
-            answer_text = f"Live Financial Data:\n{_format_live_data_text(live_data)}"
+            answer_text = f"{_format_live_data_text(live_data)}"
             spoken_reply = (
                 "Here is the requested live financial market data. The complete details are shown on your screen."
                 if effective_lang != "hi"
@@ -1449,7 +1456,7 @@ async def stream_grounded_answer(
                 model=settings.GROQ_MODEL,
                 messages=groq_messages,
                 temperature=0.2,
-                max_tokens=2500,
+                max_tokens=700,
                 stream=True,
                 extra_body={"reasoning_format": "hidden"},
             )
