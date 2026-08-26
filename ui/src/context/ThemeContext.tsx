@@ -13,16 +13,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('dhanmitr_theme') as Theme | null;
-    if (savedTheme) {
-      setThemeState(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-    } else {
-      // Default to light as per mockups
+    if (savedTheme === 'light') {
+      setThemeState('light');
       document.documentElement.classList.remove('dark');
+    } else {
+      setThemeState('dark');
+      document.documentElement.classList.add('dark');
     }
   }, []);
 

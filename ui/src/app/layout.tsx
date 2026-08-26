@@ -27,12 +27,14 @@ const themeInitScript = `
 (function () {
   try {
     var t = localStorage.getItem('dhanmitr_theme');
-    if (t === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
+    if (t === 'light') {
       document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
     }
-  } catch (e) {}
+  } catch (e) {
+    document.documentElement.classList.add('dark');
+  }
 })();
 `;
 
@@ -44,10 +46,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#F8FAFC] dark:bg-[#090D16] text-slate-900 dark:text-white transition-colors duration-200">
+      <body className="min-h-full flex flex-col font-sans bg-[#090D16] text-white transition-colors duration-200">
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}
       </body>

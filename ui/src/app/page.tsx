@@ -87,7 +87,7 @@ const AppContent: React.FC = () => {
   const isSettingsActive = currentTab === 'settings';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] transition-colors duration-200">
+    <div className="min-h-screen bg-[#090D16] text-white transition-colors duration-200">
       {/* ========================================================================= */}
       {/* MOBILE NATIVE VIEW (Visible on mobile screen widths < 768px)               */}
       {/* ========================================================================= */}

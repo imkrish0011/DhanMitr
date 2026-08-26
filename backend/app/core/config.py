@@ -1,6 +1,6 @@
 """Core configuration settings for DhanMITR Backend."""
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=True, validation_alias="BACKEND_DEBUG")
 
     # CORS
-    ALLOWED_ORIGINS: List[str] = [
+    ALLOWED_ORIGINS: Any = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:8000",
@@ -63,10 +63,21 @@ class Settings(BaseSettings):
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def split_origins(cls, v):
-        """Allow comma-separated origins in env vars (in addition to JSON arrays)."""
+        """Allow comma-separated origins, JSON arrays, or strings in env vars."""
         if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return ["*"]
+            if v.startswith("[") and v.endswith("]"):
+                try:
+                    import json
+                    return json.loads(v)
+                except Exception:
+                    pass
             return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+        if isinstance(v, (list, tuple)):
+            return list(v)
+        return ["*"]
 
 
 settings = Settings()

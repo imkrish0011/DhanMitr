@@ -78,8 +78,8 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
           <div
             className={`text-xs sm:text-[13px] leading-snug transition-all ${
               isUser
-                ? 'px-3.5 py-2 neumorph-bubble-user text-white rounded-2xl rounded-tr-xs shadow-xs'
-                : 'px-4 py-2.5 neumorph-bubble-assistant text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-xs shadow-xs'
+                ? 'px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-2xl rounded-tr-xs shadow-md border border-emerald-400/20'
+                : 'px-4 py-3 bg-[#111A2C] border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-xs shadow-md'
             }`}
           >
             {/* Formatted Text with Streaming Cursor */}

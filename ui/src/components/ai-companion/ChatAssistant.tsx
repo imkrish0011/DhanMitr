@@ -65,18 +65,18 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
   return (
     <div className="flex-1 flex h-full max-h-full neumorph-card rounded-2xl md:rounded-3xl overflow-hidden transition-colors duration-300">
       {/* Main Chat Feed */}
-      <div className="flex-1 flex flex-col justify-between h-full min-h-0 bg-[#EBF0F7] dark:bg-[#0F1626]">
+      <div className="flex-1 flex flex-col justify-between h-full min-h-0 bg-[#0F1626]">
         {/* Chat Top Header: Tactile Neumorphic Bar */}
-        <div className="shrink-0 px-3.5 sm:px-5 py-2.5 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between bg-[#EBF0F7] dark:bg-[#0F1626]">
+        <div className="shrink-0 px-3.5 sm:px-5 py-2.5 border-b border-slate-800/60 flex items-center justify-between bg-[#0F1626]">
           <div className="flex items-center gap-2 sm:gap-2.5">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl neumorph-chip flex items-center justify-center">
               <DhanMitrLogo className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <h2 className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-1.5">
                 DhanMITR AI Assistant
               </h2>
-              <div className="flex items-center gap-1.5 text-[9.5px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+              <div className="flex items-center gap-1.5 text-[9.5px] sm:text-[10px] text-emerald-400 font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
                 <span>Online • Active</span>
               </div>
@@ -88,7 +88,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
               <>
                 <button
                   onClick={() => openAuthModal('signup', 'Sign up to continue chatting and unlock the Finance Hub.')}
-                  className="flex items-center gap-1 px-2.5 py-1 neumorph-chip text-emerald-600 dark:text-emerald-400 rounded-full text-[11px] font-semibold cursor-pointer whitespace-nowrap"
+                  className="flex items-center gap-1 px-2.5 py-1 neumorph-chip text-emerald-400 rounded-full text-[11px] font-semibold cursor-pointer whitespace-nowrap"
                   title="Free trial chats remaining. Click to unlock unlimited."
                 >
                   <SparkleSmallIcon className="w-3 h-3 text-emerald-500 fill-emerald-500" />
@@ -106,7 +106,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
             {/* Switch to Voice Mode */}
             <button
               onClick={onSwitchToVoice}
-              className="flex items-center gap-1 px-2.5 py-1 neumorph-btn text-slate-700 dark:text-slate-200 rounded-full text-[11px] sm:text-xs font-bold cursor-pointer whitespace-nowrap"
+              className="flex items-center gap-1 px-2.5 py-1 neumorph-btn text-slate-200 rounded-full text-[11px] sm:text-xs font-bold cursor-pointer whitespace-nowrap"
             >
               <MicIcon className="w-3 h-3 text-emerald-500" />
               <span>Voice</span>
@@ -116,7 +116,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
             <button
               onClick={resetChat}
               title="Clear conversation"
-              className="p-1.5 neumorph-chip text-slate-500 hover:text-red-500 dark:hover:text-red-400 rounded-full transition-colors cursor-pointer"
+              className="p-1.5 neumorph-chip text-slate-400 hover:text-red-400 rounded-full transition-colors cursor-pointer"
             >
               <RefreshIcon className="w-3 h-3" />
             </button>
@@ -124,7 +124,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
         </div>
 
         {/* Scrollable Conversation Stream: Deep Sunken Recessed Well */}
-        <div className="flex-1 overflow-y-auto min-h-0 p-3 sm:p-4 space-y-1.5 neumorph-inset-deep">
+        <div className="flex-1 overflow-y-auto min-h-0 p-3 sm:p-4 space-y-2 bg-[#080C16] border-y border-slate-800/40">
           {messages.map((msg) => (
             <ChatMessageBubble key={msg.id} message={msg} />
           ))}
@@ -133,7 +133,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
         </div>
 
         {/* Suggestion Chips & Chat Input Area: Pinned at bottom */}
-        <div className="shrink-0 p-2.5 sm:p-3.5 border-t border-slate-200/60 dark:border-slate-800/60 bg-[#EBF0F7] dark:bg-[#0F1626]">
+        <div className="shrink-0 p-2.5 sm:p-3.5 border-t border-slate-800/60 bg-[#0F1626]">
           {/* "You might ask" Header & Chips: ONLY shown on initial screen before user asks questions */}
           {messages.length <= 1 && (
             <div className="mb-2">
