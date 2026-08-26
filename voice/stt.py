@@ -205,7 +205,77 @@ class FasterWhisperSTT(BaseSTT):
         )
 
 
+class GroqWhisperSTT(BaseSTT):
+    """Groq Cloud Whisper — ultra-fast Speech-to-Text via whisper-large-v3-turbo."""
+
+    name = "groq_whisper"
+
+    def __init__(self) -> None:
+        self._client = None
+        self._model_name = getattr(config, "GROQ_WHISPER_MODEL", "whisper-large-v3-turbo")
+
+    def load(self) -> None:
+        if self._client is not None:
+            return
+
+        try:
+            from groq import Groq
+        except ImportError as exc:
+            raise RuntimeError("groq package is not installed. Run: pip install groq") from exc
+
+        import os
+        api_key = getattr(config, "GROQ_API_KEY", None) or os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise RuntimeError("GROQ_API_KEY is not set in .env")
+
+        self._client = Groq(api_key=api_key)
+
+    def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
+        self.load()
+        started = time.perf_counter()
+
+        with open(wav_path, "rb") as f:
+            audio_bytes = f.read()
+
+        lang_code = language
+        if lang_code in ("hi", "hin", "hindi"):
+            lang_code = "hi"
+        elif lang_code in ("en", "eng", "english"):
+            lang_code = "en"
+        elif lang_code == "auto":
+            lang_code = None
+
+        kwargs: Dict[str, Any] = {
+            "file": (wav_path.name, audio_bytes),
+            "model": self._model_name,
+            "response_format": "verbose_json",
+        }
+        if lang_code:
+            kwargs["language"] = lang_code
+
+        response = self._client.audio.transcriptions.create(**kwargs)
+        elapsed_ms = (time.perf_counter() - started) * 1000
+
+        detected_lang = getattr(response, "language", None) or language
+        text = (getattr(response, "text", "") or "").strip()
+
+        return STTResult(
+            text=text,
+            language=detected_lang,
+            provider=self.name,
+            latency_ms=round(elapsed_ms, 1),
+            audio_seconds=getattr(response, "duration", None) or audio_utils.wav_duration_seconds(wav_path),
+            meta={
+                "model": self._model_name,
+                "segments_count": len(getattr(response, "segments", []) or []),
+            },
+        )
+
+
 _PROVIDERS = {
+    "groq_whisper": GroqWhisperSTT,
+    "whisper": GroqWhisperSTT,
+    "whisper_large": GroqWhisperSTT,
     "sravaani": SraVaaniSTT,
     "faster_whisper": FasterWhisperSTT,
 }
