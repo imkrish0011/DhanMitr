@@ -932,16 +932,19 @@ async def generate_grounded_answer(
     web_context_text = ""
 
     if not retrieved_chunks and not live_data:
-        web_results, web_context_text = await asyncio.to_thread(
-            _search_tavily_fallback,
-            q,
-        )
-        if web_results:
-            sources.extend(_format_web_sources(web_results))
-            logger.info(
-                "RAG had no relevant chunks; Tavily returned %d web results.",
-                len(web_results),
+        try:
+            web_results, web_context_text = await asyncio.wait_for(
+                asyncio.to_thread(_search_tavily_fallback, q),
+                timeout=3.5,
             )
+            if web_results:
+                sources.extend(_format_web_sources(web_results))
+                logger.info(
+                    "RAG had no relevant chunks; Tavily returned %d web results.",
+                    len(web_results),
+                )
+        except (asyncio.TimeoutError, Exception) as web_exc:
+            logger.warning("Tavily fallback search skipped or timed out: %s", web_exc)
 
     # 4. Conditional Personal Finance Context Injection
     is_personal = detect_personal_finance_intent(q)
@@ -1281,16 +1284,19 @@ async def stream_grounded_answer(
     web_context_text = ""
 
     if not retrieved_chunks and not live_data:
-        web_results, web_context_text = await asyncio.to_thread(
-            _search_tavily_fallback,
-            q,
-        )
-        if web_results:
-            sources.extend(_format_web_sources(web_results))
-            logger.info(
-                "Streaming path: RAG had no relevant chunks; Tavily returned %d web results.",
-                len(web_results),
+        try:
+            web_results, web_context_text = await asyncio.wait_for(
+                asyncio.to_thread(_search_tavily_fallback, q),
+                timeout=3.5,
             )
+            if web_results:
+                sources.extend(_format_web_sources(web_results))
+                logger.info(
+                    "Streaming path: RAG had no relevant chunks; Tavily returned %d web results.",
+                    len(web_results),
+                )
+        except (asyncio.TimeoutError, Exception) as web_exc:
+            logger.warning("Streaming Tavily fallback search skipped or timed out: %s", web_exc)
 
     # 4. Personal Finance & Scheme Intent Filtering
     is_personal = detect_personal_finance_intent(q)
