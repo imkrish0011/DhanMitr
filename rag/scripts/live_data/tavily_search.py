@@ -14,6 +14,23 @@ except ImportError:
     TavilyClient = None
 
 
+_client = None
+
+
+def _get_tavily_client():
+    global _client
+    if _client is None:
+        if TavilyClient is None:
+            raise RuntimeError(
+                "tavily-python is not installed. Run `pip install tavily-python`."
+            )
+        api_key = os.getenv("TAVILY_API_KEY")
+        if not api_key:
+            raise RuntimeError("TAVILY_API_KEY is not set in .env")
+        _client = TavilyClient(api_key=api_key)
+    return _client
+
+
 def search_web(
     query: str,
     max_results: int = 5,
@@ -27,17 +44,7 @@ def search_web(
     - url
     - content
     """
-    if TavilyClient is None:
-        raise RuntimeError(
-            "tavily-python is not installed. Run `pip install tavily-python`."
-        )
-
-    api_key = os.getenv("TAVILY_API_KEY")
-
-    if not api_key:
-        raise RuntimeError("TAVILY_API_KEY is not set in .env")
-
-    client = TavilyClient(api_key=api_key)
+    client = _get_tavily_client()
 
     response = client.search(
         query=query,

@@ -38,7 +38,7 @@ from shared.types.python.models import (
     VoiceResponse,
     VoiceTimingTelemetry,
 )
-from backend.app.core.language_detector import detect_language
+from backend.app.core.language_detector import detect_language, normalize_indic_script_to_devanagari
 from backend.app.core.telemetry import log_pipeline_latency
 
 logger = logging.getLogger(__name__)
@@ -266,6 +266,7 @@ def _process_voice_sync(
     language_hint: Optional[str] = None,
     voice_id: Optional[str] = None,
     financial_context: Optional[FinancialContext] = None,
+    history: Optional[List[Any]] = None,
 ) -> Dict[str, Any]:
     """Synchronous pipeline executed in thread pool."""
     pipeline_start = time.perf_counter()
@@ -298,7 +299,8 @@ def _process_voice_sync(
                 code="STT_PROVIDER_UNAVAILABLE",
             ) from stt_err
 
-        transcript = (stt_result.text or "").strip()
+        raw_transcript = (stt_result.text or "").strip()
+        transcript = normalize_indic_script_to_devanagari(raw_transcript)
 
         rag_sources = []
         rag_ms = 0.0
@@ -325,6 +327,7 @@ def _process_voice_sync(
                         question=transcript,
                         financial_context=financial_context,
                         language=stt_result.language or language_hint or "en",
+                        history=history,
                     )
                 )
                 loop.close()
@@ -455,6 +458,7 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             request.language,
             request.voice_id,
             parsed_context,
+            request.history,
         )
         return VoiceResponse(
             transcript=data["transcript"],
@@ -472,7 +476,8 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
         )
 
     # Standalone text chat path
-    text_input = (request.text or "").strip()
+    raw_text_input = (request.text or "").strip()
+    text_input = normalize_indic_script_to_devanagari(raw_text_input)
     t0 = time.perf_counter()
     rag_sources = []
     rag_ms = 0.0

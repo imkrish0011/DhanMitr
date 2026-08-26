@@ -11,6 +11,7 @@ sravaani        SraVaani-1.0 (ARTPARK-IISc) — 65 Indic languages + English,
 faster_whisper  Whisper via CTranslate2 — strong English, weak Indic.
 mock            No model. Fixed transcript for wiring up the UI.
 """
+import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -18,6 +19,21 @@ from typing import Any, Dict, Optional
 
 import audio_utils
 import config
+
+
+def _normalize_indic_script(text: Optional[str]) -> str:
+    """Normalizes Gujarati / regional Indic scripts to standard Devanagari Hindi."""
+    if not text:
+        return ""
+    chars = []
+    for ch in text:
+        cp = ord(ch)
+        if 0x0A81 <= cp <= 0x0AF9:
+            # Gujarati to Devanagari offset 0x0180 (384)
+            chars.append(chr(cp - 0x0180))
+        else:
+            chars.append(ch)
+    return "".join(chars)
 
 
 @dataclass
@@ -249,6 +265,7 @@ class GroqWhisperSTT(BaseSTT):
             "file": (wav_path.name, audio_bytes),
             "model": self._model_name,
             "response_format": "verbose_json",
+            "prompt": "DhanMITR financial assistant. Audio is in English or Hindi (हिंदी Devanagari script) only. No regional scripts.",
         }
         if lang_code:
             kwargs["language"] = lang_code
@@ -257,7 +274,15 @@ class GroqWhisperSTT(BaseSTT):
         elapsed_ms = (time.perf_counter() - started) * 1000
 
         detected_lang = getattr(response, "language", None) or language
-        text = (getattr(response, "text", "") or "").strip()
+        raw_text = (getattr(response, "text", "") or "").strip()
+        text = _normalize_indic_script(raw_text)
+
+        # DhanMITR strictly operates in English ('en') and Hindi ('hi')
+        if detected_lang not in ("en", "hi"):
+            if re.search(r"[\u0900-\u097f]", text):
+                detected_lang = "hi"
+            else:
+                detected_lang = "en"
 
         return STTResult(
             text=text,

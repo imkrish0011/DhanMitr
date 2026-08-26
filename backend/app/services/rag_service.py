@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from supabase import Client, create_client
 
 from backend.app.core.config import settings
+from backend.app.core.language_detector import detect_language, normalize_indic_script_to_devanagari
 from rag.scripts.live_data.tavily_search import search_web, build_web_context
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,53 @@ def _get_groq_client():
             from groq import Groq
             _groq_client = Groq(api_key=key)
     return _groq_client
+
+
+_FALLBACK_MODELS = [
+    "qwen/qwen3.8-27b",
+    "qwen/qwen3.6-27b",
+    "openai/gpt-oss-120b",
+    "groq/compound-mini",
+    "openai/gpt-oss-20b",
+]
+
+
+def _call_groq_completion_sync(
+    groq_client,
+    messages: List[Dict[str, str]],
+    max_tokens: int = 600,
+) -> str:
+    """Execute Groq chat completion with automatic multi-model fallback on rate limits or errors."""
+    models_to_try = [settings.GROQ_MODEL]
+    for fb in _FALLBACK_MODELS:
+        if fb not in models_to_try:
+            models_to_try.append(fb)
+
+    last_exc = None
+    for model_name in models_to_try:
+        try:
+            logger.info("Executing Groq LLM completion with model '%s'...", model_name)
+            kwargs: Dict[str, Any] = {
+                "model": model_name,
+                "messages": messages,
+                "temperature": 0.2,
+                "max_tokens": max_tokens,
+            }
+            if "deepseek" in model_name.lower():
+                kwargs["extra_body"] = {"reasoning_format": "hidden"}
+
+            response = groq_client.chat.completions.create(**kwargs)
+            content = (response.choices[0].message.content or "").strip()
+            if content:
+                return content
+        except Exception as exc:
+            last_exc = exc
+            logger.warning("Groq model '%s' failed (%s), trying fallback model...", model_name, exc)
+            continue
+
+    if last_exc:
+        raise last_exc
+    return ""
 
 
 def reset_client() -> None:
@@ -423,6 +471,14 @@ def _format_web_sources(
         }
         for result in web_results
     ]
+
+
+def _is_english_or_hindi_chunk(c: Dict[str, Any]) -> bool:
+    """Filter out non-English/non-Hindi chunks (e.g. Gujarati script chunks)."""
+    text = (c.get("chunk_text") or "") + " " + (c.get("document_title") or "")
+    # Reject chunk if it contains significant Gujarati script characters (\u0A80-\u0AFF)
+    guj_chars = len(re.findall(r"[\u0a80-\u0aff]", text))
+    return guj_chars <= 3
 
 
 # ---------------------------------------------------------------------------
@@ -839,7 +895,9 @@ async def generate_grounded_answer(
     history: Optional[List[Any]] = None,
 ) -> Dict[str, Any]:
     """Orchestrates end-to-end grounded answer generation with language auto-detection, multi-turn history, and telemetry."""
-    q = (question or "").strip()
+    raw_q = (question or "").strip()
+    # Normalize regional Indic scripts (such as Gujarati) to Devanagari Hindi
+    q = normalize_indic_script_to_devanagari(raw_q)
     if not q:
         return {
             "question": "",
@@ -854,7 +912,7 @@ async def generate_grounded_answer(
             "language_reason": "empty_fallback",
         }
 
-    # Auto-detect language (Devanagari, Hinglish keywords, explicit hints)
+    # Auto-detect language (Devanagari, Hinglish keywords, explicit hints) - strictly 'en' or 'hi'
     effective_lang, lang_reason = detect_language(q, language)
     logger.info("Language auto-detection: '%s' -> %s (%s)", q[:45], effective_lang.upper(), lang_reason)
 
@@ -888,12 +946,13 @@ async def generate_grounded_answer(
             raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
                 match_count=5,
-               match_threshold=0.50,
+                match_threshold=0.50,
             )
+            # Filter out non-English/non-Hindi chunks (e.g. Gujarati script chunks)
             retrieved_chunks = [
-             c for c in raw_chunks
-             if c.get("similarity", 0.0) >= 0.50
-]
+                c for c in raw_chunks
+                if c.get("similarity", 0.0) >= 0.50 and _is_english_or_hindi_chunk(c)
+            ]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             logger.info("RAG search for '%s' retrieved %d relevant chunks in %s ms", q[:40], len(retrieved_chunks), rag_ms)
             for c in retrieved_chunks:
@@ -911,22 +970,25 @@ async def generate_grounded_answer(
         logger.warning("RAG vector retrieval failed: %s", exc)
 
     # 3. Tavily Web Search Fallback
-    # The hard off-topic gate runs before this, so blocked questions never
-    # reach Tavily.
+    # Fetch web search if no local chunks matched, OR if local chunks have moderate similarity (< 0.65) and not live data
     web_results: List[Dict[str, Any]] = []
     web_context_text = ""
+    top_similarity = retrieved_chunks[0].get("similarity", 0.0) if retrieved_chunks else 0.0
+    should_fetch_web = (not retrieved_chunks or top_similarity < 0.65) and not live_data
 
-    if not retrieved_chunks and not live_data:
+    if should_fetch_web:
         try:
             web_results, web_context_text = await asyncio.wait_for(
                 asyncio.to_thread(_search_tavily_fallback, q),
-                timeout=3.5,
+                timeout=8.0,
             )
             if web_results:
                 sources.extend(_format_web_sources(web_results))
                 logger.info(
-                    "RAG had no relevant chunks; Tavily returned %d web results.",
+                    "Tavily search retrieved %d web results for '%s' (top local similarity: %.3f)",
                     len(web_results),
+                    q[:40],
+                    top_similarity,
                 )
         except (asyncio.TimeoutError, Exception) as web_exc:
             logger.warning("Tavily fallback search skipped or timed out: %s", web_exc)
@@ -955,19 +1017,19 @@ async def generate_grounded_answer(
     llm_ms = 0.0
     if groq_client:
         try:
-            # Build contexts (without leaking internal chunk IDs or metadata to LLM text output)
+            # Build compact contexts (without leaking internal chunk IDs or metadata to LLM text output)
             rag_context_text = "\n\n".join(
-                f"Information: {c.get('chunk_text')}"
-                for c in retrieved_chunks
+                f"Information: {(c.get('chunk_text') or '').strip()[:500]}"
+                for c in retrieved_chunks[:3]
             ) if retrieved_chunks else "No relevant local knowledge-base information was retrieved."
 
             live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
 
             web_context_for_prompt = (
-                "CURRENT WEB SEARCH RESULTS (TAVILY FALLBACK):\n"
+                "CURRENT WEB SEARCH RESULTS (CURRENT VERIFIED SOURCES):\n"
                 "Use these results only when they directly support the user's question. "
                 "Do not invent facts that are not present in the results.\n\n"
-                + web_context_text
+                + web_context_text[:1200]
                 if web_context_text
                 else "No web-search fallback results were retrieved."
             )
@@ -1029,7 +1091,7 @@ async def generate_grounded_answer(
                 user_prompt_parts = [
                     f"Language: {effective_lang.upper()}",
                     "",
-                    "WEB SEARCH CONTEXT (TAVILY FALLBACK):",
+                    "WEB SEARCH CONTEXT (CURRENT VERIFIED SOURCES):",
                     web_context_for_prompt,
                     "",
                     "LOCAL KNOWLEDGE-BASE CONTEXT:",
@@ -1059,17 +1121,13 @@ async def generate_grounded_answer(
             groq_messages = _build_groq_messages(system_prompt_text, user_prompt, history)
 
             t0_llm = time.perf_counter()
-            response = await asyncio.to_thread(
-                lambda: groq_client.chat.completions.create(
-                    model=settings.GROQ_MODEL,
-                    messages=groq_messages,
-                    temperature=0.2,
-                    max_tokens=700,
-                    extra_body={"reasoning_format": "hidden"},
-                )
+            generated_raw = await asyncio.to_thread(
+                _call_groq_completion_sync,
+                groq_client,
+                groq_messages,
+                1024,
             )
             llm_ms = round((time.perf_counter() - t0_llm) * 1000, 1)
-            generated_raw = (response.choices[0].message.content or "").strip()
             if generated_raw:
                 raw_ans, raw_rep = _extract_answer_and_reply(generated_raw)
                 clean_answer = sanitize_plain_text(raw_ans)
@@ -1108,7 +1166,7 @@ async def generate_grounded_answer(
                     "language_reason": lang_reason,
                 }
         except Exception as exc:
-            logger.warning("Groq generation failed, using structured fallback: %s", exc)
+            logger.warning("Groq generation failed after fallback attempts, using structured fallback: %s", exc)
     # 6. Structured Fallback Generation (when Groq key is not provided or offline)
     if live_data:
         provider = live_data.get("provider")
@@ -1196,16 +1254,21 @@ async def generate_grounded_answer(
                 if effective_lang != "hi"
                 else "यह रहा आपका लाइव मार्केट डेटा। संपूर्ण विवरण स्क्रीन पर है।"
             )
-    elif retrieved_chunks and retrieved_chunks[0].get("similarity", 0.0) >= 0.65:
-        top_chunk = retrieved_chunks[0]
-        title = top_chunk.get("document_title") or "Financial Scheme Knowledge"
-        text = (top_chunk.get("chunk_text") or "").strip()
-        text_snippet = text[:350] + ("..." if len(text) > 350 else "")
-        answer_text = f"{title}\n\n{text_snippet}"
+    elif retrieved_chunks and retrieved_chunks[0].get("similarity", 0.0) >= 0.50:
+        top_chunks = retrieved_chunks[:2]
+        sections = []
+        for i, c in enumerate(top_chunks, 1):
+            title = c.get("document_title") or c.get("source_name") or "Financial Knowledge"
+            text = (c.get("chunk_text") or "").strip()
+            text_snippet = text[:350] + ("..." if len(text) > 350 else "")
+            sections.append(f"{i}. {title}:\n{text_snippet}")
+
+        answer_text = "\n\n".join(sections)
+        top_title = top_chunks[0].get("document_title") or "financial guidelines"
         spoken_reply = (
-            f"Here is the key information regarding {title}. The full guidelines are displayed on your screen."
+            f"Here is the verified information regarding {top_title}. Complete details are displayed on your screen."
             if effective_lang != "hi"
-            else f"यहाँ {title} से संबंधित महत्वपूर्ण जानकारी प्रस्तुत है।"
+            else f"यहाँ {top_title} से संबंधित महत्वपूर्ण जानकारी प्रस्तुत है।"
         )
     elif web_results:
         first = web_results[0]
@@ -1252,7 +1315,9 @@ async def stream_grounded_answer(
     history: Optional[List[Any]] = None,
 ):
     """Async generator yielding Server-Sent Events (SSE) for low-latency streaming responses (<200ms TTFT)."""
-    q = (question or "").strip()
+    raw_q = (question or "").strip()
+    # Normalize regional Indic scripts (such as Gujarati) to Devanagari Hindi
+    q = normalize_indic_script_to_devanagari(raw_q)
     if not q:
         yield f"event: delta\ndata: {json.dumps({'text': 'Please provide a question or topic.'})}\n\n"
         yield f"event: done\ndata: {json.dumps({'total_ms': 0})}\n\n"
@@ -1293,10 +1358,11 @@ async def stream_grounded_answer(
                 match_count=5,
                 match_threshold=0.50,
             ) 
+            # Filter out non-English/non-Hindi chunks (e.g. Gujarati script chunks)
             retrieved_chunks = [
                 c for c in raw_chunks
-                if c.get("similarity", 0.0) >= 0.50
-        ]
+                if c.get("similarity", 0.0) >= 0.50 and _is_english_or_hindi_chunk(c)
+            ]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             for c in retrieved_chunks:
                 sources.append({
@@ -1313,22 +1379,24 @@ async def stream_grounded_answer(
         logger.warning("RAG retrieval failed: %s", exc)
 
     # 3. Tavily Web Search Fallback
-    # The hard off-topic gate has already run, so blocked questions never
-    # reach Tavily.
     web_results: List[Dict[str, Any]] = []
     web_context_text = ""
+    top_similarity = retrieved_chunks[0].get("similarity", 0.0) if retrieved_chunks else 0.0
+    should_fetch_web = (not retrieved_chunks or top_similarity < 0.65) and not live_data
 
-    if not retrieved_chunks and not live_data:
+    if should_fetch_web:
         try:
             web_results, web_context_text = await asyncio.wait_for(
                 asyncio.to_thread(_search_tavily_fallback, q),
-                timeout=3.5,
+                timeout=8.0,
             )
             if web_results:
                 sources.extend(_format_web_sources(web_results))
                 logger.info(
-                    "Streaming path: RAG had no relevant chunks; Tavily returned %d web results.",
+                    "Streaming path: Tavily returned %d web results for '%s' (top local similarity: %.3f)",
                     len(web_results),
+                    q[:40],
+                    top_similarity,
                 )
         except (asyncio.TimeoutError, Exception) as web_exc:
             logger.warning("Streaming Tavily fallback search skipped or timed out: %s", web_exc)
@@ -1358,16 +1426,16 @@ async def stream_grounded_answer(
         system_prompt_text = "You are DhanMITR, a helpful and precise Indian financial assistant."
 
     rag_context_text = "\n\n".join(
-        f"Information: {c.get('chunk_text')}" for c in retrieved_chunks
+        f"Information: {(c.get('chunk_text') or '').strip()[:500]}" for c in retrieved_chunks[:3]
     ) if retrieved_chunks else "No relevant local knowledge-base information was retrieved."
 
     live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
 
     web_context_for_prompt = (
-        "CURRENT WEB SEARCH RESULTS (TAVILY FALLBACK):\n"
+        "CURRENT WEB SEARCH RESULTS (CURRENT VERIFIED SOURCES):\n"
         "Use these results only when they directly support the user's question. "
         "Do not invent facts that are not present in the results.\n\n"
-        + web_context_text
+        + web_context_text[:1200]
         if web_context_text
         else "No web-search fallback results were retrieved."
     )
@@ -1420,7 +1488,7 @@ async def stream_grounded_answer(
         user_prompt_parts = [
             f"Language: {effective_lang.upper()}",
             "",
-            "WEB SEARCH CONTEXT (TAVILY FALLBACK):",
+            "WEB SEARCH CONTEXT (CURRENT VERIFIED SOURCES):",
             web_context_for_prompt,
             "",
             "LOCAL KNOWLEDGE-BASE CONTEXT:",
@@ -1452,22 +1520,38 @@ async def stream_grounded_answer(
     accumulated_text = []
     t0_llm = time.perf_counter()
     if groq_client:
-        try:
-            stream = groq_client.chat.completions.create(
-                model=settings.GROQ_MODEL,
-                messages=groq_messages,
-                temperature=0.2,
-                max_tokens=700,
-                stream=True,
-                extra_body={"reasoning_format": "hidden"},
-            )
-            for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.content:
-                    token_text = chunk.choices[0].delta.content
-                    accumulated_text.append(token_text)
-                    yield f"event: delta\ndata: {json.dumps({'text': token_text})}\n\n"
-        except Exception as exc:
-            logger.warning("Groq stream exception: %s", exc)
+        models_to_try = [settings.GROQ_MODEL]
+        for fb in _FALLBACK_MODELS:
+            if fb not in models_to_try:
+                models_to_try.append(fb)
+
+        stream_success = False
+        for model_name in models_to_try:
+            try:
+                logger.info("Streaming Groq response with model '%s'...", model_name)
+                stream_kwargs: Dict[str, Any] = {
+                    "model": model_name,
+                    "messages": groq_messages,
+                    "temperature": 0.2,
+                    "max_tokens": 600,
+                    "stream": True,
+                }
+                if "deepseek" in model_name.lower():
+                    stream_kwargs["extra_body"] = {"reasoning_format": "hidden"}
+
+                stream = groq_client.chat.completions.create(**stream_kwargs)
+                for chunk in stream:
+                    if chunk.choices and chunk.choices[0].delta.content:
+                        token_text = chunk.choices[0].delta.content
+                        accumulated_text.append(token_text)
+                        yield f"event: delta\ndata: {json.dumps({'text': token_text})}\n\n"
+                stream_success = True
+                break
+            except Exception as exc:
+                logger.warning("Groq stream with '%s' failed: %s, trying fallback...", model_name, exc)
+                continue
+
+        if not stream_success and not accumulated_text:
             fallback = "I encountered a momentary issue generating the response. Please try again."
             yield f"event: delta\ndata: {json.dumps({'text': fallback})}\n\n"
 

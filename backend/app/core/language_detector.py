@@ -72,16 +72,51 @@ HINGLISH_FUNCTIONAL_TOKENS = {
 # Regex to check Devanagari script codepoints (\u0900 to \u097f)
 DEVANAGARI_REGEX = re.compile(r"[\u0900-\u097f]")
 
+# Regex to check Gujarati script codepoints (\u0a80 to \u0aff)
+GUJARATI_REGEX = re.compile(r"[\u0a80-\u0aff]")
+
 # Word boundary regex compiler
 WORD_TOKEN_REGEX = re.compile(r"[a-zA-Z']+")
 
 
+def normalize_indic_script_to_devanagari(text: Optional[str]) -> str:
+    """Converts Gujarati or regional Indic script characters to standard Devanagari (Hindi).
+
+    If text was transcribed in Gujarati script (e.g. 'બhara મે ઇનજીનરીંગ...'),
+    it gets normalized into standard Devanagari Hindi ('बhara मे इनजीनरींग...').
+    """
+    if not text:
+        return ""
+
+    chars = []
+    for ch in text:
+        cp = ord(ch)
+        # Gujarati block (0x0A81 to 0x0AF9) -> Devanagari block (0x0901 to 0x0979)
+        # Offset is exactly 0x0180 (384)
+        if 0x0A81 <= cp <= 0x0AF9:
+            dev_cp = cp - 0x0180
+            chars.append(chr(dev_cp))
+        else:
+            chars.append(ch)
+    return "".join(chars)
+
+
+def is_gujarati_script(text: Optional[str]) -> bool:
+    """Check if text contains Gujarati script characters."""
+    if not text:
+        return False
+    return bool(GUJARATI_REGEX.search(text))
+
+
 def detect_language(text: Optional[str], language_hint: Optional[str] = None) -> Tuple[str, str]:
-    """Auto-detects language from text and hints, returning (language_code, reason).
+    """Auto-detects language from text and hints, strictly returning ('hi' | 'en', reason).
+
+    Antigravity / DhanMITR strictly supports English and Hindi (Devanagari).
+    Any regional scripts (e.g. Gujarati) are normalized to Hindi (Devanagari).
 
     Priority:
-    1. Direct Devanagari script presence in text -> 'hi'
-    2. English grammatical structure & interrogatives -> 'en' (even when loan scheme words like 'yojana' are mentioned)
+    1. Direct Devanagari script presence in text (or normalized from Gujarati) -> 'hi'
+    2. English grammatical structure & interrogatives -> 'en'
     3. Hinglish grammatical structure & interrogatives -> 'hi'
     4. Explicit language hint ('hi' vs 'en')
     5. Default English fallback
@@ -89,11 +124,14 @@ def detect_language(text: Optional[str], language_hint: Optional[str] = None) ->
     Returns:
         tuple[str, str]: ('hi' | 'en', detection_reason)
     """
-    cleaned_text = (text or "").strip()
-    if not cleaned_text:
+    raw_text = (text or "").strip()
+    if not raw_text:
         if language_hint and language_hint.strip().lower() in ("hi", "hindi", "hin"):
             return "hi", "language_hint_hindi"
         return "en", "empty_fallback"
+
+    # Normalize regional Indic scripts (like Gujarati) to Devanagari
+    cleaned_text = normalize_indic_script_to_devanagari(raw_text)
 
     # 1. Check for Devanagari Script (Highest confidence)
     devanagari_chars = DEVANAGARI_REGEX.findall(cleaned_text)
@@ -109,11 +147,11 @@ def detect_language(text: Optional[str], language_hint: Optional[str] = None) ->
         eng_count = len(english_matches)
         hin_count = len(hinglish_matches)
 
-        # Clear English grammatical structure takes precedence (e.g. "what is PM kisan yojana?", "tell me about Atal Pension Yojana")
+        # Clear English grammatical structure takes precedence
         if eng_count >= 2 and eng_count >= hin_count:
             return "en", f"english_syntax (matched: {', '.join(english_matches[:4])})"
 
-        # Definite Hinglish structure (e.g. "kisan yojana kya hai", "mere kharche batao", "kaise apply kare")
+        # Definite Hinglish structure
         if hin_count >= 2 and hin_count > eng_count:
             return "hi", f"hinglish_syntax (matched: {', '.join(hinglish_matches[:4])})"
 
