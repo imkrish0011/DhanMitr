@@ -276,3 +276,35 @@ class TestSearchSimilarChunks:
                 query_embedding=_make_embedding(),
                 match_threshold=1.5,
             )
+
+
+# ---------------------------------------------------------------------------
+# Tavily Fallback & Web Search
+# ---------------------------------------------------------------------------
+
+class TestTavilyWebSearch:
+    def test_search_tavily_fallback_success(self):
+        from backend.app.services.rag_service import _search_tavily_fallback, _format_web_sources
+
+        mock_results = [
+            {"title": "Test Title", "url": "https://example.com", "content": "Sample content about finance"}
+        ]
+        with patch("backend.app.services.rag_service.search_web", return_value=mock_results):
+            results, context = _search_tavily_fallback("test query")
+            assert len(results) == 1
+            assert results[0]["title"] == "Test Title"
+            assert "Sample content about finance" in context
+
+            sources = _format_web_sources(results)
+            assert len(sources) == 1
+            assert sources[0]["source_type"] == "web"
+            assert sources[0]["url"] == "https://example.com"
+
+    def test_search_tavily_fallback_failure(self):
+        from backend.app.services.rag_service import _search_tavily_fallback
+
+        with patch("backend.app.services.rag_service.search_web", side_effect=Exception("API error")):
+            results, context = _search_tavily_fallback("test query")
+            assert results == []
+            assert context == ""
+

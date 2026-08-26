@@ -50,6 +50,15 @@ class Settings(BaseSettings):
     COINGECKO_API_KEY: str = Field(
         default="", validation_alias="COINGECKO_API_KEY"
     )
+    TAVILY_API_KEY: str = Field(
+        default="", validation_alias="TAVILY_API_KEY"
+    )
+    METALS_DEV_API_KEY: str = Field(
+        default="", validation_alias="METALS_DEV_API_KEY"
+    )
+    TWELVE_DATA_API_KEY: str = Field(
+        default="", validation_alias="TWELVE_DATA_API_KEY"
+    )
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
