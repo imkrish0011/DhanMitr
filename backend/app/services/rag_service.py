@@ -260,8 +260,11 @@ def sanitize_plain_text(text: str) -> str:
     """
     if not text:
         return text
+    # 0. Remove reasoning tags (<think>...</think>)
+    clean = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    clean = re.sub(r"<think>.*", "", clean, flags=re.DOTALL)
     # 1. Remove code fences (```...```)
-    clean = re.sub(r"```[^`]*```", "", text, flags=re.DOTALL)
+    clean = re.sub(r"```[^`]*```", "", clean, flags=re.DOTALL)
     # 2. Remove inline code backticks
     clean = re.sub(r"`([^`]+)`", r"\1", clean)
     # 3. Remove markdown headings (# Heading)
@@ -620,11 +623,13 @@ def _build_groq_messages(
 def _extract_answer_and_reply(raw_text: str) -> Tuple[str, str]:
     """Robustly extracts 'answer' and 'reply_text' from LLM output, handling malformed JSON, unescaped characters, or markdown fences."""
     raw = (raw_text or "").strip()
+    raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+    raw = re.sub(r"<think>.*", "", raw, flags=re.DOTALL).strip()
     answer = ""
     reply = ""
 
     cleaned = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\s*```$", "", cleaned)
+    cleaned = re.sub(r"\s*```$", "", cleaned).strip()
 
     try:
         data = json.loads(cleaned, strict=False)
@@ -1061,6 +1066,7 @@ async def generate_grounded_answer(
                     messages=groq_messages,
                     temperature=0.2,
                     max_tokens=800,
+                    extra_body={"reasoning_format": "hidden"},
                 )
             )
             llm_ms = round((time.perf_counter() - t0_llm) * 1000, 1)
@@ -1399,6 +1405,7 @@ async def stream_grounded_answer(
                 temperature=0.2,
                 max_tokens=800,
                 stream=True,
+                extra_body={"reasoning_format": "hidden"},
             )
             for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
