@@ -1196,15 +1196,16 @@ async def generate_grounded_answer(
                 if effective_lang != "hi"
                 else "यह रहा आपका लाइव मार्केट डेटा। संपूर्ण विवरण स्क्रीन पर है।"
             )
-    elif retrieved_chunks:
+    elif retrieved_chunks and retrieved_chunks[0].get("similarity", 0.0) >= 0.65:
         top_chunk = retrieved_chunks[0]
         title = top_chunk.get("document_title") or "Financial Scheme Knowledge"
-        text = top_chunk.get("chunk_text", "")
-        answer_text = f"{title}\n\n{text}"
+        text = (top_chunk.get("chunk_text") or "").strip()
+        text_snippet = text[:350] + ("..." if len(text) > 350 else "")
+        answer_text = f"{title}\n\n{text_snippet}"
         spoken_reply = (
             f"Here is the key information regarding {title}. The full guidelines are displayed on your screen."
             if effective_lang != "hi"
-            else f"यहाँ {title} से संबंधित महत्वपूर्ण जानकारी प्रस्तुत है। पूरा विवरण स्क्रीन पर है।"
+            else f"यहाँ {title} से संबंधित महत्वपूर्ण जानकारी प्रस्तुत है।"
         )
     elif web_results:
         first = web_results[0]
@@ -1220,10 +1221,10 @@ async def generate_grounded_answer(
         )
     else:
         if effective_lang == "hi":
-            answer_text = "इस विषय पर कोई विशिष्ट नीति दस्तावेज़ नहीं मिला। कृपया अपने प्रश्न को थोड़ा स्पष्ट करके पूछें।"
+            answer_text = "इस विषय पर कोई सटीक वित्तीय या योजना जानकारी नहीं मिली। कृपया अपना प्रश्न थोड़ा स्पष्ट करें (जैसे सोना/चांदी का भाव, टैक्स, बैंकिंग या सरकारी योजनाएं)।"
             spoken_reply = answer_text
         else:
-            answer_text = "No specific policy guidelines were found matching your query. Please provide more details or ask another question."
+            answer_text = "I could not find verified financial data matching that specific query. Please ask about Indian market prices (gold, silver, crypto), banking, tax regimes, or government welfare schemes."
             spoken_reply = answer_text
 
     # Sanitize all output

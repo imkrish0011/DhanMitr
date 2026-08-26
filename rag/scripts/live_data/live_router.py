@@ -261,6 +261,10 @@ GOLD_KEYWORDS = [
     "sona",
     "sone",
     "sonaa",
+    "cold price",
+    "cold rate",
+    "godl",
+    "gole price",
 ]
 
 SILVER_KEYWORDS = [
@@ -268,6 +272,8 @@ SILVER_KEYWORDS = [
     "silver price",
     "silver rate",
     "silver rates",
+    "siver price",
+    "silvr price",
     "चांदी",
     "चाँदी",
     "chandi ka bhav",
