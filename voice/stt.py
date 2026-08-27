@@ -297,12 +297,39 @@ class GroqWhisperSTT(BaseSTT):
         )
 
 
+class MockSTT(BaseSTT):
+    """Mock STT returning test transcripts without loading heavy neural weights."""
+
+    name = "mock"
+
+    def __init__(self) -> None:
+        self._loaded = True
+
+    def load(self) -> None:
+        self._loaded = True
+
+    def warmup(self) -> None:
+        return
+
+    def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
+        return STTResult(
+            text="PMJJBY scheme eligibility criteria",
+            language=language or "en",
+            provider=self.name,
+            latency_ms=0.0,
+            audio_seconds=1.0,
+            meta={"note": "mock provider — no model was loaded"},
+        )
+
+
 _PROVIDERS = {
+    "groq": GroqWhisperSTT,
     "groq_whisper": GroqWhisperSTT,
     "whisper": GroqWhisperSTT,
     "whisper_large": GroqWhisperSTT,
     "sravaani": SraVaaniSTT,
     "faster_whisper": FasterWhisperSTT,
+    "mock": MockSTT,
 }
 
 _cache: Dict[str, BaseSTT] = {}
