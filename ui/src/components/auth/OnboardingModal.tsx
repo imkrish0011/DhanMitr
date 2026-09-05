@@ -79,7 +79,7 @@ export const OnboardingModal: React.FC = () => {
           <div className="flex items-center gap-2 mb-1.5">
             <DhanMitrLogo className="w-6 h-6" />
             <span className="text-sm font-bold text-slate-900 dark:text-white">
-              Welcome to Dhan<span className="text-emerald-500 font-extrabold">MITR</span>
+              Welcome to धन<span className="text-emerald-500 font-extrabold">Mitr</span>
             </span>
           </div>
           <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">

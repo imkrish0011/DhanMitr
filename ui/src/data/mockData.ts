@@ -92,7 +92,7 @@ export const initialChatMessages: ChatMessage[] = [
   {
     id: 'msg_welcome',
     sender: 'assistant',
-    text: 'Namaste! I am DhanMITR, your AI financial companion.\n\nAsk me anything about budgeting, expense optimization, OTT subscriptions, tax regimes, or financial planning in Hindi or English!',
+    text: 'Namaste! I am धनMitr, your AI financial companion.\n\nAsk me anything about budgeting, expense optimization, OTT subscriptions, tax regimes, or financial planning in Hindi or English!',
     timestamp: 'Just now',
     language: 'en',
     widgetType: 'none',

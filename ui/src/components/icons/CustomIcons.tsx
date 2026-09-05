@@ -18,7 +18,7 @@ export interface LogoProps extends React.HTMLAttributes<HTMLDivElement> {
 export const DhanMitrLogo: React.FC<LogoProps> = ({
   className = 'w-8 h-8',
   showFull = false,
-  alt = 'DhanMitr Logo',
+  alt = 'धनMitr Logo',
   ...props
 }) => {
   if (showFull) {
@@ -26,12 +26,12 @@ export const DhanMitrLogo: React.FC<LogoProps> = ({
       <div className={`relative inline-flex items-center shrink-0 ${className}`} {...props}>
         <img
           src="/images/dhanmitr_logo_light.png"
-          alt="DhanMitr — Your Financial Friend"
+          alt="धनMitr — Your Financial Friend"
           className="w-full h-full object-contain dark:hidden select-none"
         />
         <img
           src="/images/dhanmitr_logo_dark.png"
-          alt="DhanMitr — Your Financial Friend"
+          alt="धनMitr — Your Financial Friend"
           className="w-full h-full object-contain hidden dark:block select-none"
         />
       </div>

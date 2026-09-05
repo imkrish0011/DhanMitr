@@ -146,7 +146,7 @@ export const QuickActionsSidebar: React.FC = () => {
       <div className="pt-4 border-t border-slate-200/60 dark:border-white/[0.06] flex items-center justify-between">
         <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-bold">
           <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500 animate-pulse" />
-          DhanMITR AI Engine
+          धनMitr AI Engine
         </span>
       </div>
     </aside>

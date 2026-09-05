@@ -173,7 +173,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setIsLoading(false);
 
         if (!authorized) {
-          const deniedErr = new Error('Access denied: You do not possess DhanMITR administrator privileges.');
+          const deniedErr = new Error('Access denied: You do not possess धनMitr administrator privileges.');
           setAuthError(deniedErr.message);
           return { error: deniedErr };
         }

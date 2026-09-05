@@ -351,7 +351,7 @@ const AppContent: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <DhanMitrLogo className="w-8 h-6 shrink-0" />
                   <span className="font-display font-black text-sm tracking-tight text-slate-900 dark:text-white">
-                    Dhan<span className="text-emerald-500">Mitr</span>
+                    धन<span className="text-emerald-500">Mitr</span>
                     <span className="text-slate-400 font-mono text-xs font-normal ml-2">MSME & Project Loans Suite</span>
                   </span>
                 </div>

@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
           <DhanMitrLogo className="w-11 h-9 shrink-0 group-hover:scale-105 transition-transform" />
           <div className="flex flex-col">
             <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1 font-display">
-              Dhan<span className="text-emerald-500 font-bold">Mitr</span>
+              धन<span className="text-emerald-500 font-bold">Mitr</span>
             </span>
             <span className="text-[8px] font-mono tracking-widest text-slate-400 dark:text-slate-500 uppercase">Your Financial Friend</span>
           </div>

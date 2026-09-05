@@ -627,7 +627,7 @@ export const AdminUsersView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-400">
-              Change role assignment for <strong className="text-white">{roleModalUser.name || roleModalUser.email}</strong>. This grants or revokes server-side administrative access to the DhanMITR database.
+              Change role assignment for <strong className="text-white">{roleModalUser.name || roleModalUser.email}</strong>. This grants or revokes server-side administrative access to the धनMitr database.
             </p>
 
             <div className="space-y-2">

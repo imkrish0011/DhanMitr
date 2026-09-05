@@ -1068,7 +1068,7 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
 
               <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/50 rounded-xl text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
-                <span><strong className="text-slate-900 dark:text-white">Smart Threshold:</strong> DhanMITR will automatically alert you when spending in this category exceeds 80% of your defined cap.</span>
+                <span><strong className="text-slate-900 dark:text-white">Smart Threshold:</strong> धनMitr will automatically alert you when spending in this category exceeds 80% of your defined cap.</span>
               </div>
             </div>
           )}

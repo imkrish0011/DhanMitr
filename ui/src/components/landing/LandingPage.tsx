@@ -101,7 +101,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
       userQuery: '“Can I comfortably purchase the new ₹1,19,900 laptop this weekend without breaking resilience?”',
       langTag: 'English Voice',
       audioDuration: '0:04s',
-      aiResponse: 'Caution: This purchase lowers your liquid runway from 6.2 months down to 4.1 months (below your 6-month safety line). DhanMITR recommends deferring by 45 days.',
+      aiResponse: 'Caution: This purchase lowers your liquid runway from 6.2 months down to 4.1 months (below your 6-month safety line). धनMitr recommends deferring by 45 days.',
       metrics: [
         { label: 'Current Runway', value: '6.2 Mos (₹2.85L Reserves)', color: 'text-teal-400' },
         { label: 'Post-Spend Runway', value: '4.1 Mos (Safety Warning)', color: 'text-amber-400' },
@@ -118,7 +118,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
     },
     {
       q: 'How is my financial data protected from third parties?',
-      a: 'DhanMITR enforces cryptographic PostgreSQL Row-Level Security (RLS) via Supabase. We never sell, scrape, or share your financial records with advertising brokers or credit card marketers.',
+      a: 'धनMitr enforces cryptographic PostgreSQL Row-Level Security (RLS) via Supabase. We never sell, scrape, or share your financial records with advertising brokers or credit card marketers.',
     },
     {
       q: 'Are the tax calculations accurate for FY 2025-26?',
@@ -126,15 +126,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
     },
     {
       q: 'Which Indic languages are supported?',
-      a: 'DhanMITR natively understands Hindi, conversational Hinglish (mixed Hindi and English), and English with sub-180ms streaming inference.',
+      a: 'धनMitr natively understands Hindi, conversational Hinglish (mixed Hindi and English), and English with sub-180ms streaming inference.',
     },
   ];
 
   return (
     <div className="relative min-h-screen bg-[#FAFCFF] dark:bg-[#050811] text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans overflow-x-hidden selection:bg-emerald-500/20 selection:text-emerald-500">
       {/* Ambient background glows with generous diffusion */}
-      <div className="pointer-events-none fixed inset-0 z-0 opacity-30 dark:opacity-50 bg-radial-mesh" />
-      <div className="pointer-events-none fixed inset-0 z-0 opacity-10 dark:opacity-20 bg-grid-subtle" />
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-b from-emerald-500/10 via-teal-500/5 to-transparent blur-[120px] rounded-full" />
+        <div className="absolute top-1/3 -left-48 w-96 h-96 bg-blue-500/5 blur-[100px] rounded-full" />
+        <div className="absolute top-2/3 -right-48 w-96 h-96 bg-emerald-500/5 blur-[100px] rounded-full" />
+      </div>
 
       {/* ========================================================================= */}
       {/* 1. FLOATING LUXURY NAVBAR                                                 */}
@@ -143,13 +146,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
         <div className="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
           {/* Brand Emblem */}
           <div className="flex items-center gap-3">
-            <div className="relative group cursor-pointer" onClick={onLaunchHub} title="DhanMitr AI Finance Hub">
+            <div className="relative group cursor-pointer" onClick={onLaunchHub} title="धनMitr AI Finance Hub">
               <DhanMitrLogo className="w-10 h-8 group-hover:scale-105 transition-transform shrink-0" />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="font-display text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                  Dhan<span className="text-emerald-500 font-bold">Mitr</span>
+                  धन<span className="text-emerald-500 font-bold">Mitr</span>
                 </span>
                 <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -580,7 +583,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
             Conversational Finance in Real Time
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
-            Choose a real-world scenario to experience how DhanMITR parses natural voice, flags hidden drains, and defends your emergency runway.
+            Choose a real-world scenario to experience how धनMitr parses natural voice, flags hidden drains, and defends your emergency runway.
           </p>
         </motion.div>
 
@@ -682,7 +685,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
               <div className="flex items-center gap-2.5">
                 <DhanMitrLogo className="w-6 h-6 rounded-lg shadow-sm" />
                 <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                  DhanMITR Autonomous Intelligence
+                  धनMitr Autonomous Intelligence
                 </span>
               </div>
               <span className="text-[10px] font-mono text-slate-400">
@@ -886,7 +889,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
           <div className="flex items-center gap-2.5">
             <DhanMitrLogo className="w-8 h-6 shrink-0" />
             <span className="font-display font-extrabold text-slate-900 dark:text-white">
-              Dhan<span className="text-emerald-500">Mitr</span>
+              धन<span className="text-emerald-500">Mitr</span>
             </span>
             <span>•</span>
             <span>Made in India for India</span>

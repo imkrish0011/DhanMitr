@@ -89,7 +89,7 @@ export default function AdminPage() {
               Admin Control Panel
             </span>
           </div>
-          <p className="text-[10px] text-slate-600 mt-1 font-mono">DhanMITR · v1.0.0</p>
+          <p className="text-[10px] text-slate-600 mt-1 font-mono">धनMitr · v1.0.0</p>
         </div>
 
         {/* Navigation Sections */}

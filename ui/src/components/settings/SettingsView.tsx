@@ -77,7 +77,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `DhanMITR_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+    downloadAnchor.setAttribute('download', `धनMitr_Backup_${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -106,7 +106,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
     const csvData = 'data:text/csv;charset=utf-8,' + encodeURIComponent(headers + rows);
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', csvData);
-    downloadAnchor.setAttribute('download', `DhanMITR_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadAnchor.setAttribute('download', `धनMitr_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();

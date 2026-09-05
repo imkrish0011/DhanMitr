@@ -43,7 +43,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
           <ShieldCheck className="w-6 h-6 text-emerald-400 animate-pulse" />
         </div>
-        <p className="text-sm font-semibold text-slate-300">Authenticating DhanMITR Admin Access...</p>
+        <p className="text-sm font-semibold text-slate-300">Authenticating धनMitr Admin Access...</p>
         <p className="text-xs text-slate-500 mt-1">Verifying cryptographic session and database RBAC policies</p>
       </div>
     );
@@ -64,10 +64,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">403 — Forbidden: Access Denied</h2>
-            <p className="text-xs text-rose-300/80 mt-1">Private DhanMITR Administration Portal</p>
+            <p className="text-xs text-rose-300/80 mt-1">Private धनMitr Administration Portal</p>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            The authenticated user (<strong className="text-white">{user.email}</strong>) does not have administrative privileges in the DhanMITR database RBAC directory.
+            The authenticated user (<strong className="text-white">{user.email}</strong>) does not have administrative privileges in the धनMitr database RBAC directory.
           </p>
           <div className="pt-2 flex flex-col gap-2">
             <button
@@ -99,7 +99,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
-              <span className="font-bold text-sm text-white tracking-wide">DhanMITR</span>
+              <span className="font-bold text-sm text-white tracking-wide">धनMitr</span>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 ml-2 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
                 Command Center
               </span>

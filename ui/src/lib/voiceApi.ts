@@ -48,7 +48,7 @@ export async function sendVoiceChat(payload: VoiceRequest): Promise<VoiceRespons
     if (error instanceof VoiceApiError) {
       throw error;
     }
-    const message = error instanceof Error ? error.message : 'Unable to connect to DhanMITR Voice service.';
+    const message = error instanceof Error ? error.message : 'Unable to connect to धनMitr Voice service.';
     throw new VoiceApiError(message, 503);
   }
 }

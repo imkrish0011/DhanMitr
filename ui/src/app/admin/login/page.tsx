@@ -56,7 +56,7 @@ export default function AdminLoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
             <ShieldCheck className="w-7 h-7 text-emerald-400" />
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">DhanMITR Command Center</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">धनMitr Command Center</h1>
           <p className="text-xs text-slate-400 mt-1">Authorized Administrator Portal</p>
         </div>
 
@@ -172,7 +172,7 @@ export default function AdminLoginPage() {
 
         <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
           <p className="text-[11px] text-slate-500">
-            Access strictly restricted to authorized DhanMITR administrators with active RBAC credentials.
+            Access strictly restricted to authorized धनMitr administrators with active RBAC credentials.
           </p>
         </div>
       </div>

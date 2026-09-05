@@ -77,7 +77,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
             <DhanMitrLogo className="w-9 h-7 group-hover:scale-105 transition-transform shrink-0" />
             <div>
               <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors font-display">
-                Dhan<span className="text-emerald-500 font-bold">Mitr</span> Console
+                धन<span className="text-emerald-500 font-bold">Mitr</span> Console
               </h2>
               <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
@@ -211,7 +211,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
           </form>
 
           <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
-            DhanMITR can make mistakes. Always verify important financial decisions.
+            धनMitr can make mistakes. Always verify important financial decisions.
           </p>
         </div>
       </div>

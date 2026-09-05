@@ -102,7 +102,7 @@ export const AuthModal: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <DhanMitrLogo className="w-8 h-6 shrink-0" />
             <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-              Dhan<span className="text-emerald-500 font-extrabold">Mitr</span>
+              धन<span className="text-emerald-500 font-extrabold">Mitr</span>
             </span>
           </div>
           <button
@@ -258,7 +258,7 @@ export const AuthModal: React.FC = () => {
                 successText={mode === 'login' ? 'Signed in!' : 'Account created!'}
                 className="w-full py-2.5 text-xs font-bold shadow-md shadow-emerald-900/20"
               >
-                {mode === 'login' ? 'Sign In to DhanMITR' : 'Create Free Account & Unlock Hub'}
+                {mode === 'login' ? 'Sign In to धनMitr' : 'Create Free Account & Unlock Hub'}
               </StatefulButton>
             </div>
           </form>

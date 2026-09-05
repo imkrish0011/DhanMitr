@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     success: true,
     system: {
-      appName: 'DhanMITR Command Center',
+      appName: 'धनMitr Command Center',
       version: '1.0.0',
       nodeEnv: process.env.NODE_ENV || 'development',
       serverTime: new Date().toISOString(),

@@ -293,7 +293,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) return true; // Authenticated users have unlimited chats
 
     if (freeChatCount >= MAX_FREE_CHATS) {
-      openAuthModal('signup', "You've used your 3 free AI queries! Create a free account or sign in to continue chatting with DhanMITR and unlock the Finance Hub.");
+      openAuthModal('signup', "You've used your 3 free AI queries! Create a free account or sign in to continue chatting with धनMitr and unlock the Finance Hub.");
       return false;
     }
 

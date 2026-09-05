@@ -54,7 +54,7 @@ export const AdminProfilesView: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-500">
         <RefreshCw className="w-8 h-8 animate-spin text-indigo-500 mb-3" />
-        <p className="text-sm font-medium">Aggregating DhanMITR financial demographics...</p>
+        <p className="text-sm font-medium">Aggregating धनMitr financial demographics...</p>
       </div>
     );
   }

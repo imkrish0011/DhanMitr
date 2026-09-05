@@ -69,7 +69,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       case 'processing':
         return 'Processing...';
       case 'speaking':
-        return 'DhanMITR Speaking...';
+        return 'धनMitr Speaking...';
       case 'idle':
       default:
         return 'Tap to speak';
@@ -81,7 +81,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       case 'listening':
         return selectedLanguage === 'hi' ? 'अपनी वित्तीय स्थिति के बारे में बोलें...' : 'Speak naturally about your finances...';
       case 'processing':
-        return 'DhanMITR is analyzing your financial records & generating insights';
+        return 'धनMitr is analyzing your financial records & generating insights';
       case 'speaking':
         return assistantVoiceReply || 'Explaining your financial insights';
       case 'idle':
@@ -105,7 +105,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         >
           <DhanMitrLogo className="w-6 h-5 sm:w-7 sm:h-6 shrink-0" />
           <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Dhan<span className="text-emerald-500 font-bold">Mitr</span>
+            धन<span className="text-emerald-500 font-bold">Mitr</span>
           </span>
         </div>
 

@@ -92,7 +92,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
         <div className="flex items-center gap-2">
           <DhanMitrLogo className="w-8 h-6 shrink-0" />
           <span className="font-display font-extrabold tracking-tight text-base text-slate-900 dark:text-white">
-            Dhan<span className="text-emerald-500 font-bold">Mitr</span>
+            धन<span className="text-emerald-500 font-bold">Mitr</span>
           </span>
         </div>
 

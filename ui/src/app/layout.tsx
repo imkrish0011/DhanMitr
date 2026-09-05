@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DhanMITR — AI Personal Finance & Voice Companion",
+  title: "धनMitr — AI Personal Finance & Voice Companion",
   description: "Intelligent personal finance assistant with real-time tracking, OTT subscriptions, insurance analytics, and conversational voice guidance.",
 };
 
