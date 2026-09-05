@@ -189,13 +189,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
 
             <button
               onClick={onOpenCalculator || onLaunchHub}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-500/30 hover:border-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-              title="10% Margin & Quarterly Moratorium MSME Calculator"
+              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all cursor-pointer shadow-2xs"
             >
-              <Calculator className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="hidden sm:inline">MSME Calculator</span>
-              <span className="sm:hidden">Loans</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono font-bold">New</span>
+              <Calculator className="w-3.5 h-3.5" />
+              <span>Project Loans</span>
             </button>
 
             <button
@@ -256,11 +253,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
             Real-time Indic voice AI for conversational cash flow analysis, automated tax regime optimization, and 6-month wealth runway.
           </p>
 
-          {/* Action CTAs */}
+          {/* Dual Action CTAs */}
           <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <button
               onClick={() => onOpenAi('voice')}
-              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/35 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/35 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               <Mic className="w-4 h-4 text-slate-950" />
               <span>Try Voice Copilot Free</span>
@@ -269,19 +266,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
 
             <button
               onClick={onOpenCalculator || onLaunchHub}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm group"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl fintech-card fintech-card-hover text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider border border-slate-200/80 dark:border-white/10 transition-all cursor-pointer"
             >
-              <Calculator className="w-4 h-4 text-emerald-500 group-hover:rotate-12 transition-transform" />
-              <span>MSME Project Loan Suite</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono font-bold">10% Margin</span>
-            </button>
-
-            <button
-              onClick={onLaunchHub}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl fintech-card fintech-card-hover text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider border border-slate-200/80 dark:border-white/10 transition-all cursor-pointer"
-            >
-              <BarChart3 className="w-4 h-4 text-emerald-500" />
-              <span>{isAuthenticated ? 'Open Hub' : 'Explore'}</span>
+              <Calculator className="w-4 h-4 text-emerald-500" />
+              <span>10% Loan & Feasibility Calculator</span>
             </button>
           </div>
 
@@ -289,10 +277,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
           <div className="pt-4 flex flex-wrap items-center justify-center gap-2.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
             <button
               onClick={onOpenCalculator || onLaunchHub}
-              className="px-3 py-1 rounded-full fintech-card border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-1.5 hover:bg-emerald-500/10 transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full fintech-card border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-1.5 hover:bg-emerald-500/10 transition-colors cursor-pointer"
             >
               <Calculator className="w-3 h-3 text-emerald-500" />
-              10% Margin & Quarterly Moratorium
+              10% Margin Loans
             </button>
             <span className="px-3 py-1 rounded-full fintech-card border border-slate-200/60 dark:border-white/5 font-mono">
               &lt;180ms Voice
@@ -301,7 +289,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
               Old vs New Tax Engine
             </span>
             <span className="px-3 py-1 rounded-full fintech-card border border-slate-200/60 dark:border-white/5 font-mono">
-              Hyper-Local Feasibility
+              Village Feasibility
             </span>
           </div>
         </motion.div>
