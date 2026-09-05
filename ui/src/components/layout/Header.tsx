@@ -111,8 +111,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onNavigateToTab]);
 
-  const tabs: { id: FinanceSubTab; label: string; badge?: number }[] = [
+  const tabs: { id: FinanceSubTab; label: string; badge?: number | string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'msme_tools', label: 'MSME & Project Loans', badge: 'New' },
     { id: 'goals', label: 'Goals & Milestones', badge: activeGoalsCount > 0 ? activeGoalsCount : undefined },
     { id: 'tax_calculator', label: 'Tax Optimizer' },
     { id: 'subscriptions', label: 'OTT & Subscriptions', badge: activeSubscriptionsCount > 0 ? activeSubscriptionsCount : undefined },

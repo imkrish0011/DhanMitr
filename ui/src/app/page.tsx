@@ -24,6 +24,7 @@ import { InsurancesTab } from '@/components/finance/InsurancesTab';
 import { BudgetIncomeTab } from '@/components/finance/BudgetIncomeTab';
 import { GoalsTab } from '@/components/finance/GoalsTab';
 import { TaxRegimeComparator } from '@/components/finance/TaxRegimeComparator';
+import { ProjectLoanSuite } from '@/components/calculator/ProjectLoanSuite';
 import { TransactionsView } from '@/components/finance/TransactionsView';
 import { AddFinanceModal } from '@/components/finance/Modals/AddFinanceModal';
 
@@ -105,7 +106,27 @@ const AppContent: React.FC = () => {
               setAiMode(mode);
             }}
             onLaunchHub={() => handleNavSelection('finance_hub')}
+            onOpenCalculator={() => {
+              setCurrentTab('msme_tools');
+              setActiveSubTab('msme_tools');
+            }}
           />
+        ) : currentTab === 'msme_tools' ? (
+          <div className="min-h-screen px-3 py-4 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+              <button
+                onClick={() => setCurrentTab(isAuthenticated ? 'finance_hub' : 'landing')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              >
+                ← Back to {isAuthenticated ? 'Hub' : 'Home'}
+              </button>
+              <div className="flex items-center gap-2">
+                <DhanMitrLogo className="w-6 h-5" />
+                <span className="text-xs font-bold font-mono text-emerald-500">MSME Tools</span>
+              </div>
+            </div>
+            <ProjectLoanSuite />
+          </div>
         ) : currentTab === 'ai_companion' && aiMode === 'voice' ? (
           <div>
             <VoiceAssistant
@@ -160,6 +181,10 @@ const AppContent: React.FC = () => {
               setAiMode(mode);
             }}
             onLaunchHub={() => handleNavSelection('finance_hub')}
+            onOpenCalculator={() => {
+              setCurrentTab('msme_tools');
+              setActiveSubTab('msme_tools');
+            }}
           />
         )}
 
@@ -304,7 +329,35 @@ const AppContent: React.FC = () => {
                 setAiMode(mode);
               }}
               onLaunchHub={() => handleNavSelection('finance_hub')}
+              onOpenCalculator={() => {
+                setCurrentTab('msme_tools');
+                setActiveSubTab('msme_tools');
+              }}
             />
+          </main>
+        )}
+
+        {/* MSME & Project Loans Suite Desktop Canvas */}
+        {currentTab === 'msme_tools' && (
+          <main className="flex-1 h-screen overflow-y-auto p-6 sm:p-8">
+            <div className="max-w-6xl mx-auto space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
+                <button
+                  onClick={() => setCurrentTab(isAuthenticated ? 'finance_hub' : 'landing')}
+                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                >
+                  ← Back to {isAuthenticated ? 'Finance Hub' : 'Home'}
+                </button>
+                <div className="flex items-center gap-2.5">
+                  <DhanMitrLogo className="w-8 h-6 shrink-0" />
+                  <span className="font-display font-black text-sm tracking-tight text-slate-900 dark:text-white">
+                    Dhan<span className="text-emerald-500">Mitr</span>
+                    <span className="text-slate-400 font-mono text-xs font-normal ml-2">MSME & Project Loans Suite</span>
+                  </span>
+                </div>
+              </div>
+              <ProjectLoanSuite />
+            </div>
           </main>
         )}
 
@@ -394,6 +447,11 @@ const AppContent: React.FC = () => {
               {/* Tax Calculator Tab */}
               {activeSubTab === 'tax_calculator' && (
                 <TaxRegimeComparator />
+              )}
+
+              {/* MSME & Project Loans Suite */}
+              {activeSubTab === 'msme_tools' && (
+                <ProjectLoanSuite />
               )}
 
               {/* Subscriptions Tab */}

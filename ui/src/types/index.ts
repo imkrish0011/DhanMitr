@@ -239,8 +239,8 @@ export interface VoiceResponse {
   sources?: KnowledgeSource[];
 }
 
-export type NavTab = 'landing' | 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings';
+export type NavTab = 'landing' | 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings' | 'msme_tools';
 
-export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator';
+export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator' | 'msme_tools';
 
 
