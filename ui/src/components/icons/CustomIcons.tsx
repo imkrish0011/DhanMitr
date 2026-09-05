@@ -443,7 +443,10 @@ export const HdfcLifeLogo: React.FC<{ className?: string }> = ({ className = 'w-
 export const StarHealthLogo: React.FC<{ className?: string }> = ({ className = 'w-10 h-10' }) => (
   <div className={`flex items-center justify-center bg-white border border-blue-200 rounded-xl p-1 shadow-sm ${className}`}>
     <div className="w-full h-full flex flex-col items-center justify-center bg-[#006BB6] text-white rounded-lg font-bold text-[8px] leading-tight p-0.5">
-      <span className="text-[#FDB913] text-[9px]">★ STAR</span>
+      <span className="text-[#FDB913] text-[9px] inline-flex items-center gap-0.5">
+        <svg className="w-2 h-2 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+        STAR
+      </span>
       <span className="text-[7px]">HEALTH</span>
     </div>
   </div>

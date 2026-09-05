@@ -41,6 +41,7 @@ import {
   Scale,
   PieChart,
   X,
+  Lightbulb,
 } from 'lucide-react';
 
 export type FinanceRecordType = 'subscription' | 'insurance' | 'income' | 'expense' | 'investment' | 'goal' | 'tax' | 'reminder' | 'budget_cap';
@@ -988,8 +989,9 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 dark:bg-[#0B101D] border border-slate-200/70 dark:border-slate-800 rounded-xl text-[11px] text-slate-600 dark:text-slate-300">
-                💡 <strong className="text-slate-900 dark:text-white">Tip:</strong> You can also run real-time comparisons in the <strong>Finance Hub &gt; Tax Optimizer</strong> tab anytime!
+              <div className="p-3 bg-slate-50 dark:bg-[#0B101D] border border-slate-200/70 dark:border-slate-800 rounded-xl text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+                <span><strong className="text-slate-900 dark:text-white">Tip:</strong> You can also run real-time comparisons in the <strong>Finance Hub &gt; Tax Optimizer</strong> tab anytime!</span>
               </div>
             </div>
           )}
@@ -1064,8 +1066,9 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/50 rounded-xl text-[11px] text-slate-600 dark:text-slate-300">
-                💡 <strong className="text-slate-900 dark:text-white">Smart Threshold:</strong> DhanMITR will automatically alert you when spending in this category exceeds 80% of your defined cap.
+              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/50 rounded-xl text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+                <span><strong className="text-slate-900 dark:text-white">Smart Threshold:</strong> DhanMITR will automatically alert you when spending in this category exceeds 80% of your defined cap.</span>
               </div>
             </div>
           )}

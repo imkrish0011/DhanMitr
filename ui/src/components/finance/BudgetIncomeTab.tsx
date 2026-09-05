@@ -367,8 +367,15 @@ export const BudgetIncomeTab: React.FC<BudgetIncomeTabProps> = ({ onOpenAddModal
                           <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm truncate block">
                             {item.category}
                           </span>
-                          <span className="text-[10px] text-slate-400 block truncate font-mono">
-                            {isExceeded ? '⚠️ Cap exceeded' : `₹${remaining.toLocaleString('en-IN')} headroom`}
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono truncate">
+                            {isExceeded ? (
+                              <>
+                                <AlertCircle className="w-3 h-3 text-rose-500 shrink-0" />
+                                <span className="text-rose-500 font-bold">Cap exceeded</span>
+                              </>
+                            ) : (
+                              <span>₹{remaining.toLocaleString('en-IN')} headroom</span>
+                            )}
                           </span>
                         </div>
                       </div>

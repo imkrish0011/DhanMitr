@@ -322,9 +322,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
                 {/* Visual Risk Gauge */}
                 <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60">
                   <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
-                    <span>Conservative (🛡️)</span>
-                    <span>Moderate (⚖️)</span>
-                    <span>Aggressive (🚀)</span>
+                    <span className="flex items-center gap-1"><Shield className="w-3 h-3 text-emerald-500" /> Conservative</span>
+                    <span className="flex items-center gap-1"><Scale className="w-3 h-3 text-blue-500" /> Moderate</span>
+                    <span className="flex items-center gap-1"><Rocket className="w-3 h-3 text-purple-500" /> Aggressive</span>
                   </div>
                   <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex gap-1 p-0.5">
                     <div

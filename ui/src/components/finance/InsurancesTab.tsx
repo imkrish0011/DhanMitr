@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { ProviderLogo, ShieldCheckIcon } from '@/components/icons/CustomIcons';
 import { EditRecordModal, EditableItem } from '@/components/finance/Modals/EditRecordModal';
-import { ShieldCheck, Plus, Sparkles, HeartPulse, FileText, Wallet } from 'lucide-react';
+import { ShieldCheck, Plus, Sparkles, HeartPulse, FileText, Wallet, Pencil, Trash2 } from 'lucide-react';
 
 interface InsurancesTabProps {
   onOpenAddModal: () => void;
@@ -194,14 +194,14 @@ export const InsurancesTab: React.FC<InsurancesTabProps> = ({ onOpenAddModal }) 
                     className="text-slate-400 hover:text-emerald-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Edit Insurance"
                   >
-                    ✎
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => deleteInsurance(ins.id)}
                     className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Delete Policy"
                   >
-                    ✕
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

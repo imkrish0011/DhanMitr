@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { DhanMitrLogo, SparkleSmallIcon } from '@/components/icons/CustomIcons';
 import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
+import { X } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
   const {
@@ -106,9 +107,9 @@ export const AuthModal: React.FC = () => {
           </div>
           <button
             onClick={closeAuthModal}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 

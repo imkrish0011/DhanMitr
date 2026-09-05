@@ -5,7 +5,7 @@ import { useFinance } from '@/context/FinanceContext';
 import { ProviderLogo } from '@/components/icons/CustomIcons';
 import { Subscription } from '@/types';
 import { EditRecordModal, EditableItem } from '@/components/finance/Modals/EditRecordModal';
-import { Tv, Plus, Sparkles, Filter, CreditCard, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Tv, Plus, Sparkles, Filter, CreditCard, TrendingUp, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
 
 interface SubscriptionsTabProps {
   onOpenAddModal: () => void;
@@ -217,14 +217,14 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({ onOpenAddMod
                     className="text-slate-400 hover:text-emerald-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Edit Subscription"
                   >
-                    ✎
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => deleteSubscription(sub.id)}
                     className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Delete Subscription"
                   >
-                    ✕
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

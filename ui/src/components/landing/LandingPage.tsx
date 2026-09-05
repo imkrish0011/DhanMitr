@@ -27,6 +27,7 @@ import {
   Scale,
   Zap,
   Calculator,
+  Languages,
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -50,7 +51,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
       badge: 'INDIC HINGLISH STT',
       icon: Mic,
       userQuery: '“Bhai, kal Sham ko doston ke sath ₹2,450 dinner aur ₹320 cab pe gaye. Update my budget cap.”',
-      langTag: '🇮🇳 Spoken in Hinglish',
+      langTag: 'Indic Hinglish',
       audioDuration: '0:04s',
       aiResponse: 'Logged ₹2,450 under Dining and ₹320 under Transit. Your weekly dining budget cap is at 68% (₹4,230 buffer remaining).',
       metrics: [
@@ -66,7 +67,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
       badge: 'AUTONOMOUS RADAR',
       icon: Zap,
       userQuery: '“Detect all unused recurring subscriptions or zombie charges across my accounts.”',
-      langTag: '🇬🇧 English Voice',
+      langTag: 'English Voice',
       audioDuration: '0:03s',
       aiResponse: 'Found 3 dormant subscriptions: SonyLIV (0 logins in 42 days), an annual gym auto-renew, and redundant cloud storage. Pausing them recovers ₹31,580/year.',
       metrics: [
@@ -82,7 +83,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
       badge: 'UNION BUDGET FY 25-26',
       icon: Scale,
       userQuery: '“Meri gross income ₹18 Lakhs hai. Revised ₹75k standard deduction ke sath New ya Old regime lena chahiye?”',
-      langTag: '🇮🇳 Spoken in Hindi',
+      langTag: 'Hindi Voice',
       audioDuration: '0:05s',
       aiResponse: 'Under Section 115BAC (New Regime), revised slabs and the enhanced ₹75,000 standard deduction give you an exact net savings of ₹18,200 without locking money in 80C.',
       metrics: [
@@ -98,7 +99,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
       badge: 'LIQUIDITY DEFENSE',
       icon: ShieldCheck,
       userQuery: '“Can I comfortably purchase the new ₹1,19,900 laptop this weekend without breaking resilience?”',
-      langTag: '🇬🇧 English Voice',
+      langTag: 'English Voice',
       audioDuration: '0:04s',
       aiResponse: 'Caution: This purchase lowers your liquid runway from 6.2 months down to 4.1 months (below your 6-month safety line). DhanMITR recommends deferring by 45 days.',
       metrics: [
@@ -549,8 +550,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
                 <span className="text-slate-400">Old Regime</span>
                 <span className="text-slate-500">₹85,800</span>
               </div>
-              <div className="pt-2 border-t border-slate-200/80 dark:border-white/5 text-[10px] font-bold text-emerald-500 font-mono">
-                ★ ₹18,200 Net Savings
+              <div className="pt-2 border-t border-slate-200/80 dark:border-white/5 text-[10px] font-bold text-emerald-500 font-mono flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-500" />
+                <span>₹18,200 Net Savings</span>
               </div>
             </div>
           </motion.div>
@@ -629,7 +631,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 {scenarios[activeScenario].badge}
               </span>
-              <span className="text-[10px] font-mono text-slate-400">⚡ &lt;180ms</span>
+              <span className="flex items-center gap-1 text-[10px] font-mono text-slate-400">
+                <Zap className="w-3 h-3 text-emerald-500" />
+                <span>&lt;180ms</span>
+              </span>
             </div>
           </div>
 
@@ -644,7 +649,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub,
                   User Voice Input
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <Languages className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="text-[10px] font-mono text-slate-400">
                   {scenarios[activeScenario].langTag}
                 </span>

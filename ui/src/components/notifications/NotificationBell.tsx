@@ -232,9 +232,9 @@ export const NotificationBell: React.FC = () => {
                     <button
                       onClick={() => dismissNotification(n.id)}
                       aria-label="Dismiss notification"
-                      className="absolute top-2.5 right-2.5 w-4 h-4 hidden group-hover:flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs leading-none transition-colors cursor-pointer"
+                      className="absolute top-2.5 right-2.5 w-4 h-4 hidden group-hover:flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
                     >
-                      ✕
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
                 );

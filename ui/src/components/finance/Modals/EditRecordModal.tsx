@@ -3,6 +3,7 @@ import { useFinance } from '@/context/FinanceContext';
 import { Subscription, Insurance, IncomeSource, BudgetItem, BillingCycle, InsuranceType } from '@/types';
 import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { X } from 'lucide-react';
 
 export type EditableItem =
   | { type: 'subscription'; data: Subscription }
@@ -131,9 +132,9 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({ item, isOpen, 
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
