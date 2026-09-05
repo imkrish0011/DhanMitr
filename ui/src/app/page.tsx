@@ -31,6 +31,9 @@ import { AddFinanceModal } from '@/components/finance/Modals/AddFinanceModal';
 import { VoiceAssistant } from '@/components/ai-companion/VoiceAssistant';
 import { ChatAssistant } from '@/components/ai-companion/ChatAssistant';
 
+// Landing Page Component
+import { LandingPage } from '@/components/landing/LandingPage';
+
 // Native Mobile Hub Component
 import { MobileFinanceHub } from '@/components/mobile/MobileFinanceHub';
 
@@ -44,19 +47,19 @@ import { SettingsView } from '@/components/settings/SettingsView';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, openAuthModal } = useAuth();
-  const [currentTab, setCurrentTab] = useState<NavTab>('ai_companion');
+  const [currentTab, setCurrentTab] = useState<NavTab>('landing');
   const [aiMode, setAiMode] = useState<'voice' | 'chat'>('voice');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addModalType, setAddModalType] = useState<any>('subscription');
 
   const { activeSubTab, setActiveSubTab } = useFinance();
 
-  // If user logs in, automatically show Finance Hub
+  // If user logs in, automatically show Finance Hub; if logged out, show Landing
   useEffect(() => {
     if (isAuthenticated) {
       setCurrentTab('finance_hub');
     } else {
-      setCurrentTab('ai_companion');
+      setCurrentTab('landing');
     }
   }, [isAuthenticated]);
 
@@ -87,23 +90,47 @@ const AppContent: React.FC = () => {
   const isSettingsActive = currentTab === 'settings';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] transition-colors duration-200">
+    <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#070B14] text-slate-900 dark:text-slate-100 transition-colors duration-200 selection:bg-emerald-500/20 selection:text-emerald-500 overflow-x-hidden">
+      {/* Ambient Atmospheric Lighting & Grid Pattern */}
+      <div className="pointer-events-none fixed inset-0 z-0 opacity-40 dark:opacity-60 bg-radial-mesh" />
+      <div className="pointer-events-none fixed inset-0 z-0 opacity-20 dark:opacity-30 bg-grid-subtle" />
+
       {/* ========================================================================= */}
       {/* MOBILE NATIVE VIEW (Visible on mobile screen widths < 768px)               */}
       {/* ========================================================================= */}
-      <div className={`block md:hidden min-h-screen relative ${isAuthenticated ? 'pb-16' : ''}`}>
-        {currentTab === 'ai_companion' && aiMode === 'voice' ? (
+      <div className={`block md:hidden min-h-screen relative z-10 ${isAuthenticated && currentTab !== 'landing' ? 'pb-20' : ''}`}>
+        {currentTab === 'landing' ? (
+          <LandingPage
+            onOpenAi={(mode) => {
+              setCurrentTab('ai_companion');
+              setAiMode(mode);
+            }}
+            onLaunchHub={() => handleNavSelection('finance_hub')}
+          />
+        ) : currentTab === 'ai_companion' && aiMode === 'voice' ? (
           <div>
             <VoiceAssistant
               onSwitchToChat={() => setAiMode('chat')}
-              onNavigateToHub={() => handleNavSelection('finance_hub')}
+              onNavigateToHub={() => {
+                if (isAuthenticated) {
+                  handleNavSelection('finance_hub');
+                } else {
+                  setCurrentTab('landing');
+                }
+              }}
             />
           </div>
         ) : currentTab === 'ai_companion' && aiMode === 'chat' ? (
-          <div className={`${isAuthenticated ? 'h-[calc(100dvh-4.5rem)]' : 'h-[100dvh]'} flex flex-col overflow-hidden`}>
+          <div className={`${isAuthenticated ? 'h-[calc(100dvh-5.5rem)]' : 'h-[100dvh]'} flex flex-col overflow-hidden`}>
             <ChatAssistant
               onSwitchToVoice={() => setAiMode('voice')}
-              onNavigateToHub={() => handleNavSelection('finance_hub')}
+              onNavigateToHub={() => {
+                if (isAuthenticated) {
+                  handleNavSelection('finance_hub');
+                } else {
+                  setCurrentTab('landing');
+                }
+              }}
             />
           </div>
         ) : currentTab === 'transactions' && isAuthenticated ? (
@@ -128,15 +155,18 @@ const AppContent: React.FC = () => {
             onOpenTransactions={() => setCurrentTab('transactions')}
           />
         ) : (
-          <VoiceAssistant
-            onSwitchToChat={() => setAiMode('chat')}
-            onNavigateToHub={() => handleNavSelection('finance_hub')}
+          <LandingPage
+            onOpenAi={(mode) => {
+              setCurrentTab('ai_companion');
+              setAiMode(mode);
+            }}
+            onLaunchHub={() => handleNavSelection('finance_hub')}
           />
         )}
 
-        {/* ONLY SHOW Bottom 5-Tab Navigation Bar on Mobile after Login: Minimal & Clean */}
-        {isAuthenticated && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B101D]/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 px-3 py-2 shadow-lg">
+        {/* Floating 5-Tab Navigation Dock on Mobile after Login */}
+        {isAuthenticated && currentTab !== 'landing' && (
+          <div className="fixed bottom-3 left-3 right-3 z-40 max-w-md mx-auto rounded-2xl bg-white/85 dark:bg-[#0E1526]/85 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 px-3 py-1.5 shadow-xl shadow-slate-900/5 dark:shadow-black/50">
             <div className="grid grid-cols-5 items-center w-full max-w-md mx-auto">
               {/* Home Tab */}
               <button
@@ -260,10 +290,23 @@ const AppContent: React.FC = () => {
       {/* ========================================================================= */}
       {/* DESKTOP VIEW (Visible on screens >= 768px md: breakpoint)                 */}
       {/* ========================================================================= */}
-      <div className="hidden md:flex h-screen overflow-hidden">
-        {/* Desktop Left Sidebar: Only rendered after login */}
-        {isAuthenticated && (
+      <div className={`hidden md:flex ${currentTab === 'landing' ? 'min-h-screen' : 'h-screen overflow-hidden'} relative z-10`}>
+        {/* Desktop Left Sidebar: Only rendered after login and not on landing */}
+        {isAuthenticated && currentTab !== 'landing' && (
           <Sidebar currentTab={currentTab} onSelectTab={handleNavSelection} />
+        )}
+
+        {/* Landing Page Desktop Canvas */}
+        {currentTab === 'landing' && (
+          <main className="flex-1 w-full min-h-screen overflow-y-auto">
+            <LandingPage
+              onOpenAi={(mode) => {
+                setCurrentTab('ai_companion');
+                setAiMode(mode);
+              }}
+              onLaunchHub={() => handleNavSelection('finance_hub')}
+            />
+          </main>
         )}
 
         {/* AI Voice Assistant Desktop Canvas */}
@@ -271,7 +314,13 @@ const AppContent: React.FC = () => {
           <main className="flex-1 h-screen overflow-y-auto">
             <VoiceAssistant
               onSwitchToChat={() => setAiMode('chat')}
-              onNavigateToHub={() => handleNavSelection('finance_hub')}
+              onNavigateToHub={() => {
+                if (isAuthenticated) {
+                  handleNavSelection('finance_hub');
+                } else {
+                  setCurrentTab('landing');
+                }
+              }}
             />
           </main>
         )}
@@ -281,7 +330,13 @@ const AppContent: React.FC = () => {
           <main className="flex-1 h-screen p-4 lg:p-6 overflow-y-auto">
             <ChatAssistant
               onSwitchToVoice={() => setAiMode('voice')}
-              onNavigateToHub={() => handleNavSelection('finance_hub')}
+              onNavigateToHub={() => {
+                if (isAuthenticated) {
+                  handleNavSelection('finance_hub');
+                } else {
+                  setCurrentTab('landing');
+                }
+              }}
             />
           </main>
         )}
@@ -300,10 +355,12 @@ const AppContent: React.FC = () => {
           </main>
         )}
 
-        {/* Finance Hub Dashboard Canvas */}
         {isAuthenticated && currentTab === 'finance_hub' && (
           <main className="flex-1 flex flex-col h-screen overflow-y-auto">
-            <Header onOpenAddModal={handleOpenAddModal} />
+            <Header
+              onOpenAddModal={handleOpenAddModal}
+              onNavigateToTab={handleNavSelection}
+            />
 
             <div className="px-8 sm:px-10 py-8 space-y-8">
               {/* Overview Tab */}

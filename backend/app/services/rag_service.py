@@ -608,11 +608,11 @@ def _build_groq_messages(
     """Builds the Groq messages payload including system prompt, multi-turn history, and the current user prompt."""
     messages = [{"role": "system", "content": system_prompt_text}]
     if history:
-        for turn in history[-6:]:
+        for turn in history[-4:]:
             role = getattr(turn, "role", None) or (turn.get("role") if isinstance(turn, dict) else "user")
             content = getattr(turn, "content", None) or (turn.get("content") or turn.get("text") if isinstance(turn, dict) else "")
             if content and role in ("user", "assistant"):
-                messages.append({"role": role, "content": content})
+                messages.append({"role": role, "content": str(content)[:300]})
     messages.append({"role": "user", "content": user_prompt})
     return messages
 
@@ -832,13 +832,13 @@ async def generate_grounded_answer(
         if vector:
             raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
-                match_count=5,
-               match_threshold=0.50,
+                match_count=3,
+                match_threshold=0.50,
             )
             retrieved_chunks = [
-             c for c in raw_chunks
-             if c.get("similarity", 0.0) >= 0.50
-]
+                c for c in raw_chunks
+                if c.get("similarity", 0.0) >= 0.50
+            ][:3]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             logger.info("RAG search for '%s' retrieved %d relevant chunks in %s ms", q[:40], len(retrieved_chunks), rag_ms)
             for c in retrieved_chunks:
@@ -899,8 +899,8 @@ async def generate_grounded_answer(
         try:
             # Build contexts (without leaking internal chunk IDs or metadata to LLM text output)
             rag_context_text = "\n\n".join(
-                f"Information: {c.get('chunk_text')}"
-                for c in retrieved_chunks
+                f"Information: {str(c.get('chunk_text', ''))[:600]}"
+                for c in retrieved_chunks[:3]
             ) if retrieved_chunks else "No relevant local knowledge-base information was retrieved."
 
             live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
@@ -985,7 +985,7 @@ async def generate_grounded_answer(
                     model=settings.GROQ_MODEL,
                     messages=groq_messages,
                     temperature=0.2,
-                    max_tokens=800,
+                    max_tokens=450,
                     reasoning_effort="low",
                     extra_body={"reasoning_format": "hidden"},
                 )
@@ -1137,13 +1137,13 @@ async def stream_grounded_answer(
         if vector:
             raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
-                match_count=5,
+                match_count=3,
                 match_threshold=0.50,
             ) 
             retrieved_chunks = [
                 c for c in raw_chunks
                 if c.get("similarity", 0.0) >= 0.50
-        ]
+            ][:3]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             for c in retrieved_chunks:
                 sources.append({
@@ -1202,7 +1202,7 @@ async def stream_grounded_answer(
         system_prompt_text = "You are DhanMITR, a helpful and precise Indian financial assistant."
 
     rag_context_text = "\n\n".join(
-        f"Information: {c.get('chunk_text')}" for c in retrieved_chunks
+        f"Information: {str(c.get('chunk_text', ''))[:600]}" for c in retrieved_chunks[:3]
     ) if retrieved_chunks else "No relevant local knowledge-base information was retrieved."
 
     live_context_text = _format_live_data_text(live_data) if live_data else "No live-data matched."
@@ -1288,7 +1288,7 @@ async def stream_grounded_answer(
                 model=settings.GROQ_MODEL,
                 messages=groq_messages,
                 temperature=0.2,
-                max_tokens=800,
+                max_tokens=450,
                 stream=True,
                 reasoning_effort="low",
                 extra_body={"reasoning_format": "hidden"},

@@ -205,9 +205,135 @@ class FasterWhisperSTT(BaseSTT):
         )
 
 
+class GroqWhisperSTT(BaseSTT):
+    """Groq Whisper Cloud API — ultra-fast (<150ms) transcription for English and Indic languages."""
+
+    name = "groq_whisper"
+
+    def __init__(self) -> None:
+        self._client = None
+        self._loaded = False
+
+    def load(self) -> None:
+        if self._client is not None:
+            return
+
+        api_key = config.GROQ_API_KEY
+        if not api_key:
+            import os
+            api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "GROQ_API_KEY is not configured in .env. "
+                "Add GROQ_API_KEY to enable Groq Whisper STT."
+            )
+
+        try:
+            from groq import Groq
+            self._client = Groq(api_key=api_key)
+            self._loaded = True
+        except ImportError as exc:
+            raise RuntimeError(
+                "groq is not installed. Run: pip install groq"
+            ) from exc
+
+    def warmup(self) -> None:
+        """Initializes Groq client and verifies connection."""
+        self.load()
+        silence = None
+        try:
+            silence = audio_utils.make_silence_wav(1.0)
+            self.transcribe(silence)
+        except Exception:
+            # Silence transcriptions can return empty/hallucinated text; client is verified
+            pass
+        finally:
+            audio_utils.cleanup(silence)
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._client is not None
+
+    def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
+        self.load()
+        started = time.perf_counter()
+
+        with open(wav_path, "rb") as f:
+            audio_bytes = f.read()
+
+        params: Dict[str, Any] = {
+            "file": (wav_path.name, audio_bytes),
+            "model": config.GROQ_WHISPER_MODEL,
+            "response_format": "verbose_json",
+        }
+        if language and language.strip().lower() not in ("auto", "none"):
+            params["language"] = language.strip().lower()
+
+        try:
+            transcription = self._client.audio.transcriptions.create(**params)
+        except Exception as exc:
+            raise RuntimeError(f"Groq Whisper transcription failed: {exc}") from exc
+
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        raw_text = getattr(transcription, "text", "") or ""
+        detected_lang = getattr(transcription, "language", None) or language
+        duration = getattr(transcription, "duration", None) or audio_utils.wav_duration_seconds(wav_path)
+
+        # Filter hallucinated silence phrases that Whisper sometimes produces for near-silent audio
+        text = raw_text.strip()
+        lower_text = text.lower().strip(" .!?,;")
+        if lower_text in ("thank you", "thanks for watching", "subtitles by", "bye", "you"):
+            audio_dur = audio_utils.wav_duration_seconds(wav_path) or 0.0
+            if audio_dur < 1.2:
+                text = ""
+
+        return STTResult(
+            text=text,
+            language=detected_lang,
+            provider=self.name,
+            latency_ms=round(elapsed_ms, 1),
+            audio_seconds=duration,
+            meta={
+                "model": config.GROQ_WHISPER_MODEL,
+            },
+        )
+
+
+class MockSTT(BaseSTT):
+    """Mock STT for testing and offline UI development."""
+
+    name = "mock"
+
+    def __init__(self) -> None:
+        self._loaded = True
+
+    def load(self) -> None:
+        self._loaded = True
+
+    def warmup(self) -> None:
+        return
+
+    @property
+    def is_loaded(self) -> bool:
+        return True
+
+    def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
+        return STTResult(
+            text="नमस्ते, DhanMITR में आपका स्वागत है।",
+            language=language or "hi",
+            provider=self.name,
+            latency_ms=1.0,
+            audio_seconds=audio_utils.wav_duration_seconds(wav_path) or 1.0,
+            meta={"note": "mock provider — no speech was transcribed"},
+        )
+
+
 _PROVIDERS = {
+    "groq_whisper": GroqWhisperSTT,
+    "groq": GroqWhisperSTT,
     "sravaani": SraVaaniSTT,
     "faster_whisper": FasterWhisperSTT,
+    "mock": MockSTT,
 }
 
 _cache: Dict[str, BaseSTT] = {}

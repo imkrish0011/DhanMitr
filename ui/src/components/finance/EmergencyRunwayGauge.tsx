@@ -53,75 +53,84 @@ export const EmergencyRunwayGauge: React.FC = () => {
   const status = getStatus(emergencyRunwayMonths);
 
   return (
-    <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4">
+    <div className="fintech-card fintech-card-hover rounded-2xl sm:rounded-3xl p-5 sm:p-7 space-y-5 relative overflow-hidden group">
+      {/* Top Ambient Subtle Accent Beam */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-90" />
+
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 dark:border-emerald-500/30 flex items-center justify-center shrink-0 shadow-xs shadow-emerald-950/20">
             {status.icon}
           </div>
           <div>
-            <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
+            <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
               Emergency Fund Runway
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
               Survival months if all active income stops today
             </p>
           </div>
         </div>
 
-        <span className={`px-3 py-1 rounded-full text-xs font-extrabold border flex items-center gap-1.5 ${status.badgeBg}`}>
-          <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+        <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-2 shadow-2xs backdrop-blur-md ${status.badgeBg}`}>
+          <span className="w-2 h-2 rounded-full bg-current animate-ping" />
           {status.label}
         </span>
       </div>
 
       {/* Runway Score & Progress Gauge */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center pt-1">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center pt-1">
         {/* Large Meter Number */}
-        <div className="md:col-span-4 p-4 rounded-2xl neumorph-inset-deep text-center space-y-0.5">
-          <span className="text-[10px] uppercase font-bold text-slate-400">Survival Duration</span>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-baseline justify-center gap-1">
+        <div className="md:col-span-4 p-5 rounded-2xl bg-slate-500/[0.04] dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] text-center space-y-1 shadow-inner relative overflow-hidden">
+          <div className="absolute inset-0 bg-radial from-emerald-500/5 to-transparent pointer-events-none" />
+          <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-500 dark:text-slate-400 block">
+            Survival Duration
+          </span>
+          <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white flex items-baseline justify-center gap-1.5 font-mono tabular-nums">
             <span className={status.color}>{emergencyRunwayMonths}</span>
-            <span className="text-xs text-slate-400 font-semibold">Months</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-sans font-bold uppercase tracking-wider">
+              Months
+            </span>
           </div>
-          <p className="text-[10px] text-slate-400 font-medium truncate">
-            Based on ₹{totalOutflow.toLocaleString('en-IN')}/mo burn rate
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate font-mono">
+            ₹{totalOutflow.toLocaleString('en-IN')}/mo burn rate
           </p>
         </div>
 
         {/* Visual Progress Bar & Milestones */}
-        <div className="md:col-span-8 space-y-2.5">
+        <div className="md:col-span-8 space-y-3">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600 dark:text-slate-300">
-              Cushion: <strong className="text-slate-900 dark:text-white">₹{liquidEmergencyFund.toLocaleString('en-IN')}</strong>
+            <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1">
+              Cushion: <strong className="text-slate-900 dark:text-white font-mono tabular-nums">₹{liquidEmergencyFund.toLocaleString('en-IN')}</strong>
             </span>
-            <span className="text-slate-400">
-              Target (6 Mo): <strong className="text-slate-700 dark:text-slate-200">₹{target6MonthFund.toLocaleString('en-IN')}</strong>
+            <span className="text-slate-400 flex items-center gap-1">
+              Target (6 Mo): <strong className="text-slate-700 dark:text-slate-200 font-mono tabular-nums">₹{target6MonthFund.toLocaleString('en-IN')}</strong>
             </span>
           </div>
 
           {/* Progress track */}
-          <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 relative">
+          <div className="w-full h-3.5 bg-slate-200/60 dark:bg-slate-800/80 rounded-full overflow-hidden p-0.5 relative shadow-inner">
             <div
-              className={`h-full rounded-full transition-all duration-500 shadow-xs ${status.progressBg}`}
+              className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.4)]"
               style={{ width: `${Math.max(8, progressPercent)}%` }}
             />
           </div>
 
           {/* Milestones Labels */}
-          <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 px-0.5">
+          <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 dark:text-slate-500 px-0.5">
             <span>0 Mo</span>
-            <span className="text-blue-500">3 Mo (Essential: ₹{target3MonthFund.toLocaleString('en-IN')})</span>
-            <span className="text-emerald-500">6 Mo (Target)</span>
+            <span className="text-blue-500 dark:text-blue-400">3 Mo (Essential: ₹{target3MonthFund.toLocaleString('en-IN')})</span>
+            <span className="text-emerald-500 dark:text-emerald-400">6 Mo (Optimal Target)</span>
           </div>
         </div>
       </div>
 
       {/* Insight Note */}
-      <div className="p-3 bg-slate-50 dark:bg-[#0B101D] border border-slate-200/60 dark:border-slate-800/60 rounded-xl text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-2">
+      <div className="p-3.5 bg-slate-500/[0.04] dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/[0.06] rounded-2xl text-xs text-slate-600 dark:text-slate-300 flex items-start gap-3">
         <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-        <span>{status.description}</span>
+        <span className="leading-relaxed font-medium">{status.description}</span>
       </div>
     </div>
   );

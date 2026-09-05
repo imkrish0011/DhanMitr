@@ -2,9 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { ChatMessage, VoiceState } from '@/types';
+import { initialChatMessages } from '@/data/mockData';
 import { useFinance } from './FinanceContext';
 import { useAuth } from './AuthContext';
-import { sendVoiceChat, streamRagChat, streamVoiceAudio } from '@/lib/voiceApi';
+import { sendVoiceChat, streamRagChat } from '@/lib/voiceApi';
 
 export type SupportedLanguage = 'auto' | 'en' | 'hi' | 'hinglish';
 
@@ -59,7 +60,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('auto');
   const [activeTranscript, setActiveTranscript] = useState('');
   const [assistantVoiceReply, setAssistantVoiceReply] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [audioFrequencyData, setAudioFrequencyData] = useState<number[]>(new Array(24).fill(10));
 
@@ -277,94 +278,27 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Real-time streaming voice synthesis and playback via Web Audio API
+  // Voice synthesis and playback for reading messages aloud
   const speakText = async (text: string, lang: SupportedLanguage = 'en') => {
     if (!text.trim()) return;
     try {
       stopAudioPlayback();
       setVoiceState('processing');
 
-      const AudioCtxClass =
-        typeof window !== 'undefined'
-          ? window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-          : null;
+      const response = await sendVoiceChat({
+        text,
+        language: lang === 'auto' ? undefined : lang,
+        user_id: profile?.user_id,
+        financial_context: buildFinancialContext(),
+      });
 
-      if (!AudioCtxClass) {
-        const response = await sendVoiceChat({
-          text,
-          language: lang === 'auto' ? undefined : lang,
-          user_id: profile?.user_id,
-          financial_context: buildFinancialContext(),
-        });
-
-        if (response.audio_base64) {
-          playSynthesizedAudio(response.audio_base64, response.audio_format || 'audio/wav');
-        } else {
-          setVoiceState('idle');
-        }
-        return;
-      }
-
-      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
-        audioContextRef.current = new AudioCtxClass();
-      }
-      const audioCtx = audioContextRef.current;
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
-
-      nextPlayTimeRef.current = audioCtx.currentTime;
-      let hasStartedSpeaking = false;
-      let chunkCount = 0;
-
-      await streamVoiceAudio(
-        {
-          text,
-          language: lang === 'auto' ? undefined : lang,
-          user_id: profile?.user_id,
-          financial_context: buildFinancialContext(),
-        },
-        async (chunk) => {
-          try {
-            chunkCount++;
-            const arrayBuffer = chunk.buffer.slice(
-              chunk.byteOffset,
-              chunk.byteOffset + chunk.byteLength
-            ) as ArrayBuffer;
-            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
-            if (!hasStartedSpeaking) {
-              hasStartedSpeaking = true;
-              setVoiceState('speaking');
-            }
-
-            const source = audioCtx.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(audioCtx.destination);
-
-            const startTime = Math.max(audioCtx.currentTime, nextPlayTimeRef.current);
-            source.start(startTime);
-            nextPlayTimeRef.current = startTime + audioBuffer.duration;
-
-            activeSourceNodesRef.current.push(source);
-
-            source.onended = () => {
-              activeSourceNodesRef.current = activeSourceNodesRef.current.filter((n) => n !== source);
-              if (activeSourceNodesRef.current.length === 0 && audioCtx.currentTime >= nextPlayTimeRef.current - 0.1) {
-                setVoiceState('idle');
-              }
-            };
-          } catch (decodeErr) {
-            console.debug('Streaming audio chunk decode failed (ignoring corrupt chunk):', decodeErr);
-          }
-        }
-      );
-
-      if (chunkCount === 0) {
+      if (response.audio_base64) {
+        playSynthesizedAudio(response.audio_base64, response.audio_format || 'audio/wav');
+      } else {
         setVoiceState('idle');
       }
     } catch (err) {
-      console.warn('Streaming voice playback encountered an issue:', err);
+      console.warn('Voice speech synthesis encountered an issue:', err);
       setVoiceState('idle');
     }
   };
@@ -695,7 +629,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         mediaRecorderRef.current.stop();
       } catch {}
     }
-    setMessages([]);
+    setMessages(initialChatMessages);
     setActiveTranscript('');
     setAssistantVoiceReply('');
     setVoiceState('idle');

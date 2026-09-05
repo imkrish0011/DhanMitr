@@ -29,7 +29,7 @@ export const CashFlowTrendChart: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-2xs hover:shadow-sm hover:border-emerald-500/20 transition-all duration-300 flex flex-col justify-between">
+    <div className="fintech-card fintech-card-hover rounded-2xl p-6 shadow-sm overflow-hidden flex flex-col justify-between">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-bold text-slate-900 dark:text-white">

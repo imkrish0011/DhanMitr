@@ -415,6 +415,7 @@ class EdgeTTS(BaseTTS):
             return
 
         import asyncio
+        import concurrent.futures
         import edge_tts
 
         lang_key = (language or "en").lower().split("-")[0]
@@ -429,7 +430,17 @@ class EdgeTTS(BaseTTS):
             return chunks
 
         try:
-            chunks = asyncio.run(_stream_audio())
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    chunks = pool.submit(asyncio.run, _stream_audio()).result()
+            else:
+                chunks = asyncio.run(_stream_audio())
+
             for c in chunks:
                 yield c
         except Exception:

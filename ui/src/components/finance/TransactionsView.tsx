@@ -172,38 +172,41 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         )}
 
         {/* Quick Metric Cards */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-          <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-            <span className="text-[10px] sm:text-xs font-semibold text-slate-400">Total Inflow</span>
-            <p className="text-xs sm:text-lg font-black text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="fintech-card fintech-card-hover p-4 sm:p-5 rounded-2xl sm:rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Total Inflow</span>
+            <p className="text-sm sm:text-xl font-black font-mono tabular-nums text-emerald-600 dark:text-emerald-400 mt-1 truncate">
               +₹{totalIncome.toLocaleString('en-IN')}
             </p>
           </div>
 
-          <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-            <span className="text-[10px] sm:text-xs font-semibold text-slate-400">Total Outflow</span>
-            <p className="text-xs sm:text-lg font-black text-rose-600 dark:text-rose-400 mt-0.5 truncate">
+          <div className="fintech-card fintech-card-hover p-4 sm:p-5 rounded-2xl sm:rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Total Outflow</span>
+            <p className="text-sm sm:text-xl font-black font-mono tabular-nums text-rose-600 dark:text-rose-400 mt-1 truncate">
               -₹{totalOutflow.toLocaleString('en-IN')}
             </p>
           </div>
 
-          <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-            <span className="text-[10px] sm:text-xs font-semibold text-slate-400">Net Balance</span>
-            <p className={`text-xs sm:text-lg font-black mt-0.5 truncate ${netSurplus >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
+          <div className="fintech-card fintech-card-hover p-4 sm:p-5 rounded-2xl sm:rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Net Surplus</span>
+            <p className={`text-sm sm:text-xl font-black font-mono tabular-nums mt-1 truncate ${netSurplus >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
               ₹{netSurplus.toLocaleString('en-IN')}
             </p>
           </div>
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-500/[0.05] dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 rounded-2xl">
             <button
               onClick={() => setFilterType('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterType === 'all'
-                  ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white shadow-xs'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -211,9 +214,9 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             </button>
             <button
               onClick={() => setFilterType('expense')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterType === 'expense'
-                  ? 'bg-white dark:bg-[#0F172A] text-rose-600 dark:text-rose-400 shadow-xs'
+                  ? 'bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -221,9 +224,9 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             </button>
             <button
               onClick={() => setFilterType('income')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterType === 'income'
-                  ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 shadow-xs'
+                  ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -238,9 +241,9 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               placeholder="Search by title, category, account..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-3.5 py-2 text-xs bg-white dark:bg-[#0B101D] border border-slate-200/80 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 shadow-2xs"
             />
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -248,7 +251,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         </div>
 
         {/* Transactions List Container */}
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-2xs">
+        <div className="fintech-card rounded-2xl sm:rounded-3xl overflow-hidden">
           {filteredTransactions.length === 0 ? (
             <div className="p-8 sm:p-12 text-center space-y-4">
               <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center mx-auto text-2xl font-black shadow-lg shadow-emerald-900/30">
@@ -302,58 +305,58 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               )}
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+            <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
               {filteredTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="p-3.5 sm:p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
+                  className="p-3.5 sm:p-4.5 flex items-center justify-between hover:bg-slate-500/[0.04] dark:hover:bg-white/[0.02] transition-colors group"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-base font-bold shrink-0 ${
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-base font-bold shrink-0 shadow-xs ${
                       tx.type === 'income'
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60'
-                        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60'
+                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/25'
+                        : 'bg-slate-500/[0.08] dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10'
                     }`}>
                       {getCategoryIcon(tx.category, tx.type)}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">
+                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white leading-tight truncate">
                         {tx.title}
                       </h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
-                        <span>{tx.date}</span>
+                      <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-2 truncate">
+                        <span className="font-mono">{tx.date}</span>
                         <span>•</span>
-                        <span className="px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 rounded font-medium text-slate-600 dark:text-slate-300 truncate">
+                        <span className="px-2 py-0.5 bg-slate-500/[0.06] dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 rounded-md font-mono font-medium text-slate-600 dark:text-slate-300 truncate">
                           {tx.account_name || 'UPI / Cash'}
                         </span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-3.5 shrink-0">
                     <div className="text-right">
-                      <span className={`text-xs sm:text-sm font-extrabold ${
+                      <span className={`text-xs sm:text-base font-black font-mono tabular-nums ${
                         tx.type === 'income'
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : 'text-slate-900 dark:text-white'
                       }`}>
                         {tx.type === 'income' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
                       </span>
-                      <p className="text-[9px] text-slate-400 capitalize">{tx.category || tx.type}</p>
+                      <p className="text-[9px] font-mono uppercase tracking-wider text-slate-400 mt-0.5">{tx.category || tx.type}</p>
                     </div>
 
                     {/* Row Action Buttons: Edit & Delete */}
-                    <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity pl-2 border-l border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity pl-2 border-l border-slate-100 dark:border-white/[0.06]">
                       <button
                         onClick={() => handleOpenEdit(tx)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-500 transition-colors cursor-pointer"
                         title="Edit Transaction"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => deleteTransaction(tx.id)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                         title="Delete Transaction"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

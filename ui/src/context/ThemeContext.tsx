@@ -13,27 +13,46 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
+
+  const applyTheme = (targetTheme: Theme) => {
+    if (targetTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      document.documentElement.style.colorScheme = 'dark';
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      document.documentElement.style.colorScheme = 'light';
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('dhanmitr_theme') as Theme | null;
-    if (savedTheme) {
-      setThemeState(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-    } else {
-      // Default to light as per mockups
-      document.documentElement.classList.remove('dark');
+    try {
+      const savedTheme = localStorage.getItem('dhanmitr_theme') as Theme | null;
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        setThemeState(savedTheme);
+        applyTheme(savedTheme);
+      } else {
+        const hasDark = document.documentElement.classList.contains('dark');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initial = hasDark || prefersDark ? 'dark' : 'light';
+        setThemeState(initial);
+        applyTheme(initial);
+      }
+    } catch (e) {
+      applyTheme('dark');
     }
   }, []);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('dhanmitr_theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    try {
+      localStorage.setItem('dhanmitr_theme', newTheme);
+    } catch (e) {}
+    applyTheme(newTheme);
   };
 
   const toggleTheme = () => {

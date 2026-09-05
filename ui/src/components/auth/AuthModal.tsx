@@ -99,9 +99,9 @@ export const AuthModal: React.FC = () => {
         {/* Header */}
         <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <DhanMitrLogo className="w-7 h-7" />
+            <DhanMitrLogo className="w-8 h-6 shrink-0" />
             <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-              Dhan<span className="text-emerald-500 font-extrabold">MITR</span>
+              Dhan<span className="text-emerald-500 font-extrabold">Mitr</span>
             </span>
           </div>
           <button

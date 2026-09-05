@@ -23,8 +23,14 @@ except ImportError:  # python-dotenv is optional; shell env still works
 # Environment & Provider selection
 # -----------------------------------------------------------------------------
 VOICE_ENV = os.getenv("VOICE_ENV", "production").strip().lower()  # production | development | test
-STT_PROVIDER = os.getenv("STT_PROVIDER", "sravaani").strip().lower()  # sravaani | faster_whisper | mock
-TTS_PROVIDER = os.getenv("TTS_PROVIDER", "kokoro").strip().lower()    # kokoro | piper | mock
+STT_PROVIDER = os.getenv("STT_PROVIDER", "groq_whisper").strip().lower()  # groq_whisper | sravaani | faster_whisper | mock
+TTS_PROVIDER = os.getenv("TTS_PROVIDER", "edge").strip().lower()       # edge | kokoro | piper | mock
+
+# -----------------------------------------------------------------------------
+# STT — Groq Whisper (ultra-fast cloud ASR, <150ms transcription)
+# -----------------------------------------------------------------------------
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_WHISPER_MODEL = os.getenv("GROQ_WHISPER_MODEL", "whisper-large-v3-turbo")
 
 # -----------------------------------------------------------------------------
 # STT — SraVaani-1.0 (gated; authenticate with `hf auth login` or HF_TOKEN)

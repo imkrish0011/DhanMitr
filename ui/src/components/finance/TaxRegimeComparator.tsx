@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import {
   Scale,
@@ -21,6 +21,13 @@ export const TaxRegimeComparator: React.FC = () => {
     ? totalIncome * 12
     : (profile.monthly_income > 0 ? profile.monthly_income * 12 : 0);
   const [grossIncome, setGrossIncome] = useState<number>(defaultAnnual);
+
+  // Automatically sync gross income when user salary records load from Supabase
+  useEffect(() => {
+    if (defaultAnnual > 0 && grossIncome === 0) {
+      setGrossIncome(defaultAnnual);
+    }
+  }, [defaultAnnual, grossIncome]);
 
   // Deductions for Old Regime (Starts clean at 0)
   const [sec80C, setSec80C] = useState<number>(0);
@@ -121,45 +128,49 @@ export const TaxRegimeComparator: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header Card */}
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xs space-y-2">
+      <div className="fintech-card fintech-card-hover rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-2 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
               <Scale className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 Old vs. New Tax Regime Comparator
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                FY 2024-25 / FY 2025-26 Indian Income Tax Simulator & Recommendation
+                FY 2024-25 / FY 2025-26 Indian Income Tax Simulator & Recommendation Engine
               </p>
             </div>
           </div>
 
-          <span className="px-3 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded-full text-xs font-bold border border-emerald-500/20">
-            FY 2025-26 Updated
+          <span className="px-3.5 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 rounded-full text-xs font-mono font-bold tracking-wide">
+            FY 2025-26 UPDATED
           </span>
         </div>
       </div>
 
       {/* Recommendation Banner */}
       <div
-        className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border flex items-center justify-between flex-wrap gap-3 ${
+        className={`p-5 rounded-2xl sm:rounded-3xl border flex items-center justify-between flex-wrap gap-4 relative overflow-hidden backdrop-blur-xl ${
           isNewBetter
-            ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100'
-            : 'bg-blue-50 dark:bg-blue-950/50 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-100'
+            ? 'bg-emerald-500/[0.08] dark:bg-emerald-950/40 border-emerald-500/40 text-slate-900 dark:text-emerald-100 shadow-[0_0_25px_rgba(16,185,129,0.12)]'
+            : 'bg-blue-500/[0.08] dark:bg-blue-950/40 border-blue-500/40 text-slate-900 dark:text-blue-100 shadow-[0_0_25px_rgba(59,130,246,0.12)]'
         }`}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-900 shadow-xs flex items-center justify-center shrink-0">
-            <CheckCircle2 className={`w-5 h-5 ${isNewBetter ? 'text-emerald-500' : 'text-blue-500'}`} />
+        <div className="flex items-center gap-3.5">
+          <div className={`w-11 h-11 rounded-2xl shadow-xs flex items-center justify-center shrink-0 ${
+            isNewBetter ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'
+          }`}>
+            <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold">
-              {isNewBetter ? '🎉 New Tax Regime is more beneficial!' : '🎉 Old Tax Regime is more beneficial!'}
+            <h3 className="text-sm sm:text-base font-extrabold">
+              {isNewBetter ? 'New Tax Regime is more beneficial' : 'Old Tax Regime is more beneficial'}
             </h3>
-            <p className="text-xs opacity-80 mt-0.5">
+            <p className="text-xs opacity-80 mt-0.5 max-w-xl font-medium">
               {isNewBetter
                 ? `You save ₹${savings.toLocaleString('en-IN')} in tax with the simplified New Tax Regime.`
                 : `Your high deductions (80C/80D/HRA) save you ₹${savings.toLocaleString('en-IN')} in the Old Regime.`}
@@ -167,9 +178,11 @@ export const TaxRegimeComparator: React.FC = () => {
           </div>
         </div>
 
-        <div className="text-right">
-          <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Annual Tax Savings</span>
-          <p className="text-lg font-black leading-none mt-0.5">
+        <div className="text-right pl-4">
+          <span className="text-[10px] uppercase font-mono font-bold tracking-wider opacity-70 block">
+            Annual Tax Savings
+          </span>
+          <p className="text-2xl font-black font-mono tabular-nums leading-none mt-1">
             ₹{savings.toLocaleString('en-IN')}
           </p>
         </div>
@@ -177,7 +190,7 @@ export const TaxRegimeComparator: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Inputs Column */}
-        <div className="lg:col-span-5 bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4 text-xs">
+        <div className="lg:col-span-5 fintech-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-4 text-xs">
           <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
             <FileText className="w-4 h-4 text-emerald-500" />
             Your Income & Deductions
@@ -266,19 +279,22 @@ export const TaxRegimeComparator: React.FC = () => {
         <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* New Regime Card */}
           <div
-            className={`p-5 rounded-2xl sm:rounded-3xl border flex flex-col justify-between space-y-4 shadow-2xs ${
+            className={`fintech-card fintech-card-hover rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col justify-between space-y-4 relative overflow-hidden ${
               isNewBetter
-                ? 'bg-white dark:bg-[#0F172A] border-emerald-500 ring-2 ring-emerald-500/20'
-                : 'bg-slate-50 dark:bg-[#0B101D] border-slate-200 dark:border-slate-800'
+                ? 'border-emerald-500/60 ring-2 ring-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+                : 'opacity-85'
             }`}
           >
+            {isNewBetter && (
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
+            )}
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/[0.06]">
                 <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
                   New Tax Regime
                 </h4>
                 {isNewBetter && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                     Recommended ⭐
                   </span>
                 )}
@@ -287,30 +303,30 @@ export const TaxRegimeComparator: React.FC = () => {
               <div className="space-y-2.5 pt-3 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Gross Income:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">₹{grossIncome.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-slate-900 dark:text-white">₹{grossIncome.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Standard Deduction:</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">-₹{newRegimeCalc.stdDeduction.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">-₹{newRegimeCalc.stdDeduction.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-white/[0.06]">
                   <span className="text-slate-700 dark:text-slate-300 font-bold">Taxable Income:</span>
-                  <span className="font-extrabold text-slate-900 dark:text-white">₹{newRegimeCalc.taxableIncome.toLocaleString('en-IN')}</span>
+                  <span className="font-extrabold font-mono text-slate-900 dark:text-white">₹{newRegimeCalc.taxableIncome.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Income Tax:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">₹{newRegimeCalc.baseTax.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-slate-900 dark:text-white">₹{newRegimeCalc.baseTax.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Cess (4%):</span>
-                  <span className="font-bold text-slate-900 dark:text-white">₹{newRegimeCalc.cess.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-slate-900 dark:text-white">₹{newRegimeCalc.cess.toLocaleString('en-IN')}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl neumorph-inset-deep text-center">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Total Tax Payable</span>
-              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+            <div className="p-4 rounded-2xl bg-slate-500/[0.04] dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] text-center">
+              <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400">Total Tax Payable</span>
+              <p className="text-2xl font-black font-mono tabular-nums text-emerald-600 dark:text-emerald-400 mt-1">
                 ₹{newRegimeCalc.totalTax.toLocaleString('en-IN')}
               </p>
             </div>
@@ -318,19 +334,22 @@ export const TaxRegimeComparator: React.FC = () => {
 
           {/* Old Regime Card */}
           <div
-            className={`p-5 rounded-2xl sm:rounded-3xl border flex flex-col justify-between space-y-4 shadow-2xs ${
+            className={`fintech-card fintech-card-hover rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col justify-between space-y-4 relative overflow-hidden ${
               !isNewBetter
-                ? 'bg-white dark:bg-[#0F172A] border-blue-500 ring-2 ring-blue-500/20'
-                : 'bg-slate-50 dark:bg-[#0B101D] border-slate-200 dark:border-slate-800'
+                ? 'border-blue-500/60 ring-2 ring-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+                : 'opacity-85'
             }`}
           >
+            {!isNewBetter && (
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
+            )}
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/[0.06]">
                 <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
                   Old Tax Regime
                 </h4>
                 {!isNewBetter && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
                     Recommended ⭐
                   </span>
                 )}
@@ -339,30 +358,30 @@ export const TaxRegimeComparator: React.FC = () => {
               <div className="space-y-2.5 pt-3 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Gross Income:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">₹{grossIncome.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-slate-900 dark:text-white">₹{grossIncome.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Total Deductions:</span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400">-₹{oldRegimeCalc.totalDeductions.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-blue-600 dark:text-blue-400">-₹{oldRegimeCalc.totalDeductions.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-white/[0.06]">
                   <span className="text-slate-700 dark:text-slate-300 font-bold">Taxable Income:</span>
-                  <span className="font-extrabold text-slate-900 dark:text-white">₹{oldRegimeCalc.taxableIncome.toLocaleString('en-IN')}</span>
+                  <span className="font-extrabold font-mono text-slate-900 dark:text-white">₹{oldRegimeCalc.taxableIncome.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Income Tax:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">₹{oldRegimeCalc.baseTax.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-slate-900 dark:text-white">₹{oldRegimeCalc.baseTax.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Cess (4%):</span>
-                  <span className="font-bold text-slate-900 dark:text-white">₹{oldRegimeCalc.cess.toLocaleString('en-IN')}</span>
+                  <span className="font-bold font-mono text-slate-900 dark:text-white">₹{oldRegimeCalc.cess.toLocaleString('en-IN')}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl neumorph-inset-deep text-center">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Total Tax Payable</span>
-              <p className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
+            <div className="p-4 rounded-2xl bg-slate-500/[0.04] dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] text-center">
+              <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400">Total Tax Payable</span>
+              <p className="text-2xl font-black font-mono tabular-nums text-blue-600 dark:text-blue-400 mt-1">
                 ₹{oldRegimeCalc.totalTax.toLocaleString('en-IN')}
               </p>
             </div>

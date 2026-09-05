@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { EditProfileModal } from '@/components/settings/EditProfileModal';
 import { EditRiskToleranceModal } from '@/components/settings/EditRiskToleranceModal';
+import { useTheme } from '@/context/ThemeContext';
 import {
   User,
   Mail,
@@ -29,6 +30,8 @@ import {
   GraduationCap,
   Palmtree,
   Settings,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -50,6 +53,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
   } = useFinance();
 
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'sync' | 'preferences'>('profile');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -449,6 +453,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
                 <Sliders className="w-4 h-4 text-emerald-500" />
                 Application Preferences
               </h3>
+
+              {/* Theme & Mode */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Theme Appearance
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setTheme('light')}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      theme === 'light'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-700 dark:text-emerald-400 ring-2 ring-emerald-500/20'
+                        : 'bg-slate-50 dark:bg-[#0B101D] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
+                  >
+                    <Sun className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>Light Mode</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('dark')}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      theme === 'dark'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-700 dark:text-emerald-400 ring-2 ring-emerald-500/20'
+                        : 'bg-slate-50 dark:bg-[#0B101D] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
+                  >
+                    <Moon className="w-4 h-4 text-blue-400 shrink-0" />
+                    <span>Dark Mode</span>
+                  </button>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
                 <div>

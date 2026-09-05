@@ -266,6 +266,7 @@ def _process_voice_sync(
     language_hint: Optional[str] = None,
     voice_id: Optional[str] = None,
     financial_context: Optional[FinancialContext] = None,
+    history: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Synchronous pipeline executed in thread pool."""
     pipeline_start = time.perf_counter()
@@ -325,6 +326,7 @@ def _process_voice_sync(
                         question=transcript,
                         financial_context=financial_context,
                         language=stt_result.language or language_hint or "en",
+                        history=history,
                     )
                 )
                 loop.close()
@@ -455,6 +457,7 @@ async def process_voice_chat(request: VoiceRequest) -> VoiceResponse:
             request.language,
             request.voice_id,
             parsed_context,
+            request.history,
         )
         return VoiceResponse(
             transcript=data["transcript"],

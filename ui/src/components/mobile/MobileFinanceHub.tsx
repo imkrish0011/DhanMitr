@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { useFinance } from '@/context/FinanceContext';
+import { useTheme } from '@/context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 import {
   DhanMitrLogo,
   BellIcon,
@@ -35,6 +37,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
   onOpenAddModal,
   onOpenTransactions,
 }) => {
+  const { theme, toggleTheme } = useTheme();
   const {
     activeSubTab,
     setActiveSubTab,
@@ -73,29 +76,42 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
 
   const tabs = [
     { id: 'overview' as const, label: 'Overview', shortLabel: 'Overview' },
-    { id: 'goals' as const, label: `Goals (${activeGoalsCount})`, shortLabel: 'Goals' },
-    { id: 'tax_calculator' as const, label: 'Tax', shortLabel: 'Tax' },
-    { id: 'subscriptions' as const, label: `Subs (${activeSubscriptionsCount})`, shortLabel: 'Subs' },
-    { id: 'insurances' as const, label: `Ins (${activeInsurancesCount})`, shortLabel: 'Ins' },
-    { id: 'budget' as const, label: 'Budget', shortLabel: 'Budget' },
+    { id: 'goals' as const, label: `Goals (${activeGoalsCount})`, shortLabel: `Goals (${activeGoalsCount})` },
+    { id: 'tax_calculator' as const, label: 'Tax', shortLabel: 'Tax Optimizer' },
+    { id: 'subscriptions' as const, label: `Subs (${activeSubscriptionsCount})`, shortLabel: `Subs (${activeSubscriptionsCount})` },
+    { id: 'insurances' as const, label: `Ins (${activeInsurancesCount})`, shortLabel: `Ins (${activeInsurancesCount})` },
+    { id: 'budget' as const, label: 'Budget', shortLabel: 'Budget & Income' },
   ];
 
-
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] pb-16 text-slate-900 dark:text-white transition-colors duration-200">
+    <div className="w-full min-h-screen bg-transparent pb-24 text-slate-900 dark:text-white transition-colors duration-200">
       {/* Top Mobile App Bar */}
-      <div className="sticky top-0 z-30 px-4 py-3 bg-white/95 dark:bg-[#0B101B]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shadow-2xs">
+      <div className="sticky top-0 z-30 px-4 py-3 bg-white/80 dark:bg-[#070B14]/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2">
-          <DhanMitrLogo className="w-6 h-6" />
-          <span className="font-extrabold tracking-tight text-base">
-            Dhan<span className="text-emerald-500">MITR</span>
+          <DhanMitrLogo className="w-8 h-6 shrink-0" />
+          <span className="font-display font-extrabold tracking-tight text-base text-slate-900 dark:text-white">
+            Dhan<span className="text-emerald-500 font-bold">Mitr</span>
           </span>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Mobile Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 cursor-pointer shadow-2xs"
+            title="Toggle theme"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? (
+              <Moon className="w-4 h-4 text-slate-600" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-400" />
+            )}
+          </button>
+
           <button
             onClick={onOpenAddModal}
-            className="p-1.5 bg-emerald-600 active:scale-95 text-white rounded-lg shadow-xs cursor-pointer"
+            className="p-2 bg-emerald-600 active:scale-95 text-white rounded-xl shadow-xs cursor-pointer"
             title="Add Record"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
@@ -106,11 +122,11 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-1.5 text-slate-600 dark:text-slate-300 cursor-pointer"
+              className="relative p-2 text-slate-600 dark:text-slate-300 cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 shadow-2xs"
             >
-              <BellIcon className="w-5 h-5" />
+              <BellIcon className="w-4 h-4" />
               {activeAlerts.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0B101B]" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0B101B]" />
               )}
             </button>
 
@@ -151,22 +167,22 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
           <SparkleSmallIcon className="w-4 h-4 text-emerald-500 fill-emerald-400" />
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Your complete financial overview
+          Institutional personal wealth overview
         </p>
       </div>
 
-      {/* Strict 4-Column Navigation Segment Tabs */}
+      {/* Smooth Horizontally Scrollable Sub-Tabs */}
       <div className="px-4 py-2 select-none">
-        <div className="grid grid-cols-4 p-1 bg-slate-200/80 dark:bg-[#0B101D] rounded-2xl gap-1 border border-slate-200 dark:border-slate-800/80">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-200/60 dark:bg-[#0E1526]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-white/5 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => {
             const isActive = activeSubTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveSubTab(tab.id)}
-                className={`py-1.5 px-1 rounded-xl text-[11px] font-bold transition-all text-center truncate cursor-pointer ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all text-center whitespace-nowrap shrink-0 cursor-pointer ${
                   isActive
-                    ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500/30'
+                    ? 'bg-white dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 shadow-xs border border-emerald-500/30'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -180,23 +196,23 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
       {/* Tab Contents */}
       {activeSubTab === 'overview' && (
         <div className="px-4 space-y-4 pt-1">
-          {/* Hero Surplus Card (Forest Green Gradient Card) */}
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-[#064E3B] via-[#043328] to-[#02221B] text-white shadow-xl relative overflow-hidden">
+          {/* Hero Surplus Card (Luxury Emerald Gradient Card) */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-800 via-[#064E3B] to-[#022D22] text-white shadow-xl relative overflow-hidden border border-white/10">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-xs font-medium text-emerald-200/80">Net Monthly Surplus</span>
-                <h2 className="text-3xl font-extrabold text-white mt-1 tracking-tight">
+                <span className="text-xs font-semibold text-emerald-200/80 uppercase tracking-wider">Net Monthly Surplus</span>
+                <h2 className="text-3xl font-black text-white mt-1 tracking-tight font-mono tabular-nums">
                   ₹{netSurplus.toLocaleString('en-IN')}
                 </h2>
-                <div className="inline-flex items-center gap-1 mt-2.5 px-2.5 py-0.5 rounded-full bg-emerald-900/60 border border-emerald-700/60 text-[11px] font-bold text-emerald-300">
+                <div className="inline-flex items-center gap-1 mt-2.5 px-2.5 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-[11px] font-bold text-emerald-300">
                   <span>▲ {savingsRate}%</span>
-                  <span className="text-emerald-400 font-normal">vs last month</span>
+                  <span className="text-emerald-400 font-normal">savings rate</span>
                 </div>
               </div>
 
               <button
                 onClick={onOpenAddModal}
-                className="text-emerald-300 hover:text-white text-lg font-bold"
+                className="text-emerald-300 hover:text-white text-lg font-bold p-1 cursor-pointer"
               >
                 ···
               </button>
@@ -218,23 +234,23 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
 
           {/* 2x2 Grid KPI Stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-4 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center mb-2">
+            <div className="p-4 fintech-card fintech-card-hover rounded-2xl shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/20 flex items-center justify-center mb-2">
                 <WalletIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className="text-[11px] text-slate-400">Monthly Income</p>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Monthly Income</p>
+              <h4 className="text-base font-black text-slate-900 dark:text-white font-mono tabular-nums">
                 ₹{totalIncome.toLocaleString('en-IN')}
               </h4>
               <span className="text-[10px] text-slate-500">Take-home salary</span>
             </div>
 
-            <div className="p-4 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center mb-2">
+            <div className="p-4 fintech-card fintech-card-hover rounded-2xl shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-500/20 flex items-center justify-center mb-2">
                 <ArrowDownOutflowIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-[11px] text-slate-400">Total Outflow / Mo</p>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Outflow</p>
+              <h4 className="text-base font-black text-slate-900 dark:text-white font-mono tabular-nums">
                 ₹{totalOutflow.toLocaleString('en-IN')}
               </h4>
               <span className="text-[10px] text-slate-500">Living + Bills + Ins.</span>
@@ -242,24 +258,24 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
 
             <div
               onClick={() => setActiveSubTab('subscriptions')}
-              className="p-4 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs cursor-pointer hover:border-emerald-500/50 transition-colors"
+              className="p-4 fintech-card fintech-card-hover rounded-2xl shadow-2xs cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950 flex items-center justify-center mb-2">
+              <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-500/20 flex items-center justify-center mb-2">
                 <ShieldCheckIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               </div>
-              <p className="text-[11px] text-slate-400">Active Services</p>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Active Services</p>
+              <h4 className="text-base font-black text-slate-900 dark:text-white">
                 {activeSubscriptionsCount} OTT • {activeInsurancesCount} Ins.
               </h4>
               <span className="text-[10px] text-slate-500">Monitored by AI</span>
             </div>
 
-            <div className="p-4 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center mb-2">
+            <div className="p-4 fintech-card fintech-card-hover rounded-2xl shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-500/20 flex items-center justify-center mb-2">
                 <TrendingUpIcon className="w-4 h-4 text-amber-500" />
               </div>
-              <p className="text-[11px] text-slate-400">Savings Rate</p>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white">{savingsRate}%</h4>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Savings Rate</p>
+              <h4 className="text-base font-black text-slate-900 dark:text-white">{savingsRate}%</h4>
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                 Good job! <RocketIcon className="w-3 h-3 text-amber-500 inline" />
               </span>
