@@ -90,49 +90,59 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   };
 
   return (
-    <div className={`w-full ${isAuthenticated ? 'h-[calc(100dvh-5.75rem)] md:min-h-screen' : 'h-[100dvh] md:h-screen'} bg-[#EBF0F7] dark:bg-[#0B101D] text-slate-800 dark:text-slate-100 flex flex-col justify-between px-3.5 sm:px-8 pt-4 pb-4 select-none transition-colors duration-300`}>
+    <div className={`w-full ${isAuthenticated ? 'h-[calc(100dvh-5.75rem)] md:min-h-screen' : 'h-[100dvh] md:h-screen'} bg-transparent text-slate-800 dark:text-slate-100 flex flex-col justify-between px-4 sm:px-10 pt-4 pb-6 select-none relative overflow-hidden transition-colors duration-200`}>
+      {/* Subtle Background Glow behind Orb */}
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 blur-3xl -z-10" />
+
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between gap-2 max-w-5xl mx-auto w-full shrink-0">
-        {/* Brand: Tactile Neumorphic Pill */}
+      <div className="flex items-center justify-between gap-3 max-w-5xl mx-auto w-full shrink-0 z-10">
+        {/* Brand Pill */}
         <div
-          className={`flex ${isAuthenticated ? 'md:hidden' : 'flex'} items-center gap-2.5 px-3.5 py-2 neumorph-chip rounded-2xl cursor-pointer shrink-0 transition-transform active:scale-95`}
-          onClick={isAuthenticated ? onNavigateToHub : undefined}
+          className={`flex ${isAuthenticated ? 'md:hidden' : 'flex'} items-center gap-2.5 px-3.5 py-1.5 fintech-card rounded-2xl cursor-pointer shrink-0 transition-transform active:scale-95`}
+          onClick={onNavigateToHub}
+          title={isAuthenticated ? "Go to Finance Hub" : "Return to Landing Page"}
         >
-          <DhanMitrLogo className="w-5 h-5 sm:w-6 sm:h-6" />
+          <DhanMitrLogo className="w-6 h-5 sm:w-7 sm:h-6 shrink-0" />
           <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Dhan<span className="text-emerald-500 font-black">MITR</span>
+            Dhan<span className="text-emerald-500 font-bold">Mitr</span>
           </span>
         </div>
 
-        {/* Controls on Right: Sleek Neumorphic Pill Cluster */}
+        {/* Center Intelligence Beacon on Desktop */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Multilingual Voice AI Online</span>
+        </div>
+
+        {/* Controls on Right */}
         <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
           {!isAuthenticated && (
             <>
-              {/* Tactile Free Chat Quota Pill */}
+              {/* Free Chat Quota Pill */}
               <button
                 onClick={() => openAuthModal('signup', 'Sign in or create an account for unlimited AI assistance and full financial hub.')}
-                className="flex items-center gap-1.5 px-3 py-1.5 neumorph-chip text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-semibold cursor-pointer whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-semibold cursor-pointer whitespace-nowrap shadow-2xs"
                 title="Free trial chats remaining. Click to unlock unlimited."
               >
                 <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
                 <span>{remainingFreeChats}/3 Free</span>
               </button>
 
-              {/* Tactile Sign In Button */}
+              {/* Sign In Button */}
               <button
                 onClick={() => openAuthModal('login')}
-                className="px-4 py-1.5 neumorph-btn-emerald text-white rounded-full text-xs font-bold cursor-pointer whitespace-nowrap"
+                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-full text-xs font-bold cursor-pointer whitespace-nowrap shadow-xs transition-all"
               >
                 Sign In
               </button>
             </>
           )}
 
-          {/* Tactile Language Selector */}
+          {/* Language Selector */}
           <div className="relative">
             <button
               onClick={() => setShowLangMenu(!showLangMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 neumorph-chip rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap cursor-pointer shadow-2xs hover:scale-102 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap cursor-pointer shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all"
             >
               <span>
                 {selectedLanguage === 'auto'
@@ -149,7 +159,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             </button>
 
             {showLangMenu && (
-              <div className="absolute right-0 mt-2 w-44 neumorph-card rounded-2xl py-1.5 z-30 overflow-hidden text-xs shadow-lg border border-slate-200/50 dark:border-slate-800/50">
+              <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl py-1.5 z-30 overflow-hidden text-xs shadow-xl">
                 <button
                   onClick={() => {
                     setSelectedLanguage('auto');
@@ -158,7 +168,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                   className={`w-full text-left px-3.5 py-2 font-medium transition-colors cursor-pointer ${
                     selectedLanguage === 'auto'
                       ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80'
                   }`}
                 >
                   ✨ Auto Detect (स्वतः)
@@ -228,46 +238,47 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           {voiceState === 'listening' ? (
             <button
               onClick={stopVoiceListening}
-              className="flex items-center gap-2 px-6 py-3 neumorph-btn text-red-600 dark:text-red-400 rounded-full text-xs font-bold"
+              className="flex items-center gap-2.5 px-7 py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-red-500/30 active:scale-95 transition-all cursor-pointer ring-4 ring-red-500/20"
             >
-              <StopIcon className="w-4 h-4 text-red-500" />
-              <span>Tap to stop</span>
+              <StopIcon className="w-4 h-4 text-white" />
+              <span>Tap to Finish</span>
             </button>
           ) : (
             <button
               onClick={startVoiceListening}
-              className="flex items-center gap-2.5 px-7 sm:px-8 py-3.5 neumorph-btn-emerald text-white rounded-full text-xs sm:text-sm font-bold cursor-pointer"
+              className="flex items-center gap-2.5 px-8 sm:px-9 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-full text-xs sm:text-sm font-bold cursor-pointer shadow-lg shadow-emerald-600/30 active:scale-95 transition-all border border-white/20"
             >
-              <MicIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <MicIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               <span>Tap to Speak</span>
             </button>
           )}
 
           <button
             onClick={onSwitchToChat}
-            className="flex items-center gap-2 px-5 py-3 neumorph-btn text-slate-700 dark:text-slate-200 rounded-full text-xs font-bold cursor-pointer"
+            className="flex items-center gap-2 px-5 sm:px-6 py-3.5 fintech-card text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white rounded-full text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm"
             title="Switch to Chat Mode"
           >
             <SparklesIcon className="w-4 h-4 text-emerald-500" />
-            <span>Chat Mode</span>
+            <span>Chat Console</span>
           </button>
         </div>
 
-        {/* Live Audio Transcript Display: Sunken Debossed Capsule */}
+        {/* Live Audio Transcript Display */}
         {activeTranscript && (
-          <div className="mt-4 px-5 py-2 neumorph-inset rounded-2xl max-w-md text-xs text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-            &ldquo;{activeTranscript}&rdquo;
+          <div className="mt-5 px-5 py-3 fintech-card rounded-2xl max-w-lg text-xs sm:text-sm text-slate-800 dark:text-emerald-300 font-semibold shadow-md animate-in fade-in flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-ping" />
+            <span className="italic">&ldquo;{activeTranscript}&rdquo;</span>
           </div>
         )}
       </div>
 
-      {/* Bottom Area: Tactile Suggested Prompts & Sunken Input Box */}
-      <div className="shrink-0 max-w-2xl mx-auto w-full space-y-2.5 sm:space-y-3.5 pb-2 sm:pb-3">
+      {/* Bottom Area: Suggested Prompts & Input Box */}
+      <div className="shrink-0 max-w-2xl mx-auto w-full space-y-3 pb-2 sm:pb-3 z-10">
         {/* Suggested Prompts Header & Chips */}
         <div>
-          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs font-semibold mb-2 px-1">
+          <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-400 text-[11px] font-semibold tracking-wider uppercase mb-2 px-1">
             <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
-            <span>Suggested prompts</span>
+            <span>Recommended Inquiries</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -278,7 +289,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                   triggerPrompt(p.query, p.lang);
                   onSwitchToChat();
                 }}
-                className="px-3.5 py-1.5 neumorph-chip rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer"
+                className="px-3.5 py-1.5 fintech-card fintech-card-hover rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer shadow-2xs transition-all"
               >
                 {p.label}
               </button>
@@ -286,17 +297,17 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           </div>
         </div>
 
-        {/* Text Input Bar: Smooth Debossed Sunken Well */}
+        {/* Text Input Bar */}
         <form
           onSubmit={handleSendText}
-          className="flex items-center gap-2 p-1.5 sm:p-2 neumorph-inset rounded-2xl border border-slate-200/40 dark:border-slate-800/40"
+          className="flex items-center gap-2 p-2 fintech-card rounded-2xl shadow-md focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all"
         >
           <input
             type="text"
-            placeholder="Or type your question..."
+            placeholder="Or type a question for institutional analysis..."
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
-            className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+            className="flex-1 bg-transparent px-3 py-1 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
           />
 
           <button
@@ -309,7 +320,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                 ? 'bg-amber-500 text-white animate-pulse shadow-md'
                 : voiceState === 'speaking'
                 ? 'bg-emerald-500 hover:bg-emerald-600 text-white animate-pulse shadow-md'
-                : 'neumorph-btn text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
             }`}
             title={
               voiceState === 'listening'
@@ -329,7 +340,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           <button
             type="submit"
             disabled={!textInput.trim()}
-            className="p-2 neumorph-btn-emerald disabled:opacity-40 text-white rounded-xl"
+            className="p-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-40 text-white rounded-xl shadow-xs transition-all cursor-pointer"
           >
             <SendIcon className="w-4 h-4" />
           </button>

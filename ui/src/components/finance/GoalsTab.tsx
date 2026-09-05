@@ -132,20 +132,24 @@ export const GoalsTab: React.FC<GoalsTabProps> = () => {
   return (
     <div className="space-y-6">
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xs">
+      <div className="fintech-card fintech-card-hover flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl sm:rounded-3xl p-5 sm:p-7 relative overflow-hidden group">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
         <div>
           <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <Target className="w-5 h-5 text-emerald-500" />
-            Financial Goals & Milestones
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-500">
+              <Target className="w-4 h-4" />
+            </div>
+            <span>Financial Goals & Milestones</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Track your life goals with disciplined monthly SIP allocations and milestone progress.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:scale-95 text-white text-xs font-bold rounded-2xl shadow-lg shadow-emerald-950/20 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Goal</span>
@@ -154,7 +158,7 @@ export const GoalsTab: React.FC<GoalsTabProps> = () => {
 
       {/* Goals Content: Card Grid or Clean Zero-State */}
       {goals.length === 0 ? (
-        <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-2xs">
+        <div className="fintech-card rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center space-y-4">
           <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center mx-auto text-2xl font-black shadow-lg shadow-emerald-900/30">
             <Target className="w-8 h-8 text-white" />
           </div>
@@ -186,58 +190,60 @@ export const GoalsTab: React.FC<GoalsTabProps> = () => {
             return (
               <div
                 key={goal.id}
-                className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 shadow-2xs hover:border-emerald-500/30 transition-all flex flex-col justify-between group space-y-4"
+                className="fintech-card fintech-card-hover rounded-2xl sm:rounded-3xl p-5 sm:p-6 transition-all flex flex-col justify-between group space-y-4 relative overflow-hidden"
               >
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
                 {/* Card Header */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shrink-0">
                       {getCategoryIcon(goal.category)}
                     </div>
                     <div>
                       <h3 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
                         {goal.title}
                       </h3>
-                      <p className="text-[10px] text-slate-400 capitalize mt-0.5">
+                      <p className="text-[10px] text-slate-400 capitalize mt-0.5 font-medium">
                         {goal.category.replace('_', ' ')}
                       </p>
                     </div>
                   </div>
 
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${getPriorityColor(goal.priority)}`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border uppercase ${getPriorityColor(goal.priority)}`}>
                     {goal.priority}
                   </span>
                 </div>
 
                 {/* Progress & Numbers */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="flex items-baseline justify-between text-xs">
                     <div>
-                      <span className="text-base font-black text-slate-900 dark:text-white">
+                      <span className="text-base sm:text-lg font-black font-mono tabular-nums text-slate-900 dark:text-white">
                         ₹{goal.current_amount.toLocaleString('en-IN')}
                       </span>
-                      <span className="text-[11px] text-slate-400"> / ₹{goal.target_amount.toLocaleString('en-IN')}</span>
+                      <span className="text-[11px] font-mono text-slate-400"> / ₹{goal.target_amount.toLocaleString('en-IN')}</span>
                     </div>
-                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400">
                       {percent}%
                     </span>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+                  <div className="w-full h-2.5 bg-slate-200/80 dark:bg-slate-800/80 rounded-full overflow-hidden shadow-inner">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        percent >= 100 ? 'bg-emerald-500 shadow-xs' : 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        percent >= 100 ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.35)]'
                       }`}
                       style={{ width: `${percent}%` }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pt-1">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1">
                     <span>Remaining: ₹{remaining.toLocaleString('en-IN')}</span>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-slate-400" />
-                      <span>Target: {goal.target_date}</span>
+                      <span>{goal.target_date}</span>
                     </span>
                   </div>
                 </div>

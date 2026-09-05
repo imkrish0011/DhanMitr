@@ -9,29 +9,56 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
 // DhanMITR Brand & Core System SVG Icons
 // ==========================================
 
-export const DhanMitrLogo: React.FC<IconProps> = ({ className = 'w-7 h-7', ...props }) => (
-  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
-    <rect width="40" height="40" rx="10" fill="url(#logo_grad)" />
-    <path
-      d="M20 9L29 14.5V25.5L20 31L11 25.5V14.5L20 9Z"
-      stroke="white"
-      strokeWidth="2.2"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M16 15H24M16 19H23M16 23H20M20 15V25"
-      stroke="#A7F3D0"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-    <circle cx="20" cy="20" r="1.5" fill="#10B981" />
-    <defs>
-      <linearGradient id="logo_grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#10B981" />
-        <stop offset="1" stopColor="#047857" />
-      </linearGradient>
-    </defs>
-  </svg>
+export interface LogoProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string;
+  showFull?: boolean;
+  alt?: string;
+}
+
+export const DhanMitrLogo: React.FC<LogoProps> = ({
+  className = 'w-8 h-8',
+  showFull = false,
+  alt = 'DhanMitr Logo',
+  ...props
+}) => {
+  if (showFull) {
+    return (
+      <div className={`relative inline-flex items-center shrink-0 ${className}`} {...props}>
+        <img
+          src="/images/dhanmitr_logo_light.png"
+          alt="DhanMitr — Your Financial Friend"
+          className="w-full h-full object-contain dark:hidden select-none"
+        />
+        <img
+          src="/images/dhanmitr_logo_dark.png"
+          alt="DhanMitr — Your Financial Friend"
+          className="w-full h-full object-contain hidden dark:block select-none"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative inline-flex items-center justify-center shrink-0 ${className}`} {...props}>
+      <img
+        src="/images/dhanmitr_symbol_light.png"
+        alt={alt}
+        className="w-full h-full object-contain dark:hidden select-none"
+      />
+      <img
+        src="/images/dhanmitr_symbol_dark.png"
+        alt={alt}
+        className="w-full h-full object-contain hidden dark:block select-none"
+      />
+    </div>
+  );
+};
+
+export const DhanMitrFullLogo: React.FC<LogoProps> = ({
+  className = 'h-10 w-auto',
+  ...props
+}) => (
+  <DhanMitrLogo className={className} showFull={true} {...props} />
 );
 
 export const SparklesIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', ...props }) => (

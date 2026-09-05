@@ -39,10 +39,11 @@ import {
   Calendar,
   Target,
   Scale,
+  PieChart,
   X,
 } from 'lucide-react';
 
-export type FinanceRecordType = 'subscription' | 'insurance' | 'income' | 'expense' | 'investment' | 'goal' | 'tax' | 'reminder';
+export type FinanceRecordType = 'subscription' | 'insurance' | 'income' | 'expense' | 'investment' | 'goal' | 'tax' | 'reminder' | 'budget_cap';
 
 interface AddFinanceModalProps {
   isOpen: boolean;
@@ -55,7 +56,7 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   onClose,
   initialType = 'subscription',
 }) => {
-  const { addSubscription, addInsurance, addIncomeSource, addTransaction, addGoal } = useFinance();
+  const { addSubscription, addInsurance, addIncomeSource, addTransaction, addGoal, addBudgetItem } = useFinance();
   const { profile, saveOnboardingProfile } = useAuth();
   const [activeType, setActiveType] = useState<FinanceRecordType>(initialType);
   const [buttonState, setButtonState] = useState<ButtonState>('idle');
@@ -126,6 +127,12 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
 
   // 8. Tax Regime form fields
   const [taxRegimeChoice, setTaxRegimeChoice] = useState<'new' | 'old'>(profile?.tax_regime === 'old' ? 'old' : 'new');
+
+  // 9. Budget Cap form fields
+  const [budgetCategory, setBudgetCategory] = useState('Groceries & Dining');
+  const [budgetCategoryKey, setBudgetCategoryKey] = useState<TransactionCategory>('groceries');
+  const [budgetAllocated, setBudgetAllocated] = useState('');
+  const [budgetColor, setBudgetColor] = useState('#10B981');
 
 
   if (!isOpen) return null;
@@ -248,6 +255,18 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
         saveOnboardingProfile({
           tax_regime: taxRegimeChoice,
         });
+      } else if (activeType === 'budget_cap') {
+        if (!budgetAllocated || Number(budgetAllocated) <= 0) {
+          setButtonState('error');
+          return;
+        }
+        addBudgetItem({
+          category: budgetCategory,
+          categoryKey: budgetCategoryKey,
+          allocated: Number(budgetAllocated),
+          spent: 0,
+          color: budgetColor,
+        });
       }
 
 
@@ -264,6 +283,7 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
     { id: 'insurance' as const, label: 'Insurance', icon: ShieldCheck },
     { id: 'income' as const, label: 'Income', icon: Wallet },
     { id: 'expense' as const, label: 'Expense', icon: CreditCard },
+    { id: 'budget_cap' as const, label: 'Budget Cap', icon: PieChart },
     { id: 'investment' as const, label: 'Investment', icon: TrendingUp },
     { id: 'goal' as const, label: 'Goal', icon: Target },
     { id: 'tax' as const, label: 'Tax Regime', icon: Scale },
@@ -348,8 +368,8 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
           </button>
         </div>
 
-        {/* 8 Tab Selection: 4-column x 2-row grid with full text visibility */}
-        <div className="grid grid-cols-4 p-2.5 sm:p-3 bg-slate-100/80 dark:bg-[#0B101D] gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-slate-800/80 shrink-0">
+        {/* 9 Tab Selection: Responsive grid with full visibility */}
+        <div className="grid grid-cols-3 sm:grid-cols-5 p-2.5 sm:p-3 bg-slate-100/80 dark:bg-[#0B101D] gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-slate-800/80 shrink-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeType === tab.id;
@@ -970,6 +990,82 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
 
               <div className="p-3 bg-slate-50 dark:bg-[#0B101D] border border-slate-200/70 dark:border-slate-800 rounded-xl text-[11px] text-slate-600 dark:text-slate-300">
                 💡 <strong className="text-slate-900 dark:text-white">Tip:</strong> You can also run real-time comparisons in the <strong>Finance Hub &gt; Tax Optimizer</strong> tab anytime!
+              </div>
+            </div>
+          )}
+
+          {/* ===================== 9. BUDGET CAP ===================== */}
+          {activeType === 'budget_cap' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Budget Category
+                </label>
+                <select
+                  value={budgetCategoryKey}
+                  onChange={(e) => {
+                    const key = e.target.value as TransactionCategory;
+                    setBudgetCategoryKey(key);
+                    const labelMap: Record<string, string> = {
+                      housing: 'Housing & Rent',
+                      groceries: 'Groceries & Dining',
+                      utilities: 'Bills & Utilities',
+                      travel: 'Travel & Commute',
+                      shopping: 'Shopping & Lifestyle',
+                      healthcare: 'Healthcare & Wellness',
+                      entertainment: 'Entertainment & Leisure',
+                      other: 'Other Category',
+                    };
+                    setBudgetCategory(labelMap[key] || 'Other Category');
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500 font-medium"
+                >
+                  <option value="housing">Housing & Rent</option>
+                  <option value="groceries">Groceries & Dining</option>
+                  <option value="utilities">Bills & Utilities</option>
+                  <option value="travel">Travel & Commute</option>
+                  <option value="shopping">Shopping & Lifestyle</option>
+                  <option value="healthcare">Healthcare & Wellness</option>
+                  <option value="entertainment">Entertainment & Leisure</option>
+                  <option value="other">Other Category</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Monthly Cap / Limit (₹)
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g. 15000"
+                  value={budgetAllocated}
+                  onChange={(e) => setBudgetAllocated(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-[#0B101D] text-slate-900 dark:text-white focus:outline-emerald-500 font-bold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Indicator Accent Color
+                </label>
+                <div className="flex items-center gap-3">
+                  {['#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#8B5CF6', '#06B6D4'].map((col) => (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={() => setBudgetColor(col)}
+                      className={`w-7 h-7 rounded-full transition-transform cursor-pointer ${
+                        budgetColor === col ? 'ring-2 ring-offset-2 ring-emerald-500 scale-110' : 'opacity-80 hover:opacity-100'
+                      }`}
+                      style={{ backgroundColor: col }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/50 rounded-xl text-[11px] text-slate-600 dark:text-slate-300">
+                💡 <strong className="text-slate-900 dark:text-white">Smart Threshold:</strong> DhanMITR will automatically alert you when spending in this category exceeds 80% of your defined cap.
               </div>
             </div>
           )}

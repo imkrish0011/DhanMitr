@@ -222,7 +222,7 @@ class FasterWhisperSTT(BaseSTT):
 
 
 class GroqWhisperSTT(BaseSTT):
-    """Groq Cloud Whisper — ultra-fast Speech-to-Text via whisper-large-v3-turbo."""
+    """Groq Whisper Cloud API — ultra-fast (<150ms) transcription for English and Indic languages."""
 
     name = "groq_whisper"
 
@@ -242,9 +242,29 @@ class GroqWhisperSTT(BaseSTT):
         import os
         api_key = getattr(config, "GROQ_API_KEY", None) or os.getenv("GROQ_API_KEY")
         if not api_key:
-            raise RuntimeError("GROQ_API_KEY is not set in .env")
+            raise RuntimeError(
+                "GROQ_API_KEY is not configured in .env. "
+                "Add GROQ_API_KEY to enable Groq Whisper STT."
+            )
 
         self._client = Groq(api_key=api_key)
+
+    def warmup(self) -> None:
+        """Initializes Groq client and verifies connection."""
+        self.load()
+        silence = None
+        try:
+            silence = audio_utils.make_silence_wav(1.0)
+            self.transcribe(silence)
+        except Exception:
+            # Silence transcriptions can return empty/hallucinated text; client is verified
+            pass
+        finally:
+            audio_utils.cleanup(silence)
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._client is not None
 
     def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
         self.load()
@@ -254,12 +274,14 @@ class GroqWhisperSTT(BaseSTT):
             audio_bytes = f.read()
 
         lang_code = language
-        if lang_code in ("hi", "hin", "hindi"):
-            lang_code = "hi"
-        elif lang_code in ("en", "eng", "english"):
-            lang_code = "en"
-        elif lang_code == "auto":
-            lang_code = None
+        if lang_code:
+            lang_code = lang_code.strip().lower()
+            if lang_code in ("hi", "hin", "hindi"):
+                lang_code = "hi"
+            elif lang_code in ("en", "eng", "english"):
+                lang_code = "en"
+            elif lang_code in ("auto", "none"):
+                lang_code = None
 
         kwargs: Dict[str, Any] = {
             "file": (wav_path.name, audio_bytes),
@@ -270,26 +292,39 @@ class GroqWhisperSTT(BaseSTT):
         if lang_code:
             kwargs["language"] = lang_code
 
-        response = self._client.audio.transcriptions.create(**kwargs)
+        try:
+            response = self._client.audio.transcriptions.create(**kwargs)
+        except Exception as exc:
+            raise RuntimeError(f"Groq Whisper transcription failed: {exc}") from exc
+
         elapsed_ms = (time.perf_counter() - started) * 1000
 
         detected_lang = getattr(response, "language", None) or language
         raw_text = (getattr(response, "text", "") or "").strip()
         text = _normalize_indic_script(raw_text)
 
+        # Filter hallucinated silence phrases that Whisper sometimes produces for near-silent audio
+        lower_text = text.lower().strip(" .!?,;")
+        if lower_text in ("thank you", "thanks for watching", "subtitles by", "bye", "you"):
+            audio_dur = audio_utils.wav_duration_seconds(wav_path) or 0.0
+            if audio_dur < 1.2:
+                text = ""
+
         # DhanMITR strictly operates in English ('en') and Hindi ('hi')
-        if detected_lang not in ("en", "hi"):
+        if text and detected_lang not in ("en", "hi"):
             if re.search(r"[\u0900-\u097f]", text):
                 detected_lang = "hi"
             else:
                 detected_lang = "en"
+
+        duration = getattr(response, "duration", None) or audio_utils.wav_duration_seconds(wav_path)
 
         return STTResult(
             text=text,
             language=detected_lang,
             provider=self.name,
             latency_ms=round(elapsed_ms, 1),
-            audio_seconds=getattr(response, "duration", None) or audio_utils.wav_duration_seconds(wav_path),
+            audio_seconds=duration,
             meta={
                 "model": self._model_name,
                 "segments_count": len(getattr(response, "segments", []) or []),
@@ -297,12 +332,43 @@ class GroqWhisperSTT(BaseSTT):
         )
 
 
+class MockSTT(BaseSTT):
+    """Mock STT for testing and offline UI development."""
+
+    name = "mock"
+
+    def __init__(self) -> None:
+        self._loaded = True
+
+    def load(self) -> None:
+        self._loaded = True
+
+    def warmup(self) -> None:
+        return
+
+    @property
+    def is_loaded(self) -> bool:
+        return True
+
+    def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
+        return STTResult(
+            text="नमस्ते, DhanMITR में आपका स्वागत है।",
+            language=language or "hi",
+            provider=self.name,
+            latency_ms=1.0,
+            audio_seconds=audio_utils.wav_duration_seconds(wav_path) or 1.0,
+            meta={"note": "mock provider — no speech was transcribed"},
+        )
+
+
 _PROVIDERS = {
     "groq_whisper": GroqWhisperSTT,
+    "groq": GroqWhisperSTT,
     "whisper": GroqWhisperSTT,
     "whisper_large": GroqWhisperSTT,
     "sravaani": SraVaaniSTT,
     "faster_whisper": FasterWhisperSTT,
+    "mock": MockSTT,
 }
 
 _cache: Dict[str, BaseSTT] = {}

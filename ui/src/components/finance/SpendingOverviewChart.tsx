@@ -15,8 +15,12 @@ export const SpendingOverviewChart: React.FC = () => {
     setIsMounted(true);
   }, []);
 
+  const activeCategories = totalOutflow > 0
+    ? spendingCategories.filter((c) => c.amount > 0)
+    : [{ id: 'empty', category: 'No Expenses', amount: 1, color: '#334155', percentage: 100, categoryKey: 'other' }];
+
   return (
-    <div className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-2xs hover:shadow-sm hover:border-emerald-500/20 transition-all duration-300 flex flex-col justify-between">
+    <div className="fintech-card fintech-card-hover rounded-2xl p-6 shadow-sm overflow-hidden flex flex-col justify-between">
       {/* Card Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -66,17 +70,17 @@ export const SpendingOverviewChart: React.FC = () => {
             <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
             <PieChart>
               <Pie
-                data={totalOutflow > 0 ? spendingCategories.filter((c) => c.amount > 0) : [{ id: 'empty', category: 'No Expenses', amount: 1, color: '#334155' }]}
+                data={activeCategories}
                 cx="50%"
                 cy="50%"
                 innerRadius={64}
                 outerRadius={90}
                 paddingAngle={totalOutflow > 0 ? 3 : 0}
                 dataKey="amount"
-                onMouseEnter={(_, index) => totalOutflow > 0 && setHoveredCategory(spendingCategories[index]?.id || null)}
+                onMouseEnter={(_, index) => totalOutflow > 0 && setHoveredCategory(activeCategories[index]?.id || null)}
                 onMouseLeave={() => setHoveredCategory(null)}
               >
-                {(totalOutflow > 0 ? spendingCategories.filter((c) => c.amount > 0) : [{ id: 'empty', category: 'No Expenses', amount: 1, color: '#334155' }]).map((entry) => (
+                {activeCategories.map((entry) => (
                   <Cell
                     key={entry.id}
                     fill={entry.color}

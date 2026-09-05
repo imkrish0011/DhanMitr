@@ -266,7 +266,7 @@ def _process_voice_sync(
     language_hint: Optional[str] = None,
     voice_id: Optional[str] = None,
     financial_context: Optional[FinancialContext] = None,
-    history: Optional[List[Any]] = None,
+    history: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Synchronous pipeline executed in thread pool."""
     pipeline_start = time.perf_counter()

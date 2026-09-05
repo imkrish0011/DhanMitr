@@ -62,24 +62,24 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
   return (
     <>
       <div className={`flex items-start gap-2 sm:gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-3 group`}>
-        {/* Compact Tactile Neumorphic Avatar */}
+        {/* Modern Avatar */}
         {!isUser ? (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full neumorph-chip flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-            <DhanMitrLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+            <DhanMitrLogo className="w-5 h-4" />
           </div>
         ) : (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full neumorph-btn-emerald text-white font-extrabold text-[10px] sm:text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
             U
           </div>
         )}
 
-        {/* Message Bubble Content: Compact & Proportional */}
+        {/* Message Bubble Content */}
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-xl`}>
           <div
-            className={`text-xs sm:text-[13px] leading-snug transition-all ${
+            className={`text-xs sm:text-[13px] leading-relaxed transition-all ${
               isUser
-                ? 'px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-2xl rounded-tr-xs shadow-md border border-emerald-400/20'
-                : 'px-4 py-3 bg-[#111A2C] border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-xs shadow-md'
+                ? 'px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl rounded-tr-xs shadow-sm font-medium'
+                : 'px-4 sm:px-5 py-3.5 fintech-card text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-xs shadow-sm'
             }`}
           >
             {/* Formatted Text with Streaming Cursor */}
@@ -88,7 +88,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-                <span className="text-[11px] font-medium ml-1">Analyzing...</span>
+                <span className="text-xs font-medium ml-1">Analyzing...</span>
               </div>
             ) : (
               <div className="space-y-1">
@@ -101,13 +101,13 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
 
             {/* Embedded Interactive Expense Breakdown Widget */}
             {message.widgetType === 'expense_summary' && Array.isArray(message.widgetData) && (
-              <div className="mt-2.5 p-2.5 neumorph-inset rounded-xl space-y-1.5 border border-slate-200/50 dark:border-slate-800/50">
-                <div className="text-[10px] font-extrabold text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-300/40 dark:border-slate-700/60">
+              <div className="mt-2.5 p-3 bg-slate-50 dark:bg-[#0B101D] rounded-xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+                <div className="text-xs font-extrabold text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-200 dark:border-slate-800">
                   श्रेणीवार मासिक खर्च सारांश (Category Breakdown):
                 </div>
                 <div className="space-y-1">
                   {(message.widgetData as SpendingCategorySummary[]).map((cat) => (
-                    <div key={cat.id} className="flex items-center justify-between text-[11px]">
+                    <div key={cat.id} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: cat.color }} />
                         <span className="text-slate-700 dark:text-slate-300 font-semibold">{cat.category}</span>

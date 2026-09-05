@@ -652,11 +652,11 @@ def _build_groq_messages(
     """Builds the Groq messages payload including system prompt, multi-turn history, and the current user prompt."""
     messages = [{"role": "system", "content": system_prompt_text}]
     if history:
-        for turn in history[-6:]:
+        for turn in history[-4:]:
             role = getattr(turn, "role", None) or (turn.get("role") if isinstance(turn, dict) else "user")
             content = getattr(turn, "content", None) or (turn.get("content") or turn.get("text") if isinstance(turn, dict) else "")
             if content and role in ("user", "assistant"):
-                messages.append({"role": role, "content": content})
+                messages.append({"role": role, "content": str(content)[:300]})
     messages.append({"role": "user", "content": user_prompt})
     return messages
 
@@ -945,14 +945,14 @@ async def generate_grounded_answer(
         if vector:
             raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
-                match_count=5,
+                match_count=3,
                 match_threshold=0.50,
             )
             # Filter out non-English/non-Hindi chunks (e.g. Gujarati script chunks)
             retrieved_chunks = [
                 c for c in raw_chunks
                 if c.get("similarity", 0.0) >= 0.50 and _is_english_or_hindi_chunk(c)
-            ]
+            ][:3]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             logger.info("RAG search for '%s' retrieved %d relevant chunks in %s ms", q[:40], len(retrieved_chunks), rag_ms)
             for c in retrieved_chunks:
@@ -1125,7 +1125,7 @@ async def generate_grounded_answer(
                 _call_groq_completion_sync,
                 groq_client,
                 groq_messages,
-                1024,
+                600,
             )
             llm_ms = round((time.perf_counter() - t0_llm) * 1000, 1)
             if generated_raw:
@@ -1355,14 +1355,14 @@ async def stream_grounded_answer(
         if vector:
             raw_chunks = await search_similar_chunks(
                 query_embedding=vector,
-                match_count=5,
+                match_count=3,
                 match_threshold=0.50,
             ) 
             # Filter out non-English/non-Hindi chunks (e.g. Gujarati script chunks)
             retrieved_chunks = [
                 c for c in raw_chunks
                 if c.get("similarity", 0.0) >= 0.50 and _is_english_or_hindi_chunk(c)
-            ]
+            ][:3]
             rag_ms = round((time.perf_counter() - t0_rag) * 1000, 1)
             for c in retrieved_chunks:
                 sources.append({

@@ -239,7 +239,7 @@ export interface VoiceResponse {
   sources?: KnowledgeSource[];
 }
 
-export type NavTab = 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings';
+export type NavTab = 'landing' | 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings';
 
 export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator';
 

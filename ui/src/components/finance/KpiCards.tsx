@@ -61,35 +61,39 @@ export const KpiCards: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
       {cards.map((card) => (
         <div
           key={card.id}
           onClick={card.action}
-          className="bg-white dark:bg-[#0F172A] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-2xs hover:shadow-sm hover:border-emerald-500/20 transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+          className="fintech-card fintech-card-hover rounded-2xl p-5 sm:p-6 cursor-pointer flex flex-col justify-between group overflow-hidden"
         >
-          <div className="flex items-center gap-3.5 mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${card.iconBg} transition-transform`}>
-              {card.icon}
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          {/* Subtle Top Accent Line */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
                 {card.label}
-              </p>
-              <h3 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight transition-colors">
-                {card.value}
-              </h3>
+              </span>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${card.iconBg} transition-transform group-hover:scale-105 shadow-2xs`}>
+                {card.icon}
+              </div>
             </div>
+
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
+              {card.value}
+            </h3>
           </div>
 
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+          <div className="pt-3 mt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
             {card.subtext && (
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 {card.subtext}
               </span>
             )}
             {card.badge && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 {card.badge}
               </span>
             )}
