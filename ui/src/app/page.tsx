@@ -352,7 +352,7 @@ const AppContent: React.FC = () => {
                   <DhanMitrLogo className="w-8 h-6 shrink-0" />
                   <span className="font-display font-black text-sm tracking-tight text-slate-900 dark:text-white">
                     धन<span className="text-emerald-500">Mitr</span>
-                    <span className="text-slate-400 font-mono text-xs font-normal ml-2">MSME & Project Loans Suite</span>
+                    <span className="text-slate-400 font-mono text-xs font-normal ml-2">Financial Calculators & MSME Loans Suite</span>
                   </span>
                 </div>
               </div>
@@ -447,11 +447,6 @@ const AppContent: React.FC = () => {
               {/* Tax Calculator Tab */}
               {activeSubTab === 'tax_calculator' && (
                 <TaxRegimeComparator />
-              )}
-
-              {/* MSME & Project Loans Suite */}
-              {activeSubTab === 'msme_tools' && (
-                <ProjectLoanSuite />
               )}
 
               {/* Subscriptions Tab */}

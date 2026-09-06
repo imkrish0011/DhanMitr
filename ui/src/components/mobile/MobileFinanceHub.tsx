@@ -23,7 +23,6 @@ import { BudgetIncomeTab } from '@/components/finance/BudgetIncomeTab';
 import { EmergencyRunwayGauge } from '@/components/finance/EmergencyRunwayGauge';
 import { GoalsTab } from '@/components/finance/GoalsTab';
 import { TaxRegimeComparator } from '@/components/finance/TaxRegimeComparator';
-import { ProjectLoanSuite } from '@/components/calculator/ProjectLoanSuite';
 
 interface MobileFinanceHubProps {
   onOpenVoice: () => void;
@@ -77,7 +76,6 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
 
   const tabs = [
     { id: 'overview' as const, label: 'Overview', shortLabel: 'Overview' },
-    { id: 'msme_tools' as const, label: 'MSME & Loans', shortLabel: 'MSME Loans' },
     { id: 'goals' as const, label: `Goals (${activeGoalsCount})`, shortLabel: `Goals (${activeGoalsCount})` },
     { id: 'tax_calculator' as const, label: 'Tax', shortLabel: 'Tax Optimizer' },
     { id: 'subscriptions' as const, label: `Subs (${activeSubscriptionsCount})`, shortLabel: `Subs (${activeSubscriptionsCount})` },
@@ -364,12 +362,6 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
               )}
             </div>
           </div>
-        </div>
-      )}
-
-      {activeSubTab === 'msme_tools' && (
-        <div className="px-3 pt-2">
-          <ProjectLoanSuite />
         </div>
       )}
 

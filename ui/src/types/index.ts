@@ -241,6 +241,6 @@ export interface VoiceResponse {
 
 export type NavTab = 'landing' | 'finance_hub' | 'ai_companion' | 'transactions' | 'insights' | 'goals' | 'reports' | 'documents' | 'settings' | 'msme_tools';
 
-export type FinanceSubTab = 'overview' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator' | 'msme_tools';
+export type FinanceSubTab = 'overview' | 'msme_tools' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator';
 
 
