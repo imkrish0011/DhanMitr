@@ -29,8 +29,11 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
   // Margin = Project Cost * 0.10 (10%)
   // Loan = Project Cost * 0.90 (90%)
   // Project Cost = Margin / 0.10
-  const marginMoney = Math.round(projectCost * 0.1);
-  const loanAmount = Math.round(projectCost * 0.9);
+  // Official Micro Finance tier cap: Maximum loan is ₹1.25 Lakh (₹125,000)
+  const isMicro = projectCost <= 140000;
+  const rawLoanAmount = Math.round(projectCost * 0.9);
+  const loanAmount = isMicro ? Math.min(125000, rawLoanAmount) : rawLoanAmount;
+  const marginMoney = projectCost - loanAmount;
 
   // Update parent when project cost changes
   React.useEffect(() => {
@@ -38,26 +41,28 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
   }, [projectCost, onProjectCostChange]);
 
   // Exact Tiered Threshold Scheme Router:
-  // <= 1.40L -> Micro Finance (6.5%, 3 yrs, 3 mo moratorium)
+  // <= 1.40L -> Micro Finance (6.5%, 3 yrs, 3 mo moratorium, Max loan cap: ₹1.25L)
   // 1.40L to 50L -> Term Loan (8%, 7 yrs, 6 mo moratorium)
   // > 50L -> Commercial MSME (9.5%, 8 yrs, 6 mo moratorium)
   const scheme = useMemo(() => {
-    if (loanAmount <= 140000) {
+    if (projectCost <= 140000) {
       return {
         name: 'Micro Finance Scheme',
-        badge: 'Priority Micro Credit',
+        badge: 'Priority Micro Credit (Max ₹1.25L)',
         rate: 6.5,
         years: 3,
         moratoriumMonths: 3,
-        note: 'Designed for small village ventures & retail shops. Zero collateral needed.',
+        maxLoanCap: 125000,
+        note: 'Designed for small village ventures & retail shops. Zero collateral needed. Official loan cap of ₹1.25 Lakh.',
       };
-    } else if (loanAmount <= 5000000) {
+    } else if (projectCost <= 5000000) {
       return {
         name: 'MSME Term Loan Scheme',
         badge: 'CGTMSE Project Loan',
         rate: 8.0,
         years: 7,
         moratoriumMonths: 6,
+        maxLoanCap: null,
         note: 'Ideal for machinery, sheds & commercial setups. 6 months grace period.',
       };
     } else {
@@ -67,10 +72,11 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
         rate: 9.5,
         years: 8,
         moratoriumMonths: 6,
+        maxLoanCap: null,
         note: 'For larger industrial and processing setups with customized banking terms.',
       };
     }
-  }, [loanAmount]);
+  }, [projectCost]);
 
   // Quarterly EMI & Moratorium Math:
   const schedule = useMemo(() => {
@@ -222,7 +228,7 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
             </div>
             <div className="flex items-center gap-1.5 pt-1">
               <span className="text-[11px] text-slate-400 font-mono">Quick Budgets:</span>
-              {[100000, 500000, 1000000, 2500000].map((val) => (
+              {[100000, 140000, 500000, 1000000, 2500000].map((val) => (
                 <button
                   key={val}
                   type="button"
@@ -233,7 +239,7 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
                       : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'
                   }`}
                 >
-                  ₹{val >= 100000 ? `${val / 100000}L` : `${val / 1000}k`}
+                  {val === 140000 ? '₹1.4L' : val >= 100000 ? `₹${val / 100000}L` : `₹${val / 1000}k`}
                 </button>
               ))}
             </div>
@@ -245,7 +251,7 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
           {/* Card 1: Margin Money */}
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#070B14] border border-slate-200/80 dark:border-white/5 space-y-1">
             <span className="text-[11px] uppercase font-bold text-slate-400 font-mono">
-              Your 10% Margin Money
+              Your {isMicro && rawLoanAmount > 125000 ? 'Promoter' : '10%'} Margin Money
             </span>
             <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
               ₹{marginMoney.toLocaleString('en-IN')}
@@ -257,7 +263,7 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
           <div className="p-4 rounded-2xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/20 space-y-1">
             <div className="flex justify-between items-center">
               <span className="text-[11px] uppercase font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                90% Bank Loan
+                {isMicro && rawLoanAmount > 125000 ? 'Bank Loan (Capped)' : '90% Bank Loan'}
               </span>
               <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded font-bold">
                 {scheme.rate}% p.a.
@@ -268,6 +274,11 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
             </div>
             <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80">
               {scheme.name} ({scheme.years} Years)
+              {isMicro && (
+                <span className="block text-[10px] text-emerald-600/70 dark:text-emerald-400/70 font-mono mt-0.5">
+                  Official Max Cap: ₹1.25 Lakh
+                </span>
+              )}
             </p>
           </div>
 

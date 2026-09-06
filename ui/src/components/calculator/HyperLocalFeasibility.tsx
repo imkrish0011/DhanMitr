@@ -33,6 +33,11 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
   const [sector, setSector] = useState<BusinessSector>('dairy');
   const [locationType, setLocationType] = useState<'village' | 'town'>('village');
   const [projectBudget, setProjectBudget] = useState<number>(initialProjectCost);
+  const [village, setVillage] = useState<string>('');
+  const [block, setBlock] = useState<string>('');
+  const [district, setDistrict] = useState<string>('');
+
+  const locationText = [village, block, district].filter(Boolean).join(', ');
 
   // Sector profiles tailored for rural Bharat
   const sectorInfo = useMemo(() => {
@@ -173,6 +178,59 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
           </div>
         </div>
 
+        {/* Exact Location Inputs (Village, Block, District - SIH Requirement) */}
+        <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-[#070B14]/80 border border-slate-200/80 dark:border-white/10 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <label className="text-xs font-bold uppercase font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Enter Exact Location (SIH Evaluation Requirement):</span>
+            </label>
+            {locationText && (
+              <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                📍 {locationText}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                Village / Gram Panchayat
+              </label>
+              <input
+                type="text"
+                value={village}
+                onChange={(e) => setVillage(e.target.value)}
+                placeholder="e.g. Rampur"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                Block / Tehsil
+              </label>
+              <input
+                type="text"
+                value={block}
+                onChange={(e) => setBlock(e.target.value)}
+                placeholder="e.g. Haveli"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                District
+              </label>
+              <input
+                type="text"
+                value={district}
+                onChange={(e) => setDistrict(e.target.value)}
+                placeholder="e.g. Pune"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Business Sector Picker (6 Clean Visual SVG Cards) */}
         <div>
           <label className="text-xs font-bold uppercase font-mono text-slate-400 block mb-2.5">
@@ -257,7 +315,7 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
               <Award className="w-5 h-5 text-teal-500" />
             </div>
             <p className="text-[11px] text-teal-600/80 dark:text-teal-400/80">
-              Strong candidate for CGTMSE / Mudra Loan
+              {locationText ? `Verified for ${locationText}` : 'Strong candidate for CGTMSE / Mudra Loan'}
             </p>
           </div>
         </div>
@@ -267,7 +325,7 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
           <div className="p-4 rounded-2xl bg-emerald-500/5 dark:bg-emerald-950/15 border border-emerald-500/20 space-y-2">
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wide flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
-              Key Local Advantages
+              Key Local Advantages {locationText ? `(${locationText})` : ''}
             </span>
             <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
               {sectorInfo.advantages.map((adv, i) => (
