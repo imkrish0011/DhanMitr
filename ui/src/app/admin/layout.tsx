@@ -24,17 +24,17 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // If on login page, render children directly without dashboard shell
-  if (pathname === '/admin/login') {
-    return <>{children}</>;
-  }
-
   // Redirect to login if unauthenticated
   React.useEffect(() => {
     if (!isLoading && !user && pathname !== '/admin/login') {
       router.push('/admin/login');
     }
   }, [isLoading, user, pathname, router]);
+
+  // If on login page, render children directly without dashboard shell
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
 
   // Loading State
   if (isLoading) {
