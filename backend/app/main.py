@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.api.v1.endpoints.rag import router as rag_router
+from backend.app.api.v1.endpoints.feasibility import router as feasibility_router
 from backend.app.api.voice import router as voice_router
 from backend.app.services import voice_service, rag_service
 
@@ -55,6 +56,15 @@ app.include_router(
     voice_router,
     prefix=settings.API_V1_PREFIX + "/voice",
     tags=["Voice"],
+)
+
+# ---------------------------------------------------------------------------
+# Rural Business Feasibility API (Module 1)
+# ---------------------------------------------------------------------------
+app.include_router(
+    feasibility_router,
+    prefix=settings.API_V1_PREFIX + "/feasibility",
+    tags=["Feasibility"],
 )
 
 

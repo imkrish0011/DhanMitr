@@ -243,4 +243,45 @@ export type NavTab = 'landing' | 'finance_hub' | 'ai_companion' | 'transactions'
 
 export type FinanceSubTab = 'overview' | 'msme_tools' | 'subscriptions' | 'insurances' | 'budget' | 'goals' | 'tax_calculator';
 
+// Hyper-Local Feasibility Types
+export interface FeasibilitySWOT {
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+}
+
+export interface FeasibilityAnalyzeRequest {
+  location: string;
+  business_category: string;
+  margin_capital: number;
+  language?: 'en' | 'hi';
+}
+
+export interface FeasibilityAnalyzeResponse {
+  location: string;
+  business_category: string;
+  category_title: string;
+  margin_capital: number;
+  project_cost: number;
+  loan_eligible_90: number;
+  recommended_scheme: string;
+  scheme_tier: string;
+  scheme_interest_rate: number;
+  scheme_tenure_years: number;
+  moratorium_months: number;
+  market_reach_radius: string;
+  competitor_density: string;
+  market_saturation: string;
+  swot: FeasibilitySWOT;
+  pricing_benchmarks: string[];
+  estimated_monthly_sales: number;
+  net_margin_percent: number;
+  estimated_monthly_profit: number;
+  viability_score: number;
+  break_even_months: number;
+  bank_readiness_summary: string;
+  recommendation: string;
+}
+
 

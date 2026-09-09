@@ -3,7 +3,13 @@
  * Connects frontend UI to backend FastAPI voice service.
  */
 
-import { VoiceHealthResponse, VoiceRequest, VoiceResponse } from '@/types';
+import {
+  VoiceHealthResponse,
+  VoiceRequest,
+  VoiceResponse,
+  FeasibilityAnalyzeRequest,
+  FeasibilityAnalyzeResponse,
+} from '@/types';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
 
@@ -194,6 +200,50 @@ export async function streamVoiceAudio(
     if (value && value.length > 0) {
       onAudioChunk(value);
     }
+  }
+}
+
+/**
+ * Calls the /api/v1/feasibility/analyze endpoint for hyper-local rural business feasibility studies.
+ */
+export async function analyzeFeasibility(
+  payload: FeasibilityAnalyzeRequest
+): Promise<FeasibilityAnalyzeResponse> {
+  const url = `${BACKEND_URL}/api/v1/feasibility/analyze`;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let detail = 'Feasibility analysis failed';
+      try {
+        const errJson = await response.json();
+        detail = errJson.detail || detail;
+      } catch {
+        detail = response.statusText || detail;
+      }
+      throw new VoiceApiError(detail, response.status);
+    }
+
+    const data: FeasibilityAnalyzeResponse = await response.json();
+    return data;
+  } catch (err: unknown) {
+    if (err instanceof VoiceApiError) {
+      throw err;
+    }
+    const message = err instanceof Error ? err.message : 'Unable to connect to Feasibility service.';
+    throw new VoiceApiError(message, 503);
   }
 }
 

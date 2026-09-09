@@ -11,7 +11,7 @@ import { Calculator, Store, TrendingUp, Scale, Zap, Printer, Sparkles } from 'lu
 export type ProjectLoanTab = 'loan' | 'feasibility' | 'sip' | 'budget' | 'prepayment';
 
 export const ProjectLoanSuite: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ProjectLoanTab>('loan');
+  const [activeTab, setActiveTab] = useState<ProjectLoanTab>('feasibility');
   const [sharedProjectCost, setSharedProjectCost] = useState<number>(500000);
 
   const handlePrint = () => {
@@ -22,20 +22,20 @@ export const ProjectLoanSuite: React.FC = () => {
 
   const toolTabs = [
     {
-      id: 'loan' as const,
-      label: '10% Margin & Loan',
-      shortLabel: 'Margin Loan',
-      category: 'MSME & Business',
-      icon: Calculator,
-      activeClass: 'bg-emerald-500 text-slate-950 shadow-xs font-bold',
-    },
-    {
       id: 'feasibility' as const,
-      label: 'Village Feasibility',
+      label: 'Module 1: Village Feasibility',
       shortLabel: 'Feasibility',
       category: 'MSME & Business',
       icon: Store,
       activeClass: 'bg-teal-500 text-slate-950 shadow-xs font-bold',
+    },
+    {
+      id: 'loan' as const,
+      label: 'Module 2: 10% Margin & Loan',
+      shortLabel: 'Margin Loan',
+      category: 'MSME & Business',
+      icon: Calculator,
+      activeClass: 'bg-emerald-500 text-slate-950 shadow-xs font-bold',
     },
     {
       id: 'sip' as const,
@@ -127,7 +127,11 @@ export const ProjectLoanSuite: React.FC = () => {
           />
         )}
         {activeTab === 'feasibility' && (
-          <HyperLocalFeasibility initialProjectCost={sharedProjectCost} />
+          <HyperLocalFeasibility
+            initialProjectCost={sharedProjectCost}
+            onProjectCostChange={setSharedProjectCost}
+            onNavigateToLoanTab={() => setActiveTab('loan')}
+          />
         )}
         {activeTab === 'sip' && <SipCalculator />}
         {activeTab === 'budget' && <BudgetSplitter />}

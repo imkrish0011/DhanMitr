@@ -106,10 +106,6 @@ const AppContent: React.FC = () => {
               setAiMode(mode);
             }}
             onLaunchHub={() => handleNavSelection('finance_hub')}
-            onOpenCalculator={() => {
-              setCurrentTab('msme_tools');
-              setActiveSubTab('msme_tools');
-            }}
           />
         ) : currentTab === 'msme_tools' ? (
           <div className="min-h-screen px-3 py-4 space-y-4">
@@ -181,10 +177,6 @@ const AppContent: React.FC = () => {
               setAiMode(mode);
             }}
             onLaunchHub={() => handleNavSelection('finance_hub')}
-            onOpenCalculator={() => {
-              setCurrentTab('msme_tools');
-              setActiveSubTab('msme_tools');
-            }}
           />
         )}
 
@@ -329,10 +321,6 @@ const AppContent: React.FC = () => {
                 setAiMode(mode);
               }}
               onLaunchHub={() => handleNavSelection('finance_hub')}
-              onOpenCalculator={() => {
-                setCurrentTab('msme_tools');
-                setActiveSubTab('msme_tools');
-              }}
             />
           </main>
         )}
