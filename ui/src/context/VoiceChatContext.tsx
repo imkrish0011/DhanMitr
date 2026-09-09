@@ -1,11 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { ChatMessage, VoiceState } from '@/types';
+import { ChatMessage, VoiceState, ChatSession } from '@/types';
 import { initialChatMessages } from '@/data/mockData';
 import { useFinance } from './FinanceContext';
 import { useAuth } from './AuthContext';
 import { sendVoiceChat, streamRagChat } from '@/lib/voiceApi';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 export type SupportedLanguage = 'auto' | 'en' | 'hi' | 'hinglish';
 
@@ -29,11 +30,28 @@ interface VoiceChatContextType {
   resetChat: () => void;
   isGeneratingResponse: boolean;
 
+  // Chat Multi-Session & History State
+  sessions: ChatSession[];
+  activeSessionId: string | null;
+  createNewChat: () => void;
+  loadChatSession: (sessionId: string) => void;
+  deleteChatSession: (sessionId: string) => void;
+
   // Quick Actions & Triggers
   triggerPrompt: (promptText: string, lang?: SupportedLanguage) => void;
 }
 
 const generateMsgId = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+const generateSessionId = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
 const getTimestampStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const VoiceChatContext = createContext<VoiceChatContextType | undefined>(undefined);
@@ -63,6 +81,207 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [audioFrequencyData, setAudioFrequencyData] = useState<number[]>(new Array(24).fill(10));
+
+  // Multi-session chat history state
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  // Load sessions from localStorage & Supabase
+  useEffect(() => {
+    const userKey = profile?.user_id || (isAuthenticated ? 'auth_user' : 'guest');
+    const storageKey = `dhanmitr_chat_sessions_${userKey}`;
+    let loadedSessions: ChatSession[] = [];
+
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          loadedSessions = parsed;
+        }
+      }
+    } catch {}
+
+    if (loadedSessions.length === 0) {
+      const initId = generateSessionId();
+      const defaultSession: ChatSession = {
+        id: initId,
+        title: 'New Conversation',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: initialChatMessages,
+      };
+      loadedSessions = [defaultSession];
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(loadedSessions));
+      } catch {}
+    }
+
+    setSessions(loadedSessions);
+    setActiveSessionId(loadedSessions[0].id);
+    setMessages(loadedSessions[0].messages || initialChatMessages);
+
+    // Optional Supabase cloud sync if logged in and configured
+    if (isSupabaseConfigured && isAuthenticated && profile?.user_id) {
+      Promise.resolve(
+        supabase
+          .from('chat_sessions')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .order('updated_at', { ascending: false })
+      )
+        .then(({ data, error }: any) => {
+          if (!error && data && data.length > 0) {
+            const remote: ChatSession[] = data.map((d: any) => ({
+              id: d.id,
+              title: d.title || 'Conversation',
+              createdAt: new Date(d.created_at).getTime(),
+              updatedAt: new Date(d.updated_at).getTime(),
+              messages: Array.isArray(d.messages) && d.messages.length > 0 ? d.messages : initialChatMessages,
+            }));
+            setSessions(remote);
+            setActiveSessionId(remote[0].id);
+            setMessages(remote[0].messages);
+            try {
+              localStorage.setItem(storageKey, JSON.stringify(remote));
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, [profile?.user_id, isAuthenticated]);
+
+  const persistSessionMessages = (
+    targetSessionId: string,
+    updatedMessages: ChatMessage[],
+    firstUserPrompt?: string
+  ) => {
+    setSessions((prev) => {
+      const existing = prev.find((s) => s.id === targetSessionId);
+      let title = existing ? existing.title : 'New Conversation';
+      if ((title === 'New Conversation' || title === 'Conversation') && firstUserPrompt) {
+        const clean = firstUserPrompt.trim();
+        title = clean.length > 36 ? clean.slice(0, 34) + '...' : clean;
+      }
+      const updatedSession: ChatSession = existing
+        ? {
+            ...existing,
+            title,
+            updatedAt: Date.now(),
+            messages: updatedMessages,
+          }
+        : {
+            id: targetSessionId,
+            title: title,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            messages: updatedMessages,
+          };
+
+      const remaining = prev.filter((s) => s.id !== targetSessionId);
+      const updatedList = [updatedSession, ...remaining];
+
+      const userKey = profile?.user_id || (isAuthenticated ? 'auth_user' : 'guest');
+      const storageKey = `dhanmitr_chat_sessions_${userKey}`;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updatedList));
+      } catch {}
+
+      if (isSupabaseConfigured && isAuthenticated && profile?.user_id) {
+        Promise.resolve(
+          supabase
+            .from('chat_sessions')
+            .upsert({
+              id: updatedSession.id,
+              user_id: profile.user_id,
+              title: updatedSession.title,
+              messages: updatedSession.messages,
+              updated_at: new Date().toISOString(),
+            })
+        ).catch(() => {});
+      }
+
+      return updatedList;
+    });
+  };
+
+  const createNewChat = () => {
+    stopAudioPlayback();
+    const newId = generateSessionId();
+    const newSession: ChatSession = {
+      id: newId,
+      title: 'New Conversation',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messages: initialChatMessages,
+    };
+    setSessions((prev) => {
+      const updated = [newSession, ...prev];
+      const userKey = profile?.user_id || (isAuthenticated ? 'auth_user' : 'guest');
+      const storageKey = `dhanmitr_chat_sessions_${userKey}`;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    setActiveSessionId(newId);
+    setMessages(initialChatMessages);
+    setActiveTranscript('');
+    setAssistantVoiceReply('');
+    setVoiceState('idle');
+
+    if (isSupabaseConfigured && isAuthenticated && profile?.user_id) {
+      Promise.resolve(
+        supabase
+          .from('chat_sessions')
+          .insert({
+            id: newId,
+            user_id: profile.user_id,
+            title: 'New Conversation',
+            messages: initialChatMessages,
+          })
+      ).catch(() => {});
+    }
+  };
+
+  const loadChatSession = (sessionId: string) => {
+    stopAudioPlayback();
+    const target = sessions.find((s) => s.id === sessionId);
+    if (!target) return;
+    setActiveSessionId(sessionId);
+    setMessages(target.messages && target.messages.length > 0 ? target.messages : initialChatMessages);
+    setActiveTranscript('');
+    setAssistantVoiceReply('');
+    setVoiceState('idle');
+  };
+
+  const deleteChatSession = (sessionId: string) => {
+    const remaining = sessions.filter((s) => s.id !== sessionId);
+    setSessions(remaining);
+
+    const userKey = profile?.user_id || (isAuthenticated ? 'auth_user' : 'guest');
+    const storageKey = `dhanmitr_chat_sessions_${userKey}`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(remaining));
+    } catch {}
+
+    if (isSupabaseConfigured && isAuthenticated && profile?.user_id) {
+      Promise.resolve(
+        supabase
+          .from('chat_sessions')
+          .delete()
+          .eq('id', sessionId)
+      ).catch(() => {});
+    }
+
+    if (activeSessionId === sessionId) {
+      if (remaining.length > 0) {
+        loadChatSession(remaining[0].id);
+      } else {
+        createNewChat();
+      }
+    }
+  };
 
   // Audio capture refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -538,7 +757,12 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       content: m.text,
     }));
 
-    setMessages((prev) => [...prev, userMsg, initialAssistantMsg]);
+    const currentActiveId = activeSessionId || generateSessionId();
+    if (!activeSessionId) setActiveSessionId(currentActiveId);
+
+    const newMsgs = [...messages, userMsg, initialAssistantMsg];
+    setMessages(newMsgs);
+    persistSessionMessages(currentActiveId, newMsgs, text);
     setIsGeneratingResponse(true);
 
     try {
@@ -575,16 +799,18 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             );
           },
           onDone: () => {
-            setMessages((prev) =>
-              prev.map((msg) =>
+            setMessages((prev) => {
+              const finalMsgs = prev.map((msg) =>
                 msg.id === assistantMsgId ? { ...msg, isStreaming: false } : msg
-              )
-            );
+              );
+              persistSessionMessages(currentActiveId, finalMsgs);
+              return finalMsgs;
+            });
             setIsGeneratingResponse(false);
           },
           onError: (err) => {
-            setMessages((prev) =>
-              prev.map((msg) =>
+            setMessages((prev) => {
+              const finalMsgs = prev.map((msg) =>
                 msg.id === assistantMsgId
                   ? {
                       ...msg,
@@ -592,16 +818,18 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                       isStreaming: false,
                     }
                   : msg
-              )
-            );
+              );
+              persistSessionMessages(currentActiveId, finalMsgs);
+              return finalMsgs;
+            });
             setIsGeneratingResponse(false);
           },
         }
       );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Please try again.';
-      setMessages((prev) =>
-        prev.map((msg) =>
+      setMessages((prev) => {
+        const finalMsgs = prev.map((msg) =>
           msg.id === assistantMsgId
             ? {
                 ...msg,
@@ -609,8 +837,10 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 isStreaming: false,
               }
             : msg
-        )
-      );
+        );
+        persistSessionMessages(currentActiveId, finalMsgs);
+        return finalMsgs;
+      });
     } finally {
       setIsGeneratingResponse(false);
     }
@@ -630,6 +860,9 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch {}
     }
     setMessages(initialChatMessages);
+    if (activeSessionId) {
+      persistSessionMessages(activeSessionId, initialChatMessages);
+    }
     setActiveTranscript('');
     setAssistantVoiceReply('');
     setVoiceState('idle');
@@ -652,6 +885,11 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         sendMessage,
         resetChat,
         isGeneratingResponse,
+        sessions,
+        activeSessionId,
+        createNewChat,
+        loadChatSession,
+        deleteChatSession,
         triggerPrompt,
         speakText,
       }}

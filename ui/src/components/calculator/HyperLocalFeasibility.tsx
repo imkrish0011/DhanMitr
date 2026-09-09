@@ -554,7 +554,7 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
               <span>Strengths (ताकत)</span>
             </div>
             <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-              {swot.strengths.map((pt, i) => (
+              {swot.strengths.map((pt: string, i: number) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-emerald-500 font-bold mt-0.5">•</span>
                   <span>{pt}</span>
@@ -570,7 +570,7 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
               <span>Weaknesses (कमजोरियां)</span>
             </div>
             <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-              {swot.weaknesses.map((pt, i) => (
+              {swot.weaknesses.map((pt: string, i: number) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-amber-500 font-bold mt-0.5">•</span>
                   <span>{pt}</span>
@@ -586,7 +586,7 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
               <span>Opportunities (अवसर)</span>
             </div>
             <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-              {swot.opportunities.map((pt, i) => (
+              {swot.opportunities.map((pt: string, i: number) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-sky-500 font-bold mt-0.5">•</span>
                   <span>{pt}</span>
@@ -602,7 +602,7 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
               <span>Threats (जोखिम / खतरे)</span>
             </div>
             <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-              {swot.threats.map((pt, i) => (
+              {swot.threats.map((pt: string, i: number) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-rose-500 font-bold mt-0.5">•</span>
                   <span>{pt}</span>
@@ -636,7 +636,7 @@ export const HyperLocalFeasibility: React.FC<HyperLocalFeasibilityProps> = ({
               Local Ground Rates:
             </span>
             <div className="space-y-2">
-              {pricingBenchmarks.map((bm, i) => (
+              {pricingBenchmarks.map((bm: string, i: number) => (
                 <div
                   key={i}
                   className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#070B14] border border-slate-200/70 dark:border-white/5 text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2"

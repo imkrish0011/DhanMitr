@@ -176,6 +176,14 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
 
 export interface STTTelemetry {
