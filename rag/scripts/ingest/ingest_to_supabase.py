@@ -250,25 +250,35 @@ def ingest_chunks(
             }
             batch_payload.append(chunk_payload)
 
-        # Upsert batch with on_conflict on chunk_id for idempotency
-        try:
-            res = (
-                client.schema("rag")
-                .table("chunks")
-                .upsert(batch_payload, on_conflict="chunk_id")
-                .execute()
-            )
-            count = len(res.data) if res.data else len(batch_payload)
-            upserted_count += count
-            logger.info(
-                "  Upserted batch %d–%d / %d chunks",
-                i + 1,
-                min(i + batch_size, total_records),
-                total_records,
-            )
-        except Exception as exc:
-            logger.error("Failed to upsert chunk batch %d–%d: %s", i + 1, i + len(batch_payload), exc)
-            raise RuntimeError(f"Chunk batch ingestion failed: {exc}") from exc
+        # Upsert batch with on_conflict on chunk_id for idempotency (with retry for network stability)
+        max_retries = 4
+        success = False
+        for attempt in range(1, max_retries + 1):
+            try:
+                res = (
+                    client.schema("rag")
+                    .table("chunks")
+                    .upsert(batch_payload, on_conflict="chunk_id")
+                    .execute()
+                )
+                count = len(res.data) if res.data else len(batch_payload)
+                upserted_count += count
+                logger.info(
+                    "  Upserted batch %d–%d / %d chunks",
+                    i + 1,
+                    min(i + batch_size, total_records),
+                    total_records,
+                )
+                success = True
+                break
+            except Exception as exc:
+                if attempt < max_retries:
+                    import time
+                    logger.warning("Retry %d/%d for batch %d due to: %s", attempt, max_retries, i + 1, exc)
+                    time.sleep(1.5 * attempt)
+                else:
+                    logger.error("Failed to upsert chunk batch %d–%d after %d attempts: %s", i + 1, i + len(batch_payload), max_retries, exc)
+                    raise RuntimeError(f"Chunk batch ingestion failed: {exc}") from exc
 
     return upserted_count
 

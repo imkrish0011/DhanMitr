@@ -1,0 +1,59 @@
+{
+  "source_document": "Prime Minister's Employment Generation Programme (PMEGP)",
+  "source_name": "Ministry of MSME & KVIC, Government of India",
+  "source_url": "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+  "retrieved_at": "2026-09-11T12:00:00Z",
+  "data_type": "periodic",
+  "chunks": [
+    {
+      "chunk_id": "Prime Minister's Employment Generation Programme (PMEGP)-001",
+      "section": "Scheme Overview and Objectives",
+      "source_document": "Prime Minister's Employment Generation Programme (PMEGP)",
+      "source_name": "Ministry of MSME & KVIC, Government of India",
+      "source_url": "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "The Prime Minister's Employment Generation Programme (PMEGP) is a flagship credit-linked subsidy programme launched by the Ministry of MSME. It aims to generate continuous, sustainable employment opportunities in rural and urban areas by helping micro-entrepreneurs set up new self-employment ventures and micro-enterprises in manufacturing and service sectors."
+    },
+    {
+      "chunk_id": "Prime Minister's Employment Generation Programme (PMEGP)-002",
+      "section": "Maximum Project Cost and Financial Assistance",
+      "source_document": "Prime Minister's Employment Generation Programme (PMEGP)",
+      "source_name": "Ministry of MSME & KVIC, Government of India",
+      "source_url": "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "The maximum permissible project cost for setting up a new unit in the Manufacturing Sector is Rs. 50 Lakhs. The maximum permissible project cost for setting up a new unit in the Business/Service Sector is Rs. 20 Lakhs. For upgradation of existing well-performing PMEGP/MUDRA units, a second loan of up to Rs. 1 Crore for manufacturing and Rs. 25 Lakhs for service is available with a 15% to 20% subsidy."
+    },
+    {
+      "chunk_id": "Prime Minister's Employment Generation Programme (PMEGP)-003",
+      "section": "Margin Money Subsidy Rates",
+      "source_document": "Prime Minister's Employment Generation Programme (PMEGP)",
+      "source_name": "Ministry of MSME & KVIC, Government of India",
+      "source_url": "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "In Rural Areas: General Category beneficiaries receive a 25% Government Subsidy (Margin Money), requiring only 10% own contribution. Special Categories (including SC, ST, OBC, Women, Minorities, Ex-servicemen, Differently-abled, and Transgenders) receive a 35% Government Subsidy in rural areas with only 5% own contribution. In Urban Areas: General Category receives 15% subsidy (10% own contribution), while Special Categories receive 25% subsidy (5% own contribution)."
+    },
+    {
+      "chunk_id": "Prime Minister's Employment Generation Programme (PMEGP)-004",
+      "section": "Eligibility and Educational Criteria",
+      "source_document": "Prime Minister's Employment Generation Programme (PMEGP)",
+      "source_name": "Ministry of MSME & KVIC, Government of India",
+      "source_url": "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "Any individual above 18 years of age is eligible. For setting up manufacturing units with project cost above Rs. 10 Lakhs and service units above Rs. 5 Lakhs, the applicant must have passed at least standard 8th examination. Self Help Groups (SHGs), Charitable Trusts, and Co-operative Societies are also eligible. Existing units or units that have already availed government subsidies are not eligible."
+    },
+    {
+      "chunk_id": "Prime Minister's Employment Generation Programme (PMEGP)-005",
+      "section": "Bank Loan and Repayment Schedule",
+      "source_document": "Prime Minister's Employment Generation Programme (PMEGP)",
+      "source_name": "Ministry of MSME & KVIC, Government of India",
+      "source_url": "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "Banks provide the balance 90% to 95% of the total project cost as a composite loan (term loan for plant/machinery and working capital). The repayment schedule ranges from 3 to 7 years after an initial moratorium period determined by the financing bank."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "source_document": "PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)",
+  "source_name": "Ministry of New and Renewable Energy (MNRE), Government of India",
+  "source_url": "https://pmkusum.mnre.gov.in/",
+  "retrieved_at": "2026-09-11T12:00:00Z",
+  "data_type": "periodic",
+  "chunks": [
+    {
+      "chunk_id": "PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)-001",
+      "section": "Scheme Objectives and Components",
+      "source_document": "PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)",
+      "source_name": "Ministry of New and Renewable Energy (MNRE), Government of India",
+      "source_url": "https://pmkusum.mnre.gov.in/",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "PM-KUSUM aims to provide energy and water security to Indian farmers while de-dieselizing the agriculture sector. It has three components: Component A: Setting up of 10,000 MW small decentralized solar plants (0.5 MW to 2 MW) on barren/fallow land. Component B: Installation of 20 Lakh standalone solar agriculture pumps (up to 7.5 HP) in off-grid rural areas. Component C: Solarization of 15 Lakh grid-connected agricultural pumps and feeder-level solarization."
+    },
+    {
+      "chunk_id": "PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)-002",
+      "section": "Subsidy Structure and Cost Sharing (Component B & C)",
+      "source_document": "PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)",
+      "source_name": "Ministry of New and Renewable Energy (MNRE), Government of India",
+      "source_url": "https://pmkusum.mnre.gov.in/",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "Central Financial Assistance (CFA): 30% of the benchmark cost is funded by the Central Government (MNRE). State Government Subsidy: 30% of the cost is funded by the State Government. Bank Loan: 30% of the cost can be financed via bank loan. Farmer Contribution: The farmer only has to invest 10% of the total pump cost. For North Eastern States, Himachal Pradesh, Uttarakhand, J&K, and Ladakh, the Central CFA is 50%, state subsidy is 30%, and farmer share is only 20%."
+    },
+    {
+      "chunk_id": "PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)-003",
+      "section": "Eligibility and Benefits",
+      "source_document": "PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)",
+      "source_name": "Ministry of New and Renewable Energy (MNRE), Government of India",
+      "source_url": "https://pmkusum.mnre.gov.in/",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "Individual farmers, farmer groups, cooperatives, and water user associations. Provides daytime uninterrupted solar power for irrigation, eliminates recurring diesel fuel expenses, and allows farmers to sell surplus solar power back to DISCOMs for additional revenue."
+    }
+  ]
+}

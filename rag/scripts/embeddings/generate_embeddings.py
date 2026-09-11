@@ -35,6 +35,11 @@ CHUNK_FILES = [
     Path("rag/processed/chunks/pmsby_chunks.json"),
     Path("rag/processed/chunks/standup_chunks.json"),
     Path("rag/processed/chunks/pm_svanidhi_chunks.json"),
+    Path("rag/processed/chunks/pmegp_chunks.json"),
+    Path("rag/processed/chunks/kcc_chunks.json"),
+    Path("rag/processed/chunks/cgtmse_chunks.json"),
+    Path("rag/processed/chunks/ahidf_chunks.json"),
+    Path("rag/processed/chunks/pmkusum_chunks.json"),
 ]
 
 OUTPUT_FILE = Path(

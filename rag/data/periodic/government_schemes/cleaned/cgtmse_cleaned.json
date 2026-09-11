@@ -1,0 +1,25 @@
+{
+  "scheme_name": "Credit Guarantee Fund Trust for Micro and Small Enterprises (CGTMSE)",
+  "source_url": "https://www.cgtmse.in/",
+  "source_name": "Ministry of MSME & SIDBI, Government of India",
+  "retrieved_at": "2026-09-11T12:00:00Z",
+  "data_type": "periodic",
+  "sections": [
+    {
+      "heading": "Scheme Objective and Collateral-Free Guarantee",
+      "content": "CGTMSE was set up jointly by the Ministry of MSME and SIDBI to provide institutional credit guarantees to Member Lending Institutions (Banks, NBFCs, RRBs) so they can sanction collateral-free and third-party-guarantee-free credit facilities to new and existing Micro and Small Enterprises (MSEs)."
+    },
+    {
+      "heading": "Maximum Guarantee Coverage Limits",
+      "content": "The scheme provides credit guarantee coverage up to Rs. 500 Lakhs (Rs. 5 Crore) per eligible MSE borrower. Both term loans and working capital credit facilities are covered under the guarantee."
+    },
+    {
+      "heading": "Extent of Guarantee Coverage by Category",
+      "content": "For Micro Enterprises: Up to 85% guarantee coverage for loans up to Rs. 5 Lakhs. For loans above Rs. 5 Lakhs up to Rs. 500 Lakhs, guarantee coverage is 75%. For Women Entrepreneurs & SC/ST Entrepreneurs: Guarantee coverage is enhanced up to 85% across all loan sizes up to Rs. 500 Lakhs. For Units in North Eastern Region (NER), Jammu & Kashmir, Ladakh, and Aspirational Districts: Guarantee coverage is up to 85%."
+    },
+    {
+      "heading": "Annual Guarantee Fee (AGF)",
+      "content": "An Annual Guarantee Fee (AGF) starting from as low as 0.37% per annum is charged based on the loan size and borrower risk profile. For loans up to Rs. 1 Crore, the fee is reduced to make credit affordable for micro-enterprises."
+    }
+  ]
+}

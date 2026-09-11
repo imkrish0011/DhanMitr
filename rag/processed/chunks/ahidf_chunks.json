@@ -1,0 +1,39 @@
+{
+  "source_document": "Animal Husbandry Infrastructure Development Fund (AHIDF)",
+  "source_name": "Department of Animal Husbandry and Dairying (DAHD)",
+  "source_url": "https://ahidf.udyamimitra.in/",
+  "retrieved_at": "2026-09-11T12:00:00Z",
+  "data_type": "periodic",
+  "chunks": [
+    {
+      "chunk_id": "Animal Husbandry Infrastructure Development Fund (AHIDF)-001",
+      "section": "Scheme Purpose and Eligible Sectors",
+      "source_document": "Animal Husbandry Infrastructure Development Fund (AHIDF)",
+      "source_name": "Department of Animal Husbandry and Dairying (DAHD)",
+      "source_url": "https://ahidf.udyamimitra.in/",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "AHIDF is a Rs. 29,610 Crore infrastructure fund established under the Atmanirbhar Bharat Abhiyan. It incentivizes private entrepreneurs, FPOs, MSMEs, Section 8 companies, and cooperatives to set up: (1) Dairy processing and value addition infrastructure, (2) Meat processing and value addition facilities, (3) Animal feed manufacturing plants, (4) Breed improvement and multiplication farms, and (5) Veterinary vaccine & medicine manufacturing units."
+    },
+    {
+      "chunk_id": "Animal Husbandry Infrastructure Development Fund (AHIDF)-002",
+      "section": "Financial Incentives and Interest Subvention",
+      "source_document": "Animal Husbandry Infrastructure Development Fund (AHIDF)",
+      "source_name": "Department of Animal Husbandry and Dairying (DAHD)",
+      "source_url": "https://ahidf.udyamimitra.in/",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "Beneficiaries receive an interest subvention of 3% per annum for up to 8 years on bank loans. Additionally, a credit guarantee of up to 25% of the total loan amount is provided to scheduled banks through the Credit Guarantee Fund Trust for Animal Husbandry."
+    },
+    {
+      "chunk_id": "Animal Husbandry Infrastructure Development Fund (AHIDF)-003",
+      "section": "Loan Quantum and Repayment Terms",
+      "source_document": "Animal Husbandry Infrastructure Development Fund (AHIDF)",
+      "source_name": "Department of Animal Husbandry and Dairying (DAHD)",
+      "source_url": "https://ahidf.udyamimitra.in/",
+      "retrieved_at": "2026-09-11T12:00:00Z",
+      "data_type": "periodic",
+      "text": "Scheduled commercial banks can fund up to 90% of the total project cost. The promoter contribution is minimum 10% for Micro/Small units and 15% for medium units. The loan repayment period is up to 8 years including a moratorium of up to 2 years on the principal amount."
+    }
+  ]
+}
