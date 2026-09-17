@@ -14,11 +14,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 
 // Finance Components
-import { KpiCards } from '@/components/finance/KpiCards';
-import { EmergencyRunwayGauge } from '@/components/finance/EmergencyRunwayGauge';
-import { SpendingOverviewChart } from '@/components/finance/SpendingOverviewChart';
-import { CashFlowTrendChart } from '@/components/finance/CashFlowTrendChart';
-import { UpcomingRenewals } from '@/components/finance/UpcomingRenewals';
+import { ExecutiveOverview } from '@/components/finance/ExecutiveOverview';
 import { SubscriptionsTab } from '@/components/finance/SubscriptionsTab';
 import { InsurancesTab } from '@/components/finance/InsurancesTab';
 import { BudgetIncomeTab } from '@/components/finance/BudgetIncomeTab';
@@ -327,7 +323,7 @@ const AppContent: React.FC = () => {
 
         {/* MSME & Project Loans Suite Desktop Canvas */}
         {currentTab === 'msme_tools' && (
-          <main className="flex-1 h-screen overflow-y-auto p-6 sm:p-8">
+          <main className="flex-1 min-w-0 h-screen overflow-y-auto p-6 sm:p-8">
             <div className="max-w-6xl mx-auto space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
                 <button
@@ -351,7 +347,7 @@ const AppContent: React.FC = () => {
 
         {/* AI Voice Assistant Desktop Canvas */}
         {currentTab === 'ai_companion' && aiMode === 'voice' && (
-          <main className="flex-1 h-screen overflow-y-auto">
+          <main className="flex-1 min-w-0 h-screen overflow-y-auto">
             <VoiceAssistant
               onSwitchToChat={() => setAiMode('chat')}
               onNavigateToHub={() => {
@@ -367,7 +363,7 @@ const AppContent: React.FC = () => {
 
         {/* AI Chat Assistant Desktop Canvas */}
         {currentTab === 'ai_companion' && aiMode === 'chat' && (
-          <main className="flex-1 h-screen p-4 lg:p-6 overflow-y-auto">
+          <main className="flex-1 min-w-0 h-screen p-4 lg:p-6 overflow-y-auto">
             <ChatAssistant
               onSwitchToVoice={() => setAiMode('voice')}
               onNavigateToHub={() => {
@@ -383,20 +379,20 @@ const AppContent: React.FC = () => {
 
         {/* Transactions Tab Canvas */}
         {isAuthenticated && currentTab === 'transactions' && (
-          <main className="flex-1 h-screen overflow-y-auto">
+          <main className="flex-1 min-w-0 h-screen overflow-y-auto">
             <TransactionsView onOpenAddModal={handleOpenAddModal} />
           </main>
         )}
 
         {/* Settings Tab Canvas */}
         {isAuthenticated && currentTab === 'settings' && (
-          <main className="flex-1 h-screen overflow-y-auto p-4 sm:p-8">
+          <main className="flex-1 min-w-0 h-screen overflow-y-auto p-4 sm:p-8">
             <SettingsView />
           </main>
         )}
 
         {isAuthenticated && currentTab === 'finance_hub' && (
-          <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+          <main className="flex-1 min-w-0 flex flex-col h-screen overflow-y-auto">
             <Header
               onOpenAddModal={handleOpenAddModal}
               onNavigateToTab={handleNavSelection}
@@ -405,26 +401,10 @@ const AppContent: React.FC = () => {
             <div className="px-8 sm:px-10 py-8 space-y-8">
               {/* Overview Tab */}
               {activeSubTab === 'overview' && (
-                <>
-                  {/* Top 4 KPI Metrics */}
-                  <KpiCards />
-
-                  {/* Emergency Fund Runway Gauge Meter */}
-                  <EmergencyRunwayGauge />
-
-                  {/* Middle 2 Charts */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div className="lg:col-span-6">
-                      <SpendingOverviewChart />
-                    </div>
-                    <div className="lg:col-span-6">
-                      <CashFlowTrendChart />
-                    </div>
-                  </div>
-
-                  {/* Upcoming Renewals & Alerts */}
-                  <UpcomingRenewals />
-                </>
+                <ExecutiveOverview
+                  onOpenAddModal={handleOpenAddModal}
+                  onNavigateToTab={handleNavSelection}
+                />
               )}
 
               {/* Goals Tab */}
