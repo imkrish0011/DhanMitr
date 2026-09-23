@@ -73,11 +73,11 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
       ];
 
   return (
-    <div className="flex-1 flex h-full max-h-full fintech-card rounded-2xl md:rounded-3xl shadow-xl overflow-hidden transition-colors duration-200">
+    <div className="w-full max-w-full flex-1 flex h-full max-h-full min-w-0 fintech-card rounded-none md:rounded-3xl shadow-xl overflow-hidden transition-colors duration-200">
       {/* Main Chat Feed */}
-      <div className="flex-1 flex flex-col justify-between h-full min-h-0 bg-slate-50/40 dark:bg-[#070B14]">
+      <div className="w-full max-w-full flex-1 flex flex-col justify-between h-full min-h-0 min-w-0 overflow-hidden bg-slate-50/40 dark:bg-[#070B14]">
         {/* Chat Top Header */}
-        <div className="shrink-0 px-3 sm:px-6 h-14 sm:h-16 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between bg-white/90 dark:bg-[#0E1526]/90 backdrop-blur-md z-10 gap-2">
+        <div className="w-full max-w-full shrink-0 px-3 sm:px-6 h-14 sm:h-16 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between bg-white/90 dark:bg-[#0E1526]/90 backdrop-blur-md z-10 gap-2 min-w-0">
           {/* Brand & Navigation */}
           <button
             onClick={onNavigateToHub}
@@ -172,7 +172,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
         </div>
 
         {/* Scrollable Conversation Stream */}
-        <div className="flex-1 overflow-y-auto min-h-0 p-3.5 sm:p-5 space-y-2 bg-slate-50/50 dark:bg-[#090D16]">
+        <div className="w-full max-w-full flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-3 sm:p-5 space-y-2 bg-slate-50/50 dark:bg-[#090D16] min-w-0">
           {messages.map((msg) => (
             <ChatMessageBubble key={msg.id} message={msg} />
           ))}
@@ -181,7 +181,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
         </div>
 
         {/* Suggestion Chips & Chat Input Area */}
-        <div className="shrink-0 p-3 sm:p-4 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#0F172A]">
+        <div className="w-full max-w-full shrink-0 p-2.5 sm:p-4 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#0F172A] min-w-0">
           {/* "You might ask" Header & Chips */}
           {messages.length <= 1 && (
             <div className="mb-2.5">
@@ -205,14 +205,14 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
           {/* Form Input Bar */}
           <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-2 p-1.5 sm:p-2 bg-slate-50 dark:bg-[#0B101D] border border-slate-200 dark:border-slate-800 rounded-2xl focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 shadow-xs transition-all"
+            className="w-full max-w-full flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-slate-50 dark:bg-[#0B101D] border border-slate-200 dark:border-slate-800 rounded-2xl focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 shadow-xs transition-all min-w-0"
           >
             <input
               type="text"
               placeholder="Ask anything about your finances..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-[13px] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+              className="flex-1 min-w-0 bg-transparent px-2.5 sm:px-3 py-1.5 text-xs sm:text-[13px] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
             />
 
             {/* Microphone button */}

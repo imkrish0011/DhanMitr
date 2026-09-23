@@ -174,6 +174,8 @@ export interface ChatMessage {
   widgetData?: SpendingCategorySummary[] | Subscription[] | Record<string, unknown> | null;
   sources?: KnowledgeSource[];
   isStreaming?: boolean;
+  elapsed?: number;
+  isError?: boolean;
 }
 
 export interface ChatSession {

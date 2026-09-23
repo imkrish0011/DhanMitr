@@ -5,15 +5,9 @@ import { ChatMessage, SpendingCategorySummary, KnowledgeSource } from '@/types';
 import { DhanMitrLogo } from '@/components/icons/CustomIcons';
 import { useVoiceChat } from '@/context/VoiceChatContext';
 import { SourceCitationModal } from './SourceCitationModal';
-import {
-  Copy,
-  Check,
-  Volume2,
-  ThumbsUp,
-  ThumbsDown,
-  BookOpen,
-  Pin,
-} from 'lucide-react';
+import { LatticeLoader } from '@/components/ui/LatticeLoader';
+import { StreamingResponse } from '@/components/agents/streaming-response';
+import { CitationItem } from '@/components/agents/citations';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -23,18 +17,9 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
   const isUser = message.sender === 'user';
   const { speakText } = useVoiceChat();
 
-  const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'liked' | 'disliked' | null>(null);
   const [selectedSource, setSelectedSource] = useState<KnowledgeSource | null>(null);
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
-
-  const handleCopy = () => {
-    if (typeof navigator !== 'undefined') {
-      navigator.clipboard.writeText(message.text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const handleReplay = () => {
     speakText(message.text, message.language);
@@ -60,9 +45,21 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
     });
   };
 
+  // Map backend KnowledgeSources to CitationItems for StreamingResponse
+  const citationItems: CitationItem[] = (message.sources || []).map((source, idx) => ({
+    id: `source-${idx}-${source.title.replace(/\s+/g, '-').toLowerCase()}`,
+    title: source.title,
+    domain: source.source_type,
+    url: source.url,
+    snippet: source.snippet,
+  }));
+
+  // Show thinking header for assistant messages that are currently streaming or completed with recorded elapsed time
+  const showThinking = !isUser && (message.isStreaming || message.elapsed != null);
+
   return (
     <>
-      <div className={`flex items-start gap-2 sm:gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-3 group`}>
+      <div className={`flex items-start gap-2 sm:gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-3 group w-full max-w-full min-w-0`}>
         {/* Modern Avatar */}
         {!isUser ? (
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
@@ -75,138 +72,102 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
         )}
 
         {/* Message Bubble Content */}
-        <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-xl`}>
+        <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-xl min-w-0 flex-1`}>
           <div
-            className={`text-xs sm:text-[13px] leading-relaxed transition-all ${
+            className={`text-xs sm:text-[13px] leading-relaxed break-words [overflow-wrap:anywhere] min-w-0 transition-all ${
               isUser
                 ? 'px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl rounded-tr-xs shadow-sm font-medium'
-                : 'px-4 sm:px-5 py-3.5 fintech-card text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-xs shadow-sm'
+                : 'px-3.5 sm:px-5 py-3 sm:py-3.5 fintech-card text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-xs shadow-sm w-full max-w-full'
             }`}
           >
-            {/* Formatted Text with Streaming Cursor */}
-            {message.isStreaming && !message.text ? (
-              <div className="flex items-center gap-1.5 py-1 text-slate-500 dark:text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-                <span className="text-xs font-medium ml-1">Analyzing...</span>
+            {isUser ? (
+              <div className="space-y-1 break-words [overflow-wrap:anywhere] min-w-0">
+                {renderFormattedText(message.text)}
               </div>
             ) : (
-              <div className="space-y-1">
-                {renderFormattedText(message.text)}
-                {message.isStreaming && (
-                  <span className="inline-block w-1.5 h-3.5 bg-emerald-500 rounded-xs animate-pulse ml-0.5 align-middle" />
+              <>
+                {/* LatticeLoader Thinking Animation Header */}
+                {showThinking && (
+                  <div className={`flex items-center text-slate-500 dark:text-slate-400 ${message.text ? 'pb-2.5 mb-2.5 border-b border-slate-200/60 dark:border-slate-800/60' : 'py-0.5'}`}>
+                    <LatticeLoader
+                      status={message.isStreaming ? 'working' : message.isError ? 'error' : 'done'}
+                      label="Thinking"
+                      doneLabel="Done in"
+                      errorLabel="Failed after"
+                      pattern="orbit"
+                      grid={3}
+                      shape="round"
+                      doneColor="#10B981"
+                      errorColor="#ef4444"
+                      cellSize={5.5}
+                      gap={2}
+                      fontSize={12.5}
+                      step={90}
+                      idleOpacity={0.16}
+                      glow={false}
+                      showTimer
+                      elapsed={message.elapsed}
+                    />
+                  </div>
                 )}
-              </div>
-            )}
 
-            {/* Embedded Interactive Expense Breakdown Widget */}
-            {message.widgetType === 'expense_summary' && Array.isArray(message.widgetData) && (
-              <div className="mt-2.5 p-3 bg-slate-50 dark:bg-[#0B101D] rounded-xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-                <div className="text-xs font-extrabold text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-200 dark:border-slate-800">
-                  श्रेणीवार मासिक खर्च सारांश (Category Breakdown):
-                </div>
-                <div className="space-y-1">
-                  {(message.widgetData as SpendingCategorySummary[]).map((cat) => (
-                    <div key={cat.id} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: cat.color }} />
-                        <span className="text-slate-700 dark:text-slate-300 font-semibold">{cat.category}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-extrabold text-slate-900 dark:text-white">
-                          ₹{cat.amount.toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-[9px] text-slate-500 font-medium">({cat.percentage}%)</span>
-                      </div>
+                {/* Streaming Response Content & Action Footer */}
+                {Boolean(message.text) && (
+                  <StreamingResponse
+                    status={message.isStreaming ? 'streaming' : message.isError ? 'error' : 'complete'}
+                    copyText={message.text}
+                    onRetry={handleReplay}
+                    sources={citationItems}
+                    feedback={feedback === 'liked' ? 'up' : feedback === 'disliked' ? 'down' : null}
+                    onFeedbackChange={(fb) => setFeedback(fb === 'up' ? 'liked' : fb === 'down' ? 'disliked' : null)}
+                  >
+                    <div className="space-y-1 break-words [overflow-wrap:anywhere] min-w-0 max-w-full">
+                      {renderFormattedText(message.text)}
+                      {message.isStreaming && (
+                        <span className="inline-block w-1.5 h-3.5 bg-emerald-500 rounded-xs animate-pulse ml-0.5 align-middle" />
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* RAG Source Citation Badges / Pills (Only shown after response has finished generating) */}
-            {!message.isStreaming && Boolean(message.text?.trim()) && message.sources && message.sources.length > 0 && (
-              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 space-y-1.5">
-                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  <BookOpen className="w-3 h-3 text-emerald-500" />
-                  <span>Verified Citations & Guidelines:</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {message.sources.map((source, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleOpenSource(source)}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:scale-102"
-                      title="Click to view verified source and guidelines"
-                    >
-                      <Pin className="w-3 h-3 text-emerald-500 shrink-0" />
-                      <span className="truncate max-w-[200px]">{source.title}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                    {/* Embedded Interactive Expense Breakdown Widget */}
+                    {message.widgetType === 'expense_summary' && Array.isArray(message.widgetData) && (
+                      <div className="mt-2.5 p-3 bg-slate-50 dark:bg-[#0B101D] rounded-xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+                        <div className="text-xs font-extrabold text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-200 dark:border-slate-800">
+                          श्रेणीवार मासिक खर्च सारांश (Category Breakdown):
+                        </div>
+                        <div className="space-y-1">
+                          {(message.widgetData as SpendingCategorySummary[]).map((cat) => (
+                            <div key={cat.id} className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: cat.color }} />
+                                <span className="text-slate-700 dark:text-slate-300 font-semibold">{cat.category}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-extrabold text-slate-900 dark:text-white">
+                                  ₹{cat.amount.toLocaleString('en-IN')}
+                                </span>
+                                <span className="text-[9px] text-slate-500 font-medium">({cat.percentage}%)</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </StreamingResponse>
+                )}
+              </>
             )}
           </div>
 
-          {/* Action Bar (Only for Assistant messages when completed) */}
-          {!isUser && !message.isStreaming && Boolean(message.text?.trim()) && (
-            <div className="flex items-center gap-1 mt-1 px-1 text-slate-400 dark:text-slate-500">
-              {/* Copy Button */}
-              <button
-                onClick={handleCopy}
-                className="p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800/60 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                title={copied ? 'Copied to clipboard' : 'Copy message text'}
-              >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-              </button>
-
-              {/* TTS Replay Button */}
-              <button
-                onClick={handleReplay}
-                className="p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800/60 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
-                title="Read message aloud"
-              >
-                <Volume2 className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Thumbs Up Feedback */}
-              <button
-                onClick={() => setFeedback(feedback === 'liked' ? null : 'liked')}
-                className={`p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer ${
-                  feedback === 'liked' ? 'text-emerald-500 font-bold' : 'hover:text-slate-700 dark:hover:text-slate-200'
-                }`}
-                title="Helpful response"
-              >
-                <ThumbsUp className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Thumbs Down Feedback */}
-              <button
-                onClick={() => setFeedback(feedback === 'disliked' ? null : 'disliked')}
-                className={`p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer ${
-                  feedback === 'disliked' ? 'text-rose-500 font-bold' : 'hover:text-slate-700 dark:hover:text-slate-200'
-                }`}
-                title="Not helpful response"
-              >
-                <ThumbsDown className="w-3.5 h-3.5" />
-              </button>
-
-              {message.timestamp && (
-                <span className="text-[9.5px] text-slate-400 ml-1.5 select-none">
-                  {message.timestamp}
-                </span>
-              )}
-            </div>
+          {/* Timestamp for user messages or legacy messages */}
+          {message.timestamp && isUser && (
+            <span className="text-[9.5px] text-slate-400 mt-1 px-1 select-none">
+              {message.timestamp}
+            </span>
           )}
         </div>
       </div>
 
-      {/* Source Citation Modal */}
+      {/* Source Citation Modal for deep-dive reading */}
       <SourceCitationModal
         isOpen={isSourceModalOpen}
         onClose={() => setIsSourceModalOpen(false)}
@@ -215,4 +176,3 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
     </>
   );
 };
-

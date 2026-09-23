@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "@/components/ui/LatticeLoader.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-sans",

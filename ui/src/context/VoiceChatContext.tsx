@@ -765,6 +765,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     persistSessionMessages(currentActiveId, newMsgs, text);
     setIsGeneratingResponse(true);
 
+    const startTime = performance.now();
     try {
       await streamRagChat(
         {
@@ -799,9 +800,10 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             );
           },
           onDone: () => {
+            const elapsedSec = Number(((performance.now() - startTime) / 1000).toFixed(1));
             setMessages((prev) => {
               const finalMsgs = prev.map((msg) =>
-                msg.id === assistantMsgId ? { ...msg, isStreaming: false } : msg
+                msg.id === assistantMsgId ? { ...msg, isStreaming: false, elapsed: elapsedSec } : msg
               );
               persistSessionMessages(currentActiveId, finalMsgs);
               return finalMsgs;
@@ -809,6 +811,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setIsGeneratingResponse(false);
           },
           onError: (err) => {
+            const elapsedSec = Number(((performance.now() - startTime) / 1000).toFixed(1));
             setMessages((prev) => {
               const finalMsgs = prev.map((msg) =>
                 msg.id === assistantMsgId
@@ -816,6 +819,8 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                       ...msg,
                       text: msg.text || `Unable to complete response: ${err.message}`,
                       isStreaming: false,
+                      elapsed: elapsedSec,
+                      isError: true,
                     }
                   : msg
               );
@@ -827,6 +832,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       );
     } catch (err: unknown) {
+      const elapsedSec = Number(((performance.now() - startTime) / 1000).toFixed(1));
       const message = err instanceof Error ? err.message : 'Please try again.';
       setMessages((prev) => {
         const finalMsgs = prev.map((msg) =>
@@ -835,6 +841,8 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ...msg,
                 text: msg.text || `Unable to process message: ${message}`,
                 isStreaming: false,
+                elapsed: elapsedSec,
+                isError: true,
               }
             : msg
         );

@@ -25,20 +25,14 @@ import {
 } from 'lucide-react';
 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { BloomMenu } from '@/components/ui/BloomMenu';
 
 interface HeaderProps {
   onOpenAddModal: (type?: string) => void;
   onNavigateToTab?: (tab: NavTab) => void;
 }
 
-const QUICK_ADD_OPTIONS = [
-  { id: 'expense', label: 'Expense / Outflow', icon: CreditCard },
-  { id: 'income', label: 'Income Source', icon: Wallet },
-  { id: 'subscription', label: 'OTT & Subscription', icon: Tv },
-  { id: 'insurance', label: 'Insurance Policy', icon: ShieldCheck },
-  { id: 'goal', label: 'Financial Goal', icon: Target },
-  { id: 'investment', label: 'Investment (SIP)', icon: TrendingUp },
-];
+
 
 export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab }) => {
   const { theme, toggleTheme } = useTheme();
@@ -58,9 +52,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const [showAddMenu, setShowAddMenu] = useState(false);
-  const addMenuRef = useRef<HTMLDivElement>(null);
-
   // Close user menu on outside click or Escape
   useEffect(() => {
     if (!showUserMenu) return;
@@ -79,25 +70,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
       document.removeEventListener('keydown', handleKey);
     };
   }, [showUserMenu]);
-
-  // Close add menu on outside click or Escape
-  useEffect(() => {
-    if (!showAddMenu) return;
-    const handleOutside = (e: MouseEvent) => {
-      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
-        setShowAddMenu(false);
-      }
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowAddMenu(false);
-    };
-    document.addEventListener('mousedown', handleOutside);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleOutside);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [showAddMenu]);
 
   // Global Ctrl+K / ⌘K shortcut to switch to search / transactions ledger
   useEffect(() => {
@@ -158,56 +130,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
 
           {isAuthenticated ? (
             <>
-              {/* Executive Primary Action: Add Record Split Button */}
-              <div className="relative" ref={addMenuRef}>
-                <div className="inline-flex items-center rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all">
-                  <button
-                    onClick={() => {
-                      setShowAddMenu(false);
-                      onOpenAddModal();
-                    }}
-                    className="flex items-center gap-1.5 h-10 px-3.5 text-xs font-bold cursor-pointer rounded-l-xl active:scale-95 transition-transform"
-                    title="Add Financial Record"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Add Record</span>
-                  </button>
-                  <button
-                    onClick={() => setShowAddMenu(!showAddMenu)}
-                    className="h-10 px-2 border-l border-emerald-500/40 hover:bg-emerald-700/40 rounded-r-xl cursor-pointer flex items-center justify-center transition-colors"
-                    title="Quick Category Picker"
-                    aria-label="Open record category menu"
-                  >
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showAddMenu ? 'rotate-180' : ''}`} />
-                  </button>
-                </div>
-
-                {/* Quick Add Dropdown: Anchored neatly below the button */}
-                {showAddMenu && (
-                  <div className="!absolute left-0 sm:right-0 sm:left-auto top-full mt-2 w-56 fintech-card rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 border border-slate-200/90 dark:border-white/10 backdrop-blur-2xl text-xs">
-                    <div className="px-2.5 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-white/[0.06] mb-1">
-                      Quick Add Category
-                    </div>
-                    <div className="space-y-0.5">
-                      {QUICK_ADD_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.id}
-                          onClick={() => {
-                            setShowAddMenu(false);
-                            onOpenAddModal(opt.id);
-                          }}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 text-left font-medium transition-colors cursor-pointer group"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.05] group-hover:bg-emerald-500/20 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-emerald-500 transition-colors">
-                            <opt.icon className="w-3.5 h-3.5" />
-                          </div>
-                          <span>{opt.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* Executive Primary Action: BloomMenu for Add Record */}
+              <BloomMenu
+                triggerLabel="Add Record"
+                onSelect={(id) => onOpenAddModal(id)}
+              />
 
               {/* Utility Cluster: Sync, Theme Toggle, Notification Bell, User Avatar */}
               <div className="flex items-center gap-1 h-10 p-1 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10">

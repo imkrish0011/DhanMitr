@@ -94,7 +94,7 @@ const AppContent: React.FC = () => {
       {/* ========================================================================= */}
       {/* MOBILE NATIVE VIEW (Visible on mobile screen widths < 768px)               */}
       {/* ========================================================================= */}
-      <div className={`block md:hidden min-h-screen relative z-10 ${isAuthenticated && currentTab !== 'landing' ? 'pb-20' : ''}`}>
+      <div className={`block md:hidden min-h-screen relative z-10 ${isAuthenticated && currentTab !== 'landing' && !(currentTab === 'ai_companion' && aiMode === 'chat') ? 'pb-20' : ''}`}>
         {currentTab === 'landing' ? (
           <LandingPage
             onOpenAi={(mode) => {
@@ -133,7 +133,7 @@ const AppContent: React.FC = () => {
             />
           </div>
         ) : currentTab === 'ai_companion' && aiMode === 'chat' ? (
-          <div className={`${isAuthenticated ? 'h-[calc(100dvh-5.5rem)]' : 'h-[100dvh]'} flex flex-col overflow-hidden`}>
+          <div className={`w-full max-w-full flex-1 flex flex-col min-w-0 ${isAuthenticated ? 'h-[calc(100dvh-4.75rem)] pb-1' : 'h-[100dvh]'} overflow-hidden`}>
             <ChatAssistant
               onSwitchToVoice={() => setAiMode('voice')}
               onNavigateToHub={() => {
@@ -163,7 +163,7 @@ const AppContent: React.FC = () => {
               setCurrentTab('ai_companion');
               setAiMode('chat');
             }}
-            onOpenAddModal={() => handleOpenAddModal('subscription')}
+            onOpenAddModal={(type) => handleOpenAddModal(type || 'subscription')}
             onOpenTransactions={() => setCurrentTab('transactions')}
           />
         ) : (

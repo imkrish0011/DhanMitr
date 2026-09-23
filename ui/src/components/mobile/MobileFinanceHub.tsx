@@ -24,11 +24,12 @@ import { EmergencyRunwayGauge } from '@/components/finance/EmergencyRunwayGauge'
 import { GoalsTab } from '@/components/finance/GoalsTab';
 import { TaxRegimeComparator } from '@/components/finance/TaxRegimeComparator';
 import { ProjectLoanSuite } from '@/components/calculator/ProjectLoanSuite';
+import { BloomMenu } from '@/components/ui/BloomMenu';
 
 interface MobileFinanceHubProps {
   onOpenVoice: () => void;
   onOpenChat: () => void;
-  onOpenAddModal: () => void;
+  onOpenAddModal: (type?: string) => void;
   onOpenTransactions?: () => void;
 }
 
@@ -111,15 +112,12 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
             )}
           </button>
 
-          <button
-            onClick={onOpenAddModal}
-            className="p-2 bg-emerald-600 active:scale-95 text-white rounded-xl shadow-xs cursor-pointer"
-            title="Add Record"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </button>
+          {/* Mobile BloomMenu for Adding Records */}
+          <BloomMenu
+            compact
+            triggerLabel="Add"
+            onSelect={(id) => onOpenAddModal(id)}
+          />
 
           <div className="relative">
             <button
@@ -213,7 +211,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
               </div>
 
               <button
-                onClick={onOpenAddModal}
+                onClick={() => onOpenAddModal()}
                 className="text-emerald-300 hover:text-white text-lg font-bold p-1 cursor-pointer"
               >
                 ···
@@ -387,19 +385,19 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
 
       {activeSubTab === 'subscriptions' && (
         <div className="px-4 pt-2">
-          <SubscriptionsTab onOpenAddModal={onOpenAddModal} />
+          <SubscriptionsTab onOpenAddModal={() => onOpenAddModal('subscription')} />
         </div>
       )}
 
       {activeSubTab === 'insurances' && (
         <div className="px-4 pt-2">
-          <InsurancesTab onOpenAddModal={onOpenAddModal} />
+          <InsurancesTab onOpenAddModal={() => onOpenAddModal('insurance')} />
         </div>
       )}
 
       {activeSubTab === 'budget' && (
         <div className="px-4 pt-2">
-          <BudgetIncomeTab onOpenAddModal={onOpenAddModal} />
+          <BudgetIncomeTab onOpenAddModal={() => onOpenAddModal('income')} />
         </div>
       )}
     </div>
