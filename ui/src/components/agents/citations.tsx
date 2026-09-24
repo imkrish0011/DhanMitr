@@ -84,6 +84,7 @@ export function CitationFavicon({
   className?: string;
 }) {
   const favicon = useFavicon(url);
+  const [loadError, setLoadError] = React.useState(false);
 
   return (
     <span
@@ -93,7 +94,7 @@ export function CitationFavicon({
         className,
       )}
     >
-      {favicon.src ? (
+      {favicon.src && !loadError ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           ref={favicon.ref}
@@ -101,6 +102,7 @@ export function CitationFavicon({
           alt=""
           width={16}
           height={16}
+          onError={() => setLoadError(true)}
           referrerPolicy="no-referrer"
           className="size-3.5 rounded-xs object-contain"
         />

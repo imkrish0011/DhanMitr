@@ -43,7 +43,9 @@
 @theme {
   --font-sans: var(--font-sans), 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-display: var(--font-display), 'Outfit', system-ui, sans-serif;
+  --font-serif: var(--font-serif), 'Newsreader', Georgia, serif;
   --font-mono: var(--font-mono), 'JetBrains Mono', monospace;
+  --font-handwriting: var(--font-handwriting), 'Caveat', cursive, sans-serif;
 }
 
 body {
@@ -56,6 +58,14 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-handwriting {
+  font-family: var(--font-handwriting);
 }
 
 /* Cool Emerald Selection Everywhere on the Website */

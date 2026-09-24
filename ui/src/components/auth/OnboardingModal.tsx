@@ -6,6 +6,7 @@ import { DhanMitrLogo, SparkleSmallIcon } from '@/components/icons/CustomIcons';
 import { EmploymentType, RiskTolerance, TaxRegime } from '@/types';
 import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
 import { CustomSelect, SelectOption } from '@/components/ui/CustomSelect';
+import { Loader } from '@/components/motion/loader';
 import {
   Briefcase,
   Building,
@@ -18,9 +19,14 @@ import {
   Sparkles,
   FileText,
   XSquare,
+  X,
 } from 'lucide-react';
 
-export const OnboardingModal: React.FC = () => {
+interface OnboardingModalProps {
+  onComplete?: () => void;
+}
+
+export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
   const { isOnboardingOpen, profile, saveOnboardingProfile, closeOnboarding } = useAuth();
 
   const [name, setName] = useState(profile?.name || '');
@@ -31,6 +37,7 @@ export const OnboardingModal: React.FC = () => {
   const [taxRegime, setTaxRegime] = useState<TaxRegime>('new');
   const [emergencyFund, setEmergencyFund] = useState('');
   const [buttonState, setButtonState] = useState<ButtonState>('idle');
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   React.useEffect(() => {
@@ -48,9 +55,12 @@ export const OnboardingModal: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
     setButtonState('loading');
 
     try {
+      // Helix loading animation during profile setup
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       await saveOnboardingProfile({
         name: name.trim(),
         monthly_income: skipOptional ? 0 : Number(monthlyIncome) || 0,
@@ -63,9 +73,13 @@ export const OnboardingModal: React.FC = () => {
 
       setButtonState('success');
       setTimeout(() => {
+        setIsSaving(false);
         setButtonState('idle');
-      }, 500);
+        closeOnboarding();
+        onComplete?.();
+      }, 400);
     } catch (err: any) {
+      setIsSaving(false);
       setButtonState('error');
       setError('Failed to save profile. Please try again.');
     }
@@ -73,9 +87,30 @@ export const OnboardingModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in select-none">
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+      <div className="relative bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+        {/* Full Modal Helix Loading Overlay */}
+        {isSaving && (
+          <div className="absolute inset-0 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 z-30 animate-in fade-in duration-200 text-center">
+            <Loader variant="helix" size={48} className="text-emerald-500 mb-4" />
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Setting Up Your Financial Profile...
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs">
+              Configuring your personalized Finance Hub and AI intelligence
+            </p>
+          </div>
+        )}
+
         {/* Top Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0 relative">
+          <button
+            type="button"
+            onClick={closeOnboarding}
+            className="absolute top-5 right-5 p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
           <div className="flex items-center gap-2 mb-1.5">
             <DhanMitrLogo className="w-6 h-6" />
             <span className="text-sm font-bold text-slate-900 dark:text-white">
@@ -231,6 +266,7 @@ export const OnboardingModal: React.FC = () => {
             onClick={() => handleFinish(false)}
             state={buttonState}
             loadingText="Saving..."
+            loadingIcon={<Loader variant="helix" size={16} className="text-white" />}
             successText="All Set!"
             className="px-6 py-2.5 text-xs font-bold shadow-md shadow-emerald-900/20"
           >

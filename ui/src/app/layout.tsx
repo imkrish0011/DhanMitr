@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Outfit, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, JetBrains_Mono, Caveat, Newsreader } from "next/font/google";
 import "./globals.css";
 import "@/components/ui/LatticeLoader.css";
 
@@ -20,6 +20,19 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
   preload: false,
+});
+
+const caveat = Caveat({
+  variable: "--font-handwriting",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const newsreader = Newsreader({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -52,7 +65,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakarta.variable} ${outfit.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${plusJakarta.variable} ${outfit.variable} ${jetbrainsMono.variable} ${caveat.variable} ${newsreader.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-[#090D16] text-white transition-colors duration-200">

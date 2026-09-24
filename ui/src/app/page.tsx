@@ -7,6 +7,7 @@ import { FinanceProvider, useFinance } from '@/context/FinanceContext';
 import { VoiceChatProvider } from '@/context/VoiceChatContext';
 import { NavTab } from '@/types';
 import { SparkleSmallIcon, DhanMitrLogo } from '@/components/icons/CustomIcons';
+import { Home as HomeIcon, Briefcase, Receipt, User, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Layout Components
@@ -81,7 +82,7 @@ const AppContent: React.FC = () => {
   };
 
   const isHomeActive = currentTab === 'finance_hub' && activeSubTab === 'overview';
-  const isInsightsActive = currentTab === 'finance_hub' && activeSubTab === 'budget';
+  const isMsmeActive = (currentTab === 'finance_hub' && activeSubTab === 'msme_tools') || currentTab === 'msme_tools';
   const isAiActive = currentTab === 'ai_companion';
   const isTransactionsActive = currentTab === 'transactions';
   const isSettingsActive = currentTab === 'settings';
@@ -176,123 +177,118 @@ const AppContent: React.FC = () => {
           />
         )}
 
-        {/* Floating 5-Tab Navigation Dock on Mobile after Login */}
+        {/* Floating 5-Tab Luxury Navigation Dock on Mobile after Login */}
         {isAuthenticated && currentTab !== 'landing' && (
-          <div className="fixed bottom-3 left-3 right-3 z-40 max-w-md mx-auto rounded-2xl bg-white/85 dark:bg-[#0E1526]/85 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 px-3 py-1.5 shadow-xl shadow-slate-900/5 dark:shadow-black/50">
-            <div className="grid grid-cols-5 items-center w-full max-w-md mx-auto">
+          <div className="fixed bottom-3.5 inset-x-3.5 z-40 max-w-md mx-auto">
+            {/* Ambient diffuse emerald halo */}
+            <div className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-emerald-500/20 blur-xl opacity-75 pointer-events-none" />
+
+            <div className="relative flex items-center justify-between rounded-full bg-white/90 dark:bg-[#070B16]/92 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 px-3 py-1.5 shadow-[0_12px_40px_-6px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_50px_-8px_rgba(0,0,0,0.85)]">
               {/* Home Tab */}
               <button
                 onClick={() => {
                   setCurrentTab('finance_hub');
                   setActiveSubTab('overview');
                 }}
-                className={`relative py-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer select-none ${
+                className={`relative flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer select-none ${
                   isHomeActive
-                    ? 'text-emerald-500 dark:text-emerald-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 font-medium'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
                 }`}
               >
                 {isHomeActive && (
                   <motion.div
-                    layoutId="mobileNavMinimalIndicator"
-                    className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    layoutId="mobileActiveDockCapsule"
+                    className="absolute inset-x-1.5 inset-y-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 -z-10"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                </svg>
-                <span className="text-[10px] tracking-tight truncate w-full text-center leading-none">Home</span>
+                <HomeIcon className="w-4.5 h-4.5" />
+                <span className="text-[10px] tracking-tight">Home</span>
               </button>
 
-              {/* Insights Tab */}
+              {/* MSME & Loans Tab */}
               <button
                 onClick={() => {
                   setCurrentTab('finance_hub');
-                  setActiveSubTab('budget');
+                  setActiveSubTab('msme_tools');
                 }}
-                className={`relative py-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer select-none ${
-                  isInsightsActive
-                    ? 'text-emerald-500 dark:text-emerald-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 font-medium'
+                className={`relative flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer select-none ${
+                  isMsmeActive
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
                 }`}
               >
-                {isInsightsActive && (
+                {isMsmeActive && (
                   <motion.div
-                    layoutId="mobileNavMinimalIndicator"
-                    className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    layoutId="mobileActiveDockCapsule"
+                    className="absolute inset-x-1.5 inset-y-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 -z-10"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                  <path d="M18 20V10M12 20V4M6 20v-6" />
-                </svg>
-                <span className="text-[10px] tracking-tight truncate w-full text-center leading-none">Insights</span>
+                <Briefcase className="w-4.5 h-4.5" />
+                <span className="text-[10px] tracking-tight">MSME</span>
               </button>
 
-              {/* Center Elevated AI Companion FAB */}
-              <div className="flex items-center justify-center">
+              {/* Center Elevated AI Companion Pulsing Sphere */}
+              <div className="flex items-center justify-center px-1">
                 <button
                   onClick={() => {
                     setCurrentTab('ai_companion');
                     setAiMode('voice');
                   }}
-                  className={`relative -top-3 w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                  className={`relative -top-4 w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-95 group ${
                     isAiActive
-                      ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30 scale-105 ring-2 ring-emerald-300 dark:ring-emerald-400'
-                      : 'bg-emerald-600 text-white shadow-sm hover:bg-emerald-500 active:scale-95'
+                      ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 ring-4 ring-emerald-400/40 shadow-emerald-500/50 scale-105'
+                      : 'bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-500 text-slate-950 shadow-emerald-500/35 hover:scale-105'
                   }`}
-                  title="Open AI Companion"
+                  title="Talk to धनMitr AI"
                 >
-                  <SparkleSmallIcon className="w-5 h-5 fill-current" />
+                  {!isAiActive && (
+                    <span className="absolute -inset-1 rounded-full bg-emerald-400/30 animate-ping pointer-events-none" />
+                  )}
+                  <Sparkles className="w-5 h-5 relative z-10 fill-slate-950" />
                 </button>
               </div>
 
               {/* Transactions / Ledger Tab */}
               <button
                 onClick={() => setCurrentTab('transactions')}
-                className={`relative py-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer select-none ${
+                className={`relative flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer select-none ${
                   isTransactionsActive
-                    ? 'text-emerald-500 dark:text-emerald-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 font-medium'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
                 }`}
               >
                 {isTransactionsActive && (
                   <motion.div
-                    layoutId="mobileNavMinimalIndicator"
-                    className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    layoutId="mobileActiveDockCapsule"
+                    className="absolute inset-x-1.5 inset-y-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 -z-10"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                  <line x1="8" y1="6" x2="21" y2="6" />
-                  <line x1="8" y1="12" x2="21" y2="12" />
-                  <line x1="8" y1="18" x2="21" y2="18" />
-                </svg>
-                <span className="text-[10px] tracking-tight truncate w-full text-center leading-none">Ledger</span>
+                <Receipt className="w-4.5 h-4.5" />
+                <span className="text-[10px] tracking-tight">Ledger</span>
               </button>
 
               {/* Profile / Settings Tab */}
               <button
                 onClick={() => setCurrentTab('settings')}
-                className={`relative py-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer select-none ${
+                className={`relative flex-1 py-1.5 flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer select-none ${
                   isSettingsActive
-                    ? 'text-emerald-500 dark:text-emerald-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 font-medium'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
                 }`}
               >
                 {isSettingsActive && (
                   <motion.div
-                    layoutId="mobileNavMinimalIndicator"
-                    className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    layoutId="mobileActiveDockCapsule"
+                    className="absolute inset-x-1.5 inset-y-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 -z-10"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span className="text-[10px] tracking-tight truncate w-full text-center leading-none">Profile</span>
+                <User className="w-4.5 h-4.5" />
+                <span className="text-[10px] tracking-tight">Profile</span>
               </button>
             </div>
           </div>
@@ -447,7 +443,7 @@ const AppContent: React.FC = () => {
       <AuthModal />
 
       {/* User Onboarding Modal (Mandatory Name, Optional Financial Details) */}
-      <OnboardingModal />
+      <OnboardingModal onComplete={() => setCurrentTab('finance_hub')} />
     </div>
   );
 };

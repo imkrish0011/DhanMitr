@@ -78,8 +78,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode }[] = [
     { id: 'finance_hub', label: 'Finance Hub', icon: <ShieldCheckIcon className="w-5 h-5" /> },
-    { id: 'msme_tools', label: 'MSME & Loans', icon: <Calculator className="w-5 h-5" /> },
     { id: 'ai_companion', label: 'AI Companion', icon: <SparklesIcon className="w-5 h-5" /> },
+    { id: 'msme_tools', label: 'MSME & Loans', icon: <Calculator className="w-5 h-5" /> },
     { id: 'transactions', label: 'Transactions', icon: <TransactionsIcon className="w-5 h-5" /> },
   ];
 

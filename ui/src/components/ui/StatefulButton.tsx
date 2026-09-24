@@ -27,6 +27,7 @@ export interface StatefulButtonProps extends Omit<ButtonProps, 'children'> {
   successText?: ReactNode;
   errorText?: ReactNode;
   icon?: ReactNode;
+  loadingIcon?: ReactNode;
 }
 
 const CASCADE_STAGGER = 0.025;
@@ -177,6 +178,7 @@ export const StatefulButton = forwardRef<HTMLButtonElement, StatefulButtonProps>
     successText = 'Saved!',
     errorText = 'Try again',
     icon,
+    loadingIcon,
     disabled,
     ...rest
   },
@@ -203,7 +205,7 @@ export const StatefulButton = forwardRef<HTMLButtonElement, StatefulButtonProps>
         <AnimatePresence initial={false}>
           {state === 'loading' ? (
             <IconSlot keyId="loading-icon">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              {loadingIcon ?? <Loader2 className="h-4 w-4 animate-spin" />}
             </IconSlot>
           ) : null}
           {state === 'success' ? (

@@ -52,15 +52,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Free chat counter for guests
   const [freeChatCount, setFreeChatCount] = useState<number>(0);
 
-  // Load guest chat counter from localStorage
+  // Load guest chat counter & local profile from localStorage
   useEffect(() => {
     try {
       const savedCount = localStorage.getItem('dhanmitr_free_chats');
       if (savedCount !== null) {
         setFreeChatCount(parseInt(savedCount, 10) || 0);
       }
+      const savedProfile = localStorage.getItem('dhanmitr_profile');
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile);
+        if (parsed && typeof parsed === 'object') {
+          setProfile(parsed);
+        }
+      }
     } catch (e) {
-      console.warn('Could not read free chat count from localStorage', e);
+      console.warn('Could not read saved auth state from localStorage', e);
     }
   }, []);
 
@@ -267,8 +274,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Error during Supabase signout', e);
+      }
     }
+    try {
+      localStorage.removeItem('dhanmitr_profile');
+      localStorage.removeItem('dhanmitr_local_user_id');
+    } catch (e) {}
     setUser(null);
     setSession(null);
     setProfile(null);
@@ -308,17 +323,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Save onboarding details
   const saveOnboardingProfile = async (data: Partial<UserFinancialProfile>) => {
-    if (!user && !profile) return;
-    const userId = user?.id || profile?.user_id;
-    if (!userId) return;
+    let userId = user?.id || profile?.user_id;
+    if (!userId) {
+      try {
+        let localId = localStorage.getItem('dhanmitr_local_user_id');
+        if (!localId) {
+          localId = 'usr_' + Math.random().toString(36).substring(2, 11);
+          localStorage.setItem('dhanmitr_local_user_id', localId);
+        }
+        userId = localId;
+      } catch (e) {
+        userId = 'usr_' + Date.now();
+      }
+    }
 
     const updatedProfile: UserFinancialProfile = {
       user_id: userId,
       name: data.name || profile?.name || 'User',
-      email: user?.email || profile?.email,
+      email: user?.email || profile?.email || 'user@dhanmitr.local',
       avatar_initial: (data.name || profile?.name || 'U').charAt(0).toUpperCase(),
       is_premium: false,
-      currency: data.currency || 'INR',
+      currency: data.currency || profile?.currency || 'INR',
       monthly_income: data.monthly_income ?? (profile?.monthly_income || 0),
       monthly_expenses: data.monthly_expenses ?? (profile?.monthly_expenses || 0),
       emergency_fund_balance: data.emergency_fund_balance ?? (profile?.emergency_fund_balance || 0),
@@ -331,9 +356,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     setProfile(updatedProfile);
+    try {
+      localStorage.setItem('dhanmitr_profile', JSON.stringify(updatedProfile));
+    } catch (e) {
+      console.warn('Could not persist profile to localStorage', e);
+    }
     setIsOnboardingOpen(false);
 
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && user) {
       try {
         await supabase.from('profiles').upsert({
           id: userId,
@@ -364,7 +394,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAuthenticated = Boolean(user);
+  const isAuthenticated = Boolean(user || (profile && profile.is_onboarded));
   const remainingFreeChats = Math.max(0, MAX_FREE_CHATS - freeChatCount);
   const canChat = isAuthenticated || freeChatCount < MAX_FREE_CHATS;
 

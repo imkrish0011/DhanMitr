@@ -352,7 +352,7 @@ class MockSTT(BaseSTT):
 
     def transcribe(self, wav_path: Path, language: Optional[str] = None) -> STTResult:
         return STTResult(
-            text="नमस्ते, DhanMITR में आपका स्वागत है।",
+            text="नमस्ते, धनMitr में आपका स्वागत है।",
             language=language or "hi",
             provider=self.name,
             latency_ms=1.0,

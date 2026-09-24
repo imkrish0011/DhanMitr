@@ -269,7 +269,7 @@ export const AdminDashboardView: React.FC<{ onNavigateTab: (tab: string) => void
             <p className="text-xs text-slate-500 py-10 text-center">No subscriptions tracked yet.</p>
           ) : (
             <div className="h-52 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                 <BarChart data={stats?.topProviders} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <XAxis dataKey="name" stroke="#64748B" fontSize={11} />
                   <YAxis stroke="#64748B" fontSize={11} allowDecimals={false} />

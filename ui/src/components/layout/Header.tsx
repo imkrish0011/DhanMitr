@@ -26,6 +26,7 @@ import {
 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { BloomMenu } from '@/components/ui/BloomMenu';
+import { ThemeToggle } from '@/components/motion/theme-toggle';
 
 interface HeaderProps {
   onOpenAddModal: (type?: string) => void;
@@ -150,18 +151,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
                 </button>
 
                 {/* Theme Toggle Button */}
-                <button
-                  onClick={toggleTheme}
+                <ThemeToggle
+                  variant="circle"
+                  start="top-right"
                   className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
-                  title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-                  aria-label="Toggle theme"
-                >
-                  {theme === 'light' ? (
-                    <Moon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  ) : (
-                    <Sun className="w-4 h-4 text-amber-400" />
-                  )}
-                </button>
+                  iconClassName="w-4 h-4"
+                  title="Toggle theme"
+                />
 
                 {/* Notification Bell */}
                 <NotificationBell />
@@ -200,18 +196,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
           ) : (
             <div className="flex items-center gap-2">
               {/* Theme Toggle Button for Guests */}
-              <button
-                onClick={toggleTheme}
+              <ThemeToggle
+                variant="circle"
+                start="top-right"
                 className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-all cursor-pointer"
-                title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-                aria-label="Toggle theme"
-              >
-                {theme === 'light' ? (
-                  <Moon className="w-4 h-4 text-indigo-600" />
-                ) : (
-                  <Sun className="w-4 h-4 text-amber-400" />
-                )}
-              </button>
+                iconClassName="w-4 h-4"
+                title="Toggle theme"
+              />
 
               <button
                 onClick={() => openAuthModal('login')}
