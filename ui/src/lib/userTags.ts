@@ -99,27 +99,24 @@ export function resolveUserTags(params: {
     }
   }
 
-  // 2. Auto-tag: Founder (Sole tag for founders unless custom surprise tag added)
-  const isFounder = isFounderEmail(email);
-  if (isFounder) {
-    tagsSet.clear(); // Clear any cached cool/clever tags so founder has only 1 tag
-    tagsSet.add('founder');
-  } else {
-    // 3. Auto-tag: Cool (High savings discipline >= 35% or solid financial mindfulness)
-    if (savingsRate >= 35 || monthly_income >= 60000) {
-      tagsSet.add('cool');
-    }
-
-    // 4. Auto-tag: Clever (Investments active or strategic diversification)
-    if (total_investments > 0 || savingsRate >= 45) {
-      tagsSet.add('clever');
+  // 2. Auto-tag fallback if no tags are explicitly set yet
+  if (tagsSet.size === 0) {
+    if (isFounderEmail(email)) {
+      tagsSet.add('founder');
+    } else {
+      if (savingsRate >= 35 || monthly_income >= 60000) {
+        tagsSet.add('cool');
+      }
+      if (total_investments > 0 || savingsRate >= 45) {
+        tagsSet.add('clever');
+      }
     }
   }
 
   const tagsArray = Array.from(tagsSet);
   const allBadges = getAllUserBadges(tagsArray, clientCustomTag);
   const activeBadge = allBadges[0] || getPrimaryBadge(tagsArray, clientCustomTag);
-  const memberNumber = getUserMemberNumber(userId, email);
+  const memberNumber = getUserMemberNumber(userId, email, tagsArray);
 
   return {
     tags: tagsArray,
@@ -133,8 +130,8 @@ export function resolveUserTags(params: {
 /**
  * Determines user sequence/member number inspired by Instagram Threads (e.g. @1, @9274)
  */
-export function getUserMemberNumber(userId?: string, email?: string): string {
-  if (isFounderEmail(email) || email?.toLowerCase().trim() === 'ks9875277@gmail.com') {
+export function getUserMemberNumber(userId?: string, email?: string, tags: string[] = []): string {
+  if (tags.some((t) => t.toLowerCase() === 'founder') || isFounderEmail(email) || email?.toLowerCase().trim() === 'ks9875277@gmail.com') {
     return '1';
   }
   if (!userId) return '42';
@@ -154,10 +151,17 @@ export function getUserMemberNumber(userId?: string, email?: string): string {
  */
 export function getAllUserBadges(tags: string[], customTag?: string): TagDetails[] {
   const badges: TagDetails[] = [];
-  const normalized = tags.map((t) => t.toLowerCase().trim());
+  const seen = new Set<string>();
+
+  // Collect all unique tags preserving case for display
+  const tagList: string[] = [...tags];
+  if (customTag && customTag.trim()) {
+    tagList.push(customTag.trim());
+  }
 
   // Priority 1: Founder Tag
-  if (normalized.includes('founder')) {
+  if (tagList.some((t) => t.toLowerCase().trim() === 'founder')) {
+    seen.add('founder');
     badges.push({
       id: 'founder',
       name: 'Founder',
@@ -172,13 +176,18 @@ export function getAllUserBadges(tags: string[], customTag?: string): TagDetails
     });
   }
 
-  // Priority 2: Admin-assigned Custom Tag (Surprise Badge!)
-  if (customTag && customTag.trim()) {
-    const cleanCustom = customTag.trim();
+  // Priority 2: Custom Admin Tags (e.g. "Nothing to Write", "Boring Person", etc.)
+  for (const rawTag of tagList) {
+    const clean = rawTag.trim();
+    const lower = clean.toLowerCase();
+    if (!clean || lower === 'founder' || lower === 'cool' || lower === 'clever') continue;
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+
     badges.push({
-      id: 'custom',
-      name: cleanCustom,
-      badgeLabel: `✦ ${cleanCustom.toUpperCase()}`,
+      id: 'custom_' + lower.replace(/\s+/g, '_'),
+      name: clean,
+      badgeLabel: `✦ ${clean.toUpperCase()}`,
       colorBg: 'bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20',
       colorBorder: 'border-emerald-400/80',
       colorText: 'text-emerald-800 dark:text-emerald-300',
@@ -190,7 +199,8 @@ export function getAllUserBadges(tags: string[], customTag?: string): TagDetails
   }
 
   // Priority 3: Clever Tag
-  if (normalized.includes('clever')) {
+  if (tagList.some((t) => t.toLowerCase().trim() === 'clever') && !seen.has('clever')) {
+    seen.add('clever');
     badges.push({
       id: 'clever',
       name: 'Clever Strategist',
@@ -206,7 +216,8 @@ export function getAllUserBadges(tags: string[], customTag?: string): TagDetails
   }
 
   // Priority 4: Cool Tag
-  if (normalized.includes('cool')) {
+  if (tagList.some((t) => t.toLowerCase().trim() === 'cool') && !seen.has('cool')) {
+    seen.add('cool');
     badges.push({
       id: 'cool',
       name: 'Cool Wealth Builder',
@@ -221,7 +232,7 @@ export function getAllUserBadges(tags: string[], customTag?: string): TagDetails
     });
   }
 
-  // Default Elite Member if no badges
+  // Default fallback if absolutely no badges
   if (badges.length === 0) {
     badges.push({
       id: 'elite',
