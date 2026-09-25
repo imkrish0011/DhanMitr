@@ -35,6 +35,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { ProviderLogo, SparkleSmallIcon } from '@/components/icons/CustomIcons';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ExecutiveOverviewProps {
   onOpenAddModal?: (type?: string) => void;
@@ -57,13 +58,55 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
     spendingCategories,
     subscriptions,
     insurances,
+    transactions,
     goals,
     setActiveSubTab,
   } = useFinance();
+  const { language, t } = useLanguage();
 
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [cashFlowPeriod, setCashFlowPeriod] = useState<'3M' | '6M' | '1Y'>('6M');
   const [hoveredSpendingId, setHoveredSpendingId] = useState<string | null>(null);
+
+  // Dynamic 3-Color State Machine for Desktop Hero Card
+  const isDeficit = netSurplus < 0;
+  const isTight = !isDeficit && (netSurplus <= 5000 || (totalIncome > 0 && (netSurplus / totalIncome) <= 0.15));
+
+  const heroTheme = isDeficit
+    ? {
+        border: 'border-rose-500/30',
+        glow: 'from-rose-500/20 via-pink-500/5 to-transparent',
+        accentLine: 'via-rose-500/80',
+        badgeBg: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
+        badgeText: language === 'hi' ? 'घाटा (Deficit Risk)' : 'Deficit Risk',
+        pillBadge: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30',
+        textColor: 'text-rose-600 dark:text-rose-400',
+        icon: <ArrowDownRight className="w-3.5 h-3.5 stroke-[2.5]" />,
+        dot: 'bg-rose-500',
+      }
+    : isTight
+    ? {
+        border: 'border-amber-500/30',
+        glow: 'from-amber-500/20 via-yellow-500/5 to-transparent',
+        accentLine: 'via-amber-500/80',
+        badgeBg: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30',
+        badgeText: language === 'hi' ? 'कम बचत (Tight Buffer)' : 'Tight Buffer',
+        pillBadge: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30',
+        textColor: 'text-amber-600 dark:text-amber-400',
+        icon: <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />,
+        dot: 'bg-amber-500',
+      }
+    : {
+        border: 'border-emerald-500/30',
+        glow: 'from-emerald-500/15 via-teal-500/5 to-transparent',
+        accentLine: 'via-emerald-500/70',
+        badgeBg: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+        badgeText: language === 'hi' ? 'सुरक्षित बचत (Healthy)' : 'Healthy Surplus',
+        pillBadge: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30',
+        textColor: 'text-emerald-600 dark:text-emerald-400',
+        icon: <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />,
+        dot: 'bg-emerald-500',
+      };
 
   // Emergency Fund Calculations
   const emergencyGoal = goals.find((g) => g.category === 'emergency_fund');
@@ -126,9 +169,35 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
   const cashTurnover = Math.max(1, totalIncome + totalOutflow);
   const incomePercent = Math.round((totalIncome / cashTurnover) * 100);
   const outflowPercent = Math.round((totalOutflow / cashTurnover) * 100);
-  const dailyBurn = Math.round(totalOutflow / 30);
 
-  // Dynamic Multi-Month Cash Flow Horizon
+  // Smart Daily Burn & Spending Pace
+  const today = new Date();
+  const currentDay = Math.max(1, today.getDate());
+  const daysInCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+  const subMonthlyTotal = subscriptions
+    .filter((s) => s.is_active)
+    .reduce((sum, s) => sum + (s.billing_cycle === 'monthly' ? s.amount : Math.round(s.amount / 12)), 0);
+  const insMonthlyTotal = insurances
+    .filter((i) => i.is_active)
+    .reduce((sum, i) => sum + (i.premium_frequency === 'monthly' ? i.premium_amount : Math.round(i.premium_amount / 12)), 0);
+
+  // Real spend in current month from transactions + prorated recurring fixed bills
+  const currentMonthTxSpend = transactions
+    .filter((t) => {
+      if (t.type !== 'expense' && t.type !== 'investment') return false;
+      if (!t.date) return true;
+      const d = new Date(t.date);
+      return !isNaN(d.getTime()) ? d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear() : true;
+    })
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+  const mtdExpenses = currentMonthTxSpend + Math.round(((subMonthlyTotal + insMonthlyTotal) / daysInCurrentMonth) * currentDay);
+  const dailyBurn = currentDay > 0 && currentMonthTxSpend > 0
+    ? Math.max(0, Math.round(mtdExpenses / currentDay))
+    : Math.round(totalOutflow / 30);
+
+  // Dynamic Multi-Month Cash Flow Horizon (Real Date-Grouped Transactions)
   const displayTrend = useMemo(() => {
     if (totalIncome === 0 && totalOutflow === 0) return [];
 
@@ -136,18 +205,45 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
     const now = new Date();
     const points = [];
 
-    // Organic variance profile for realistic financial visual momentum
-    const variance = [0.93, 0.97, 0.95, 1.01, 0.98, 1.0, 0.94, 0.96, 1.02, 0.99, 0.97, 1.0];
-    const expVariance = [1.05, 0.98, 1.02, 0.94, 1.01, 1.0, 1.03, 0.95, 0.99, 1.02, 0.97, 1.0];
+    // Group real transactions by "YYYY-MM"
+    const txByMonth: Record<string, { income: number; expense: number }> = {};
+    transactions.forEach((tx) => {
+      if (!tx.date) return;
+      const d = new Date(tx.date);
+      if (isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!txByMonth[key]) txByMonth[key] = { income: 0, expense: 0 };
+      if (tx.type === 'income') {
+        txByMonth[key].income += Number(tx.amount || 0);
+      } else if (tx.type === 'expense' || tx.type === 'investment') {
+        txByMonth[key].expense += Number(tx.amount || 0);
+      }
+    });
+
+    const fixedMonthly = subMonthlyTotal + insMonthlyTotal;
 
     for (let i = monthsBack - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthLabel = d.toLocaleString('en-US', { month: 'short' });
-      const idx = (monthsBack - 1 - i) % variance.length;
-
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const isCurrent = i === 0;
-      const inc = isCurrent ? totalIncome : Math.round(totalIncome * variance[idx]);
-      const exp = isCurrent ? totalOutflow : Math.round(totalOutflow * expVariance[idx]);
+
+      const record = txByMonth[key];
+      let inc = 0;
+      let exp = 0;
+
+      if (isCurrent) {
+        inc = totalIncome;
+        exp = totalOutflow;
+      } else if (record && (record.income > 0 || record.expense > 0)) {
+        // Real past transactions found!
+        inc = record.income > 0 ? record.income : totalIncome;
+        exp = record.expense + fixedMonthly;
+      } else {
+        // Intelligent baseline pace based on current known finances
+        inc = totalIncome;
+        exp = Math.round(totalOutflow * (0.96 + (i * 0.008)));
+      }
 
       points.push({
         month: monthLabel,
@@ -158,7 +254,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
       });
     }
     return points;
-  }, [totalIncome, totalOutflow, cashFlowPeriod]);
+  }, [totalIncome, totalOutflow, cashFlowPeriod, transactions, subMonthlyTotal, insMonthlyTotal]);
 
   // Active Spending Categories
   const activeCategories =
@@ -179,36 +275,44 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
     return activeCategories.find((c) => c.id === hoveredSpendingId);
   }, [hoveredSpendingId, activeCategories]);
 
-  // Combined Priority Obligations
+  // Combined Priority Obligations (Real dynamic days remaining)
   const priorityObligations = [
     ...subscriptions
       .filter((s) => s.is_active)
-      .map((s) => ({
-        id: s.id,
-        title: s.name,
-        logoKey: s.logoKey,
-        dueText: `in ${s.days_remaining}d`,
-        dueDate: s.next_renewal_date,
-        amount: s.amount,
-        cycle: s.billing_cycle === 'monthly' ? 'Monthly' : 'Annual',
-        isUrgent: s.is_urgent || s.days_remaining <= 10,
-        daysRemaining: s.days_remaining,
-        type: 'subscription' as const,
-      })),
+      .map((s) => {
+        const days = s.days_remaining !== undefined ? s.days_remaining : 15;
+        const dueText = days <= 0 ? 'Due today' : days === 1 ? 'Due tomorrow' : `in ${days}d`;
+        return {
+          id: s.id,
+          title: s.name,
+          logoKey: s.logoKey,
+          dueText,
+          dueDate: s.next_renewal_date,
+          amount: s.amount,
+          cycle: s.billing_cycle === 'monthly' ? 'Monthly' : 'Annual',
+          isUrgent: s.is_urgent || days <= 3,
+          daysRemaining: days,
+          type: 'subscription' as const,
+        };
+      }),
     ...insurances
       .filter((i) => i.is_active)
-      .map((i) => ({
-        id: i.id,
-        title: i.policy_name,
-        logoKey: i.logoKey,
-        dueText: `in ${i.days_remaining}d`,
-        dueDate: i.renewal_date,
-        amount: i.premium_amount,
-        cycle: i.premium_frequency === 'monthly' ? 'Monthly' : 'Annual',
-        isUrgent: i.is_urgent || i.days_remaining <= 10,
-        daysRemaining: i.days_remaining,
-        type: 'insurance' as const,
-      })),
+      .map((i) => {
+        const days = i.days_remaining !== undefined ? i.days_remaining : 30;
+        const dueText = days <= 0 ? 'Due today' : days === 1 ? 'Due tomorrow' : `in ${days}d`;
+        return {
+          id: i.id,
+          title: i.policy_name,
+          logoKey: i.logoKey,
+          dueText,
+          dueDate: i.renewal_date,
+          amount: i.premium_amount,
+          cycle: i.premium_frequency === 'monthly' ? 'Monthly' : 'Annual',
+          isUrgent: i.is_urgent || days <= 7,
+          daysRemaining: days,
+          type: 'insurance' as const,
+        };
+      }),
   ]
     .sort((a, b) => a.daysRemaining - b.daysRemaining)
     .slice(0, 4);
@@ -219,7 +323,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
   return (
     <div className="space-y-5 select-none animate-in fade-in duration-300">
       {/* ========================================================================= */}
-      {/* 0. SOVEREIGN TELEMETRY TICKER BAR                                        */}
+      {/* 0. FINANCIAL TELEMETRY TICKER BAR                                        */}
       {/* ========================================================================= */}
       <div className="p-3 sm:p-3.5 rounded-2xl bg-white/70 dark:bg-[#0E1526]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
@@ -229,14 +333,16 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
           <div className="flex flex-col">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-black tracking-wider uppercase text-slate-900 dark:text-white font-mono">
-                Sovereign Wealth Cockpit
+                {language === 'hi' ? 'धन-मित्र खाता सारांश' : 'DhanMitr Financial Overview'}
               </span>
               <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-extrabold bg-emerald-500 text-slate-950 uppercase tracking-widest">
-                Live Engine
+                {language === 'hi' ? 'सक्रिय खाता' : 'Live Sync'}
               </span>
             </div>
             <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-              Institutional personal finance telemetry • Real-time solvency & velocity analytics
+              {language === 'hi'
+                ? 'दैनिक कमाई, खर्च और बचत का सच्चा हिसाब • सुरक्षित व पारदर्शी'
+                : 'Real-time personal balance, cashflow & savings intelligence'}
             </span>
           </div>
         </div>
@@ -246,65 +352,55 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
             <span className="text-emerald-500">₹</span>
             <span>{netSurplus >= 0 ? `+₹${netSurplus.toLocaleString('en-IN')}` : `-₹${Math.abs(netSurplus).toLocaleString('en-IN')}`}/mo</span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
-            <Flame className="w-3.5 h-3.5 fill-emerald-500/40" />
-            <span>{savingsRate}% Retained</span>
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-mono font-extrabold ${heroTheme.pillBadge}`}>
+            <Flame className="w-3.5 h-3.5 fill-current" />
+            <span>{savingsRate}% {language === 'hi' ? 'बचत' : 'Saved'}</span>
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. TOP BENTO ROW: WEALTH VELOCITY COCKPIT & RUNWAY VAULT                 */}
+      {/* 1. TOP BENTO ROW: DYNAMIC HERO CARD & RUNWAY VAULT                       */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* HERO TILE: Wealth Velocity Engine (8 Cols) */}
-        <div className="lg:col-span-8 rounded-3xl fintech-card p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between group shadow-sm border border-slate-200/80 dark:border-white/[0.08]">
-          {/* Subtle Ambient Radial Glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-500/15 via-teal-500/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/70 to-transparent" />
+        {/* HERO TILE: Dynamic 3-Color Responsive Wealth Card (8 Cols) */}
+        <div className={`lg:col-span-8 rounded-3xl fintech-card p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between group shadow-sm border ${heroTheme.border} transition-colors duration-300`}>
+          {/* Dynamic Ambient Radial Glow matching Deficit/Tight/Healthy state */}
+          <div className={`absolute top-0 right-0 w-96 h-96 bg-gradient-to-br ${heroTheme.glow} rounded-full blur-3xl pointer-events-none -mr-16 -mt-16 transition-all duration-500`} />
+          <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent ${heroTheme.accentLine} to-transparent transition-all duration-500`} />
 
           <div>
             {/* Header / Subtitle */}
             <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] sm:text-xs font-mono font-bold tracking-widest text-emerald-700 dark:text-emerald-300 uppercase bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Monthly Cash Flow Position
+                <span className={`text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded-full flex items-center gap-1.5 ${heroTheme.pillBadge}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${heroTheme.dot} ${isDeficit ? 'animate-ping' : 'animate-pulse'}`} />
+                  {language === 'hi' ? 'मासिक बचत स्थिति' : 'Monthly Cash Flow Position'}
                 </span>
                 <span className="text-xs text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">
-                  • Institutional Pulse
+                  • {language === 'hi' ? 'लाइव हिसाब' : 'Real-time Telemetry'}
                 </span>
               </div>
 
               {/* Savings Velocity Badge */}
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
                 <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
-                <span>{savingsRate}% Savings Velocity</span>
+                <span>{language === 'hi' ? `▲ ${savingsRate}% बचत दर` : `▲ ${savingsRate}% Savings Rate`}</span>
               </div>
             </div>
 
             {/* Giant Net Surplus Display with Live Glow */}
             <div className="mt-2 mb-4">
               <span className="text-[11px] font-mono font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-400 block mb-1.5">
-                Net Monthly Surplus (Retained Capital)
+                {language === 'hi' ? 'उपलब्ध मासिक बचत (Surplus)' : 'Net Monthly Surplus (Available Balance)'}
               </span>
               <div className="flex items-baseline gap-3 flex-wrap">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight font-mono tabular-nums leading-none">
-                  ₹{netSurplus.toLocaleString('en-IN')}
+                <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight font-mono tabular-nums leading-none ${heroTheme.textColor}`}>
+                  {netSurplus < 0 ? `-₹${Math.abs(netSurplus).toLocaleString('en-IN')}` : `₹${netSurplus.toLocaleString('en-IN')}`}
                 </h2>
-                <span
-                  className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl shadow-xs ${
-                    netSurplus >= 0
-                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                      : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
-                  }`}
-                >
-                  {netSurplus >= 0 ? (
-                    <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
-                  ) : (
-                    <ArrowDownRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                  )}
-                  {netSurplus >= 0 ? 'Cash Positive' : 'Deficit'}
+                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl shadow-xs ${heroTheme.badgeBg}`}>
+                  {heroTheme.icon}
+                  <span>{heroTheme.badgeText}</span>
                 </span>
               </div>
             </div>
@@ -319,17 +415,17 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="text-slate-600 dark:text-slate-300 font-bold flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Total Inflow / Month
+                    {language === 'hi' ? 'कुल मासिक कमाई' : 'Total Inflow / Month'}
                   </span>
                   <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover/inflow:translate-x-0.5 group-hover/inflow:-translate-y-0.5 transition-transform">
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
                 <div className="text-xl sm:text-2xl font-black font-mono tabular-nums text-slate-900 dark:text-white">
-                  ₹{totalIncome.toLocaleString('en-IN')}
+                  +₹{totalIncome.toLocaleString('en-IN')}
                 </div>
                 <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                  <span>Gross turnover</span>
+                  <span>{language === 'hi' ? 'वेतन व आमदनी' : 'Income & credits'}</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Topline</span>
                 </div>
               </div>
@@ -337,23 +433,23 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               {/* Outflow Card */}
               <div
                 onClick={() => setActiveSubTab('budget')}
-                className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/[0.06] hover:border-indigo-500/40 hover:bg-indigo-500/[0.02] dark:hover:bg-indigo-500/[0.04] transition-all cursor-pointer group/outflow relative overflow-hidden"
+                className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/[0.06] hover:border-rose-500/40 hover:bg-rose-500/[0.02] dark:hover:bg-rose-500/[0.04] transition-all cursor-pointer group/outflow relative overflow-hidden"
               >
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="text-slate-600 dark:text-slate-300 font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                    Operational Outflow
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    {language === 'hi' ? 'कुल मासिक खर्च' : 'Operational Outflow'}
                   </span>
-                  <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover/outflow:translate-x-0.5 group-hover/outflow:translate-y-0.5 transition-transform">
+                  <div className="w-6 h-6 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover/outflow:translate-x-0.5 group-hover/outflow:translate-y-0.5 transition-transform">
                     <ArrowDownRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
                 <div className="text-xl sm:text-2xl font-black font-mono tabular-nums text-slate-900 dark:text-white">
-                  ₹{totalOutflow.toLocaleString('en-IN')}
+                  -₹{totalOutflow.toLocaleString('en-IN')}
                 </div>
                 <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                  <span>₹{dailyBurn.toLocaleString('en-IN')}/day burn</span>
-                  <span className="text-indigo-600 dark:text-indigo-400 font-bold">{outflowPercent}% Burn Ratio</span>
+                  <span>₹{dailyBurn.toLocaleString('en-IN')}/{language === 'hi' ? 'दिन खर्च' : 'day burn'}</span>
+                  <span className="text-rose-600 dark:text-rose-400 font-bold">{outflowPercent}% {language === 'hi' ? 'खर्च अनुपात' : 'Burn Ratio'}</span>
                 </div>
               </div>
             </div>
@@ -363,11 +459,11 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
                 <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Inflow Velocity {incomePercent}%
+                  {language === 'hi' ? 'कमाई हिस्सा' : 'Inflow Share'} {incomePercent}%
                 </span>
-                <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                  Burn Rate {outflowPercent}%
+                <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  {language === 'hi' ? 'खर्च हिस्सा' : 'Outflow Share'} {outflowPercent}%
                 </span>
               </div>
               <div className="w-full h-2.5 rounded-full bg-slate-200/80 dark:bg-white/10 overflow-hidden flex p-0.5 gap-0.5">
@@ -376,7 +472,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
                   style={{ width: `${incomePercent}%` }}
                 />
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-r-full transition-all duration-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]"
+                  className="h-full bg-gradient-to-r from-rose-500 to-pink-500 rounded-r-full transition-all duration-500 shadow-[0_0_8px_rgba(244,63,94,0.3)]"
                   style={{ width: `${outflowPercent}%` }}
                 />
               </div>
@@ -390,7 +486,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/20 active:scale-95 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Log Record</span>
+              <span>{language === 'hi' ? '+ नया हिसाब जोड़ें' : 'Log Record'}</span>
             </button>
 
             <button
@@ -398,7 +494,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200/80 dark:border-white/10 cursor-pointer active:scale-95"
             >
               <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-              <span>AI Advisor Audit</span>
+              <span>{language === 'hi' ? 'AI बचत सलाह' : 'AI Advice'}</span>
             </button>
 
             <button
@@ -406,7 +502,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200/80 dark:border-white/10 cursor-pointer active:scale-95"
             >
               <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>Tax Optimizer</span>
+              <span>{language === 'hi' ? 'टैक्स बचत' : 'Tax Optimizer'}</span>
             </button>
           </div>
         </div>

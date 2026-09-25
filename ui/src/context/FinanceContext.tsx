@@ -10,6 +10,7 @@ import {
   IncomeSource,
   MonthlyCashFlowPoint,
   Transaction,
+  TransactionCategory,
   FinanceSubTab,
   FinancialGoal,
 } from '@/types';
@@ -24,6 +25,7 @@ import {
   emptyGoals,
 } from '@/data/mockData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { calculateDaysRemaining } from '@/lib/utils';
 import { useAuth } from './AuthContext';
 
 interface FinanceContextType {
@@ -115,21 +117,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (subsData) {
         setSubscriptions(
-          subsData.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            provider: s.provider || s.name,
-            logoKey: s.logo_key || 'other',
-            planName: s.plan_name || 'Standard Plan',
-            amount: Number(s.amount || 0),
-            currency: (s.currency as any) || 'INR',
-            billing_cycle: (s.billing_cycle as any) || 'monthly',
-            category: s.category || 'Entertainment',
-            next_renewal_date: s.next_renewal_date || '28 days',
-            days_remaining: 30,
-            is_urgent: false,
-            is_active: s.is_active ?? true,
-          }))
+          subsData.map((s: any) => {
+            const cycle = (s.billing_cycle as any) || 'monthly';
+            const days = calculateDaysRemaining(s.next_renewal_date, cycle);
+            return {
+              id: s.id,
+              name: s.name,
+              provider: s.provider || s.name,
+              logoKey: s.logo_key || 'other',
+              planName: s.plan_name || 'Standard Plan',
+              amount: Number(s.amount || 0),
+              currency: (s.currency as any) || 'INR',
+              billing_cycle: cycle,
+              category: s.category || 'Entertainment',
+              next_renewal_date: s.next_renewal_date || '28 days',
+              days_remaining: days,
+              is_urgent: days <= 3,
+              is_active: s.is_active ?? true,
+            };
+          })
         );
       }
 
@@ -142,21 +148,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (insData) {
         setInsurances(
-          insData.map((i: any) => ({
-            id: i.id,
-            policy_name: i.policy_name,
-            provider: i.provider || 'Insurance Provider',
-            logoKey: i.logo_key || 'other',
-            policy_type: (i.policy_type as any) || 'term_life',
-            policy_number: i.policy_number || 'POL-000',
-            coverage_amount: Number(i.coverage_amount || 0),
-            premium_amount: Number(i.premium_amount || 0),
-            premium_frequency: (i.premium_frequency as any) || 'yearly',
-            renewal_date: i.renewal_date || 'Next Year',
-            days_remaining: 60,
-            is_urgent: false,
-            is_active: i.is_active ?? true,
-          }))
+          insData.map((i: any) => {
+            const freq = (i.premium_frequency as any) || 'yearly';
+            const days = calculateDaysRemaining(i.renewal_date, freq);
+            return {
+              id: i.id,
+              policy_name: i.policy_name,
+              provider: i.provider || 'Insurance Provider',
+              logoKey: i.logo_key || 'other',
+              policy_type: (i.policy_type as any) || 'term_life',
+              policy_number: i.policy_number || 'POL-000',
+              coverage_amount: Number(i.coverage_amount || 0),
+              premium_amount: Number(i.premium_amount || 0),
+              premium_frequency: freq,
+              renewal_date: i.renewal_date || 'Next Year',
+              days_remaining: days,
+              is_urgent: days <= 7,
+              is_active: i.is_active ?? true,
+            };
+          })
         );
       }
 
@@ -295,39 +305,58 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .filter((i) => i.is_active)
       .reduce((sum, i) => sum + (i.premium_frequency === 'monthly' ? i.premium_amount : Math.round(i.premium_amount / 12)), 0);
 
-    // Sum from transactions
-    const categoryTotals: Record<string, number> = {
-      housing: 0,
-      investments: 0,
-      utilities: 0,
+    const CATEGORY_MAP: Record<TransactionCategory, { label: string; color: string }> = {
+      groceries: { label: 'Groceries & Supplies', color: '#10B981' },
+      dining: { label: 'Food & Dining', color: '#F59E0B' },
+      shopping: { label: 'Shopping & Retail', color: '#EC4899' },
+      travel: { label: 'Travel & Transport', color: '#3B82F6' },
+      housing: { label: 'Housing & Rent', color: '#14B8A6' },
+      utilities: { label: 'Bills & Utilities', color: '#F97316' },
+      subscriptions: { label: 'Subscriptions & OTT', color: '#8B5CF6' },
+      insurance: { label: 'Insurance Premiums', color: '#A855F7' },
+      healthcare: { label: 'Health & Medical', color: '#EF4444' },
+      investments: { label: 'Investments & Savings', color: '#06B6D4' },
+      education: { label: 'Education & Fees', color: '#6366F1' },
+      entertainment: { label: 'Entertainment & Leisure', color: '#D946EF' },
+      salary: { label: 'Salary / Wages', color: '#10B981' },
+      freelance: { label: 'Freelance & Business', color: '#0D9488' },
+      other: { label: 'General & Others', color: '#94A3B8' },
+    };
+
+    // Aggregate spending per category
+    const categoryTotals: Partial<Record<TransactionCategory, number>> = {
       subscriptions: subTotal,
       insurance: insTotal,
-      other: 0,
     };
 
     transactions
       .filter((t) => t.type === 'expense' || t.type === 'investment')
       .forEach((t) => {
-        const cat = t.category;
-        if (cat in categoryTotals) {
-          categoryTotals[cat] += t.amount;
-        } else {
-          categoryTotals.other += t.amount;
-        }
+        const cat = (t.category as TransactionCategory) || 'other';
+        categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(t.amount || 0);
       });
 
-    // If budget items exist, incorporate allocated/spent
+    // If budget items exist, incorporate allocated/spent if not already counted
     budgetItems.forEach((b) => {
-      if (b.categoryKey in categoryTotals && categoryTotals[b.categoryKey] === 0) {
-        categoryTotals[b.categoryKey] = b.spent;
+      const cat = b.categoryKey as TransactionCategory;
+      if (!categoryTotals[cat] && b.spent > 0) {
+        categoryTotals[cat] = b.spent;
       }
     });
 
-    const grandTotal = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
+    const activeEntries = Object.entries(categoryTotals).filter(([_, amt]) => (amt || 0) > 0);
+    const grandTotal = activeEntries.reduce((acc, [_, amt]) => acc + (amt || 0), 0);
 
     if (grandTotal === 0 && profile.monthly_expenses > 0) {
       return [
-        { id: 'cat_est', category: 'Estimated Expenses', categoryKey: 'other', amount: profile.monthly_expenses, percentage: 100, color: '#34D399' },
+        {
+          id: 'cat_est',
+          category: 'Estimated Expenses',
+          categoryKey: 'other' as const,
+          amount: profile.monthly_expenses,
+          percentage: 100,
+          color: '#10B981',
+        },
       ];
     }
 
@@ -335,15 +364,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return defaultSpendingCategories;
     }
 
-    return defaultSpendingCategories.map((cat) => {
-      const amount = categoryTotals[cat.categoryKey] || 0;
-      const percentage = grandTotal > 0 ? Number(((amount / grandTotal) * 100).toFixed(1)) : 0;
-      return {
-        ...cat,
-        amount,
-        percentage,
-      };
-    });
+    // Build categories sorted descending by amount so highest expenses lead
+    return activeEntries
+      .map(([catKey, amount]) => {
+        const k = catKey as TransactionCategory;
+        const meta = CATEGORY_MAP[k] || { label: k.charAt(0).toUpperCase() + k.slice(1), color: '#94A3B8' };
+        const numAmount = amount || 0;
+        const percentage = grandTotal > 0 ? Number(((numAmount / grandTotal) * 100).toFixed(1)) : 0;
+        return {
+          id: `cat_${k}`,
+          category: meta.label,
+          categoryKey: k,
+          amount: numAmount,
+          percentage,
+          color: meta.color,
+        };
+      })
+      .sort((a, b) => b.amount - a.amount);
   }, [subscriptions, insurances, transactions, budgetItems, profile.monthly_expenses]);
 
   const totalOutflow = useMemo(() => {
@@ -353,7 +390,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [spendingCategories, profile.monthly_expenses]);
 
   const netSurplus = useMemo(() => {
-    return Math.max(0, totalIncome - totalOutflow);
+    return totalIncome - totalOutflow;
   }, [totalIncome, totalOutflow]);
 
   const savingsRate = useMemo(() => {
@@ -396,10 +433,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Subscriptions CRUD with Supabase
   const addSubscription = async (sub: Omit<Subscription, 'id' | 'days_remaining'>) => {
     const tempId = `sub_${Date.now()}`;
+    const cycle = sub.billing_cycle || 'monthly';
+    const days = calculateDaysRemaining(sub.next_renewal_date, cycle);
     const newSub: Subscription = {
       ...sub,
       id: tempId,
-      days_remaining: 30,
+      days_remaining: days,
+      is_urgent: days <= 3,
     };
     setSubscriptions((prev) => [newSub, ...prev]);
 
@@ -435,7 +475,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateSubscription = async (id: string, updated: Partial<Subscription>) => {
-    setSubscriptions((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
+    setSubscriptions((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const merged = { ...s, ...updated };
+        if (updated.next_renewal_date !== undefined || updated.billing_cycle !== undefined) {
+          const days = calculateDaysRemaining(merged.next_renewal_date, merged.billing_cycle);
+          merged.days_remaining = days;
+          merged.is_urgent = days <= 3;
+        }
+        return merged;
+      })
+    );
 
     if (user?.id && isSupabaseConfigured) {
       try {
@@ -496,10 +547,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Insurance CRUD with Supabase
   const addInsurance = async (ins: Omit<Insurance, 'id' | 'days_remaining'>) => {
     const tempId = `ins_${Date.now()}`;
+    const freq = ins.premium_frequency || 'yearly';
+    const days = calculateDaysRemaining(ins.renewal_date, freq);
     const newIns: Insurance = {
       ...ins,
       id: tempId,
-      days_remaining: 30,
+      days_remaining: days,
+      is_urgent: days <= 7,
     };
     setInsurances((prev) => [newIns, ...prev]);
 
@@ -535,7 +589,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateInsurance = async (id: string, updated: Partial<Insurance>) => {
-    setInsurances((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
+    setInsurances((prev) =>
+      prev.map((i) => {
+        if (i.id !== id) return i;
+        const merged = { ...i, ...updated };
+        if (updated.renewal_date !== undefined || updated.premium_frequency !== undefined) {
+          const days = calculateDaysRemaining(merged.renewal_date, merged.premium_frequency);
+          merged.days_remaining = days;
+          merged.is_urgent = days <= 7;
+        }
+        return merged;
+      })
+    );
 
     if (user?.id && isSupabaseConfigured) {
       try {

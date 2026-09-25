@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { FinanceProvider, useFinance } from '@/context/FinanceContext';
 import { VoiceChatProvider } from '@/context/VoiceChatContext';
@@ -23,7 +24,7 @@ import { GoalsTab } from '@/components/finance/GoalsTab';
 import { TaxRegimeComparator } from '@/components/finance/TaxRegimeComparator';
 import { ProjectLoanSuite } from '@/components/calculator/ProjectLoanSuite';
 import { TransactionsView } from '@/components/finance/TransactionsView';
-import { AddFinanceModal } from '@/components/finance/Modals/AddFinanceModal';
+import { AddFinanceModal, FinanceRecordType } from '@/components/finance/Modals/AddFinanceModal';
 
 // AI Companion Components
 import { VoiceAssistant } from '@/components/ai-companion/VoiceAssistant';
@@ -45,10 +46,11 @@ import { SettingsView } from '@/components/settings/SettingsView';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, openAuthModal } = useAuth();
+  const { t } = useLanguage();
   const [currentTab, setCurrentTab] = useState<NavTab>('landing');
   const [aiMode, setAiMode] = useState<'voice' | 'chat'>('voice');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addModalType, setAddModalType] = useState<any>('subscription');
+  const [addModalType, setAddModalType] = useState<FinanceRecordType | undefined>(undefined);
 
   const { activeSubTab, setActiveSubTab } = useFinance();
 
@@ -61,13 +63,15 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated]);
 
-  const handleOpenAddModal = (type?: any) => {
+  const handleOpenAddModal = (type?: string) => {
     if (!isAuthenticated) {
       openAuthModal('signup', 'Sign up to add and track your personalized financial records.');
       return;
     }
-    if (type && ['subscription', 'insurance', 'income', 'expense', 'investment', 'reminder', 'goal', 'tax'].includes(type)) {
-      setAddModalType(type);
+    if (type && ['subscription', 'insurance', 'income', 'expense', 'investment', 'reminder', 'goal', 'tax', 'budget_cap'].includes(type)) {
+      setAddModalType(type as FinanceRecordType);
+    } else {
+      setAddModalType(undefined);
     }
     setIsAddModalOpen(true);
   };
@@ -164,7 +168,7 @@ const AppContent: React.FC = () => {
               setCurrentTab('ai_companion');
               setAiMode('chat');
             }}
-            onOpenAddModal={(type) => handleOpenAddModal(type || 'subscription')}
+            onOpenAddModal={(type) => handleOpenAddModal(type as FinanceRecordType)}
             onOpenTransactions={() => setCurrentTab('transactions')}
           />
         ) : (
@@ -204,7 +208,7 @@ const AppContent: React.FC = () => {
                   />
                 )}
                 <HomeIcon className="w-4.5 h-4.5" />
-                <span className="text-[10px] tracking-tight">Home</span>
+                <span className="text-[10px] tracking-tight">{t.nav.home}</span>
               </button>
 
               {/* MSME & Loans Tab */}
@@ -227,7 +231,7 @@ const AppContent: React.FC = () => {
                   />
                 )}
                 <Briefcase className="w-4.5 h-4.5" />
-                <span className="text-[10px] tracking-tight">MSME</span>
+                <span className="text-[10px] tracking-tight">{t.nav.msme}</span>
               </button>
 
               {/* Center Elevated AI Companion Pulsing Sphere */}
@@ -242,7 +246,7 @@ const AppContent: React.FC = () => {
                       ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 ring-4 ring-emerald-400/40 shadow-emerald-500/50 scale-105'
                       : 'bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-500 text-slate-950 shadow-emerald-500/35 hover:scale-105'
                   }`}
-                  title="Talk to धनMitr AI"
+                  title={t.nav.voiceAi}
                 >
                   {!isAiActive && (
                     <span className="absolute -inset-1 rounded-full bg-emerald-400/30 animate-ping pointer-events-none" />
@@ -268,7 +272,7 @@ const AppContent: React.FC = () => {
                   />
                 )}
                 <Receipt className="w-4.5 h-4.5" />
-                <span className="text-[10px] tracking-tight">Ledger</span>
+                <span className="text-[10px] tracking-tight">{t.nav.passbook}</span>
               </button>
 
               {/* Profile / Settings Tab */}
@@ -288,7 +292,7 @@ const AppContent: React.FC = () => {
                   />
                 )}
                 <User className="w-4.5 h-4.5" />
-                <span className="text-[10px] tracking-tight">Profile</span>
+                <span className="text-[10px] tracking-tight">{t.nav.settings}</span>
               </button>
             </div>
           </div>
@@ -451,13 +455,15 @@ const AppContent: React.FC = () => {
 export default function Home() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <FinanceProvider>
-          <VoiceChatProvider>
-            <AppContent />
-          </VoiceChatProvider>
-        </FinanceProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <FinanceProvider>
+            <VoiceChatProvider>
+              <AppContent />
+            </VoiceChatProvider>
+          </FinanceProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

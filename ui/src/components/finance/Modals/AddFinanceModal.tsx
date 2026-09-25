@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '@/context/FinanceContext';
-
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { BillingCycle, InsuranceType, TransactionCategory, GoalCategory, GoalPriority } from '@/types';
 import { StatefulButton, ButtonState } from '@/components/ui/StatefulButton';
 import { CustomSelect, SelectOption } from '@/components/ui/CustomSelect';
@@ -42,6 +42,7 @@ import {
   PieChart,
   X,
   Lightbulb,
+  ChevronDown,
 } from 'lucide-react';
 
 export type FinanceRecordType = 'subscription' | 'insurance' | 'income' | 'expense' | 'investment' | 'goal' | 'tax' | 'reminder' | 'budget_cap';
@@ -55,19 +56,31 @@ interface AddFinanceModalProps {
 export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   isOpen,
   onClose,
-  initialType = 'subscription',
+  initialType,
 }) => {
+  const { language } = useLanguage();
   const { addSubscription, addInsurance, addIncomeSource, addTransaction, addGoal, addBudgetItem } = useFinance();
   const { profile, saveOnboardingProfile } = useAuth();
-  const [activeType, setActiveType] = useState<FinanceRecordType>(initialType);
+  const [activeType, setActiveType] = useState<FinanceRecordType>(initialType || 'income');
+  const [showTypePicker, setShowTypePicker] = useState<boolean>(!initialType);
   const [buttonState, setButtonState] = useState<ButtonState>('idle');
 
-
   useEffect(() => {
-    if (initialType) {
-      setActiveType(initialType);
+    if (isOpen) {
+      if (initialType) {
+        setActiveType(initialType);
+        setShowTypePicker(false);
+      } else {
+        setShowTypePicker(true);
+      }
     }
   }, [initialType, isOpen]);
+
+  const getUpcomingDate = (daysAhead: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + daysAhead);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
 
   // 1. Subscription form fields
   const [subName, setSubName] = useState('');
@@ -76,7 +89,7 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   const [subAmount, setSubAmount] = useState('');
   const [subCycle, setSubCycle] = useState<BillingCycle>('monthly');
   const [subCategory, setSubCategory] = useState('Entertainment');
-  const [subDate, setSubDate] = useState('28 Aug 2026');
+  const [subDate, setSubDate] = useState(() => getUpcomingDate(5));
 
   // 2. Insurance form fields
   const [insName, setInsName] = useState('');
@@ -87,7 +100,7 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   const [insPremium, setInsPremium] = useState('');
   const [insFreq, setInsFreq] = useState<'monthly' | 'yearly'>('yearly');
   const [insPolicyNo, setInsPolicyNo] = useState('');
-  const [insDate, setInsDate] = useState('15 Sep 2026');
+  const [insDate, setInsDate] = useState(() => getUpcomingDate(20));
 
   // 3. Income form fields
   const [incTitle, setIncTitle] = useState('');
@@ -280,16 +293,184 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   };
 
   const tabs = [
-    { id: 'subscription' as const, label: 'Subscription', icon: Tv },
-    { id: 'insurance' as const, label: 'Insurance', icon: ShieldCheck },
-    { id: 'income' as const, label: 'Income', icon: Wallet },
-    { id: 'expense' as const, label: 'Expense', icon: CreditCard },
-    { id: 'budget_cap' as const, label: 'Budget Cap', icon: PieChart },
-    { id: 'investment' as const, label: 'Investment', icon: TrendingUp },
-    { id: 'goal' as const, label: 'Goal', icon: Target },
-    { id: 'tax' as const, label: 'Tax Regime', icon: Scale },
-    { id: 'reminder' as const, label: 'Alert / Bill', icon: Bell },
+    { id: 'income' as const, labelEn: 'Income', labelHi: '+ आया (आय)', icon: Wallet },
+    { id: 'expense' as const, labelEn: 'Expense', labelHi: '- गया (खर्च)', icon: CreditCard },
+    { id: 'subscription' as const, labelEn: 'Bill / Sub', labelHi: 'बिल व सेवा', icon: Tv },
+    { id: 'insurance' as const, labelEn: 'Insurance', labelHi: 'बीमा पॉलिसी', icon: ShieldCheck },
+    { id: 'investment' as const, labelEn: 'Investment', labelHi: 'निवेश (SIP)', icon: TrendingUp },
+    { id: 'goal' as const, labelEn: 'Goal', labelHi: 'बचत लक्ष्य', icon: Target },
+    { id: 'budget_cap' as const, labelEn: 'Budget Cap', labelHi: 'बजट सीमा', icon: PieChart },
+    { id: 'tax' as const, labelEn: 'Tax Regime', labelHi: 'टैक्स नियम', icon: Scale },
+    { id: 'reminder' as const, labelEn: 'Alert', labelHi: 'बिल अलर्ट', icon: Bell },
   ];
+
+  const typeDetails: Record<
+    FinanceRecordType,
+    {
+      labelEn: string;
+      labelHi: string;
+      subEn: string;
+      subHi: string;
+      icon: React.ComponentType<{ className?: string }>;
+      colorClass: string;
+      bgClass: string;
+      borderClass: string;
+      badgeEn: string;
+      badgeHi: string;
+      submitBgClass: string;
+    }
+  > = {
+    income: {
+      labelEn: 'Add Income',
+      labelHi: 'नई कमाई जोड़ें',
+      subEn: 'Salary, harvest, trade or freelance income',
+      subHi: 'वेतन, फसल, दुकान या मजदूरी की आमदनी दर्ज करें',
+      icon: Wallet,
+      colorClass: 'text-emerald-600 dark:text-emerald-400',
+      bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+      borderClass: 'border-emerald-500/30',
+      badgeEn: '+ Money In',
+      badgeHi: '+ आया',
+      submitBgClass: 'bg-emerald-600 hover:bg-emerald-500',
+    },
+    expense: {
+      labelEn: 'Record Expense',
+      labelHi: 'नया खर्च दर्ज करें',
+      subEn: 'Daily spending, groceries, petrol, or shopping',
+      subHi: 'दैनिक खर्च, राशन, खाद-बीज, पेट्रोल या भुगतान',
+      icon: CreditCard,
+      colorClass: 'text-amber-600 dark:text-amber-400',
+      bgClass: 'bg-amber-500/10 dark:bg-amber-500/20',
+      borderClass: 'border-amber-500/30',
+      badgeEn: '- Money Out',
+      badgeHi: '- गया',
+      submitBgClass: 'bg-amber-600 hover:bg-amber-500',
+    },
+    subscription: {
+      labelEn: 'Add Recurring Bill / Sub',
+      labelHi: 'नया बिल या सदस्यता जोड़ें',
+      subEn: 'Mobile recharge, DTH, electricity or OTT service',
+      subHi: 'मोबाइल रिचार्ज, डिश टीवी, बिजली या नियमित सेवा',
+      icon: Tv,
+      colorClass: 'text-sky-600 dark:text-sky-400',
+      bgClass: 'bg-sky-500/10 dark:bg-sky-500/20',
+      borderClass: 'border-sky-500/30',
+      badgeEn: 'Recurring Bill',
+      badgeHi: 'नियमित बिल',
+      submitBgClass: 'bg-sky-600 hover:bg-sky-500',
+    },
+    insurance: {
+      labelEn: 'Add Insurance Policy',
+      labelHi: 'बीमा पॉलिसी जोड़ें',
+      subEn: 'Health, life, vehicle, or crop insurance policy',
+      subHi: 'स्वास्थ्य, जीवन, गाड़ी या फसल बीमा पॉलिसी',
+      icon: ShieldCheck,
+      colorClass: 'text-blue-600 dark:text-blue-400',
+      bgClass: 'bg-blue-500/10 dark:bg-blue-500/20',
+      borderClass: 'border-blue-500/30',
+      badgeEn: 'Protection',
+      badgeHi: 'सुरक्षा कवच',
+      submitBgClass: 'bg-blue-600 hover:bg-blue-500',
+    },
+    investment: {
+      labelEn: 'Add Investment / SIP',
+      labelHi: 'नया निवेश जोड़ें',
+      subEn: 'Mutual funds SIP, gold, fixed deposit or shares',
+      subHi: 'म्यूचुअल फंड, डिजिटल सोना, बैंक एफडी या शेयर',
+      icon: TrendingUp,
+      colorClass: 'text-teal-600 dark:text-teal-400',
+      bgClass: 'bg-teal-500/10 dark:bg-teal-500/20',
+      borderClass: 'border-teal-500/30',
+      badgeEn: 'Wealth Growth',
+      badgeHi: 'धन वृद्धि',
+      submitBgClass: 'bg-teal-600 hover:bg-teal-500',
+    },
+    goal: {
+      labelEn: 'Create Savings Goal',
+      labelHi: 'नया बचत लक्ष्य बनाएं',
+      subEn: 'Target for tractor, house, wedding or emergency fund',
+      subHi: 'ट्रैक्टर, नया घर, शादी या बच्चों की पढ़ाई का लक्ष्य',
+      icon: Target,
+      colorClass: 'text-purple-600 dark:text-purple-400',
+      bgClass: 'bg-purple-500/10 dark:bg-purple-500/20',
+      borderClass: 'border-purple-500/30',
+      badgeEn: 'Target',
+      badgeHi: 'बचत लक्ष्य',
+      submitBgClass: 'bg-purple-600 hover:bg-purple-500',
+    },
+    budget_cap: {
+      labelEn: 'Set Monthly Budget Cap',
+      labelHi: 'बजट सीमा तय करें',
+      subEn: 'Limit monthly expenses on groceries, fuel or shopping',
+      subHi: 'राशन, पेट्रोल या अन्य खर्च की अधिकतम सीमा तय करें',
+      icon: PieChart,
+      colorClass: 'text-indigo-600 dark:text-indigo-400',
+      bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/20',
+      borderClass: 'border-indigo-500/30',
+      badgeEn: 'Limit',
+      badgeHi: 'खर्च सीमा',
+      submitBgClass: 'bg-indigo-600 hover:bg-indigo-500',
+    },
+    tax: {
+      labelEn: 'Tax Regime Planning',
+      labelHi: 'टैक्स नियम व छूट',
+      subEn: 'Compare New vs Old regime, 80C deductions & advice',
+      subHi: 'नया और पुराना टैक्स नियम और छूट की गणना',
+      icon: Scale,
+      colorClass: 'text-rose-600 dark:text-rose-400',
+      bgClass: 'bg-rose-500/10 dark:bg-rose-500/20',
+      borderClass: 'border-rose-500/30',
+      badgeEn: 'Tax Rules',
+      badgeHi: 'टैक्स नियम',
+      submitBgClass: 'bg-rose-600 hover:bg-rose-500',
+    },
+    reminder: {
+      labelEn: 'Set Bill / EMI Alert',
+      labelHi: 'बिल या ईएमआई अलर्ट',
+      subEn: 'Due date alerts for EMI, electricity bill or school fee',
+      subHi: 'बिजली बिल, ईएमआई या तारीख का अलर्ट याद रखें',
+      icon: Bell,
+      colorClass: 'text-amber-600 dark:text-amber-400',
+      bgClass: 'bg-amber-500/10 dark:bg-amber-500/20',
+      borderClass: 'border-amber-500/30',
+      badgeEn: 'Reminder',
+      badgeHi: 'अलर्ट',
+      submitBgClass: 'bg-amber-600 hover:bg-amber-500',
+    },
+  };
+
+  const currentMeta = typeDetails[activeType] || typeDetails.income;
+  const CurrentIcon = currentMeta.icon;
+
+  const getSubmitButtonLabel = () => {
+    if (language === 'hi') {
+      switch (activeType) {
+        case 'income': return '+ कमाई जोड़ें';
+        case 'expense': return '- खर्च दर्ज करें';
+        case 'subscription': return 'बिल / सदस्यता जोड़ें';
+        case 'insurance': return 'बीमा पॉलिसी जोड़ें';
+        case 'investment': return 'निवेश दर्ज करें';
+        case 'goal': return 'नया लक्ष्य बनाएं';
+        case 'budget_cap': return 'बजट सीमा तय करें';
+        case 'tax': return 'टैक्स विवरण सुरक्षित करें';
+        case 'reminder': return 'अलर्ट सेट करें';
+        default: return 'सुरक्षित करें';
+      }
+    } else {
+      switch (activeType) {
+        case 'income': return '+ Add Income';
+        case 'expense': return '- Record Expense';
+        case 'subscription': return 'Save Subscription';
+        case 'insurance': return 'Save Insurance Policy';
+        case 'investment': return 'Save Investment';
+        case 'goal': return 'Create Goal';
+        case 'budget_cap': return 'Save Budget Cap';
+        case 'tax': return 'Save Tax Plan';
+        case 'reminder': return 'Set Alert';
+        default: return 'Save Record';
+      }
+    }
+  };
 
   // Options for custom selects with sleek SVG icons
   const subLogoOptions: SelectOption[] = [
@@ -319,20 +500,20 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   ];
 
   const expCategoryOptions: SelectOption[] = [
-    { value: 'housing', label: 'Housing / Rent', icon: <Home className="w-3.5 h-3.5 text-amber-500" /> },
-    { value: 'investments', label: 'Investments', icon: <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> },
-    { value: 'utilities', label: 'Bills & Utilities', icon: <Zap className="w-3.5 h-3.5 text-cyan-500" /> },
-    { value: 'subscriptions', label: 'Subscriptions', icon: <Tv className="w-3.5 h-3.5 text-purple-500" /> },
-    { value: 'insurance', label: 'Insurance', icon: <ShieldCheck className="w-3.5 h-3.5 text-rose-500" /> },
-    { value: 'other', label: 'Food, Dining & Other', icon: <Utensils className="w-3.5 h-3.5 text-emerald-500" /> },
+    { value: 'housing', label: language === 'hi' ? 'घर का किराया / मकान' : 'Housing / Rent', icon: <Home className="w-3.5 h-3.5 text-amber-500" /> },
+    { value: 'investments', label: language === 'hi' ? 'निवेश (SIP / बचत)' : 'Investments', icon: <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> },
+    { value: 'utilities', label: language === 'hi' ? 'बिजली, पानी व बिल' : 'Bills & Utilities', icon: <Zap className="w-3.5 h-3.5 text-cyan-500" /> },
+    { value: 'subscriptions', label: language === 'hi' ? 'मोबाइल व टीवी रिचार्ज' : 'Subscriptions', icon: <Tv className="w-3.5 h-3.5 text-purple-500" /> },
+    { value: 'insurance', label: language === 'hi' ? 'बीमा प्रीमियम' : 'Insurance', icon: <ShieldCheck className="w-3.5 h-3.5 text-rose-500" /> },
+    { value: 'other', label: language === 'hi' ? 'राशन, भोजन व अन्य' : 'Food, Dining & Other', icon: <Utensils className="w-3.5 h-3.5 text-emerald-500" /> },
   ];
 
   const paymentAccountOptions: SelectOption[] = [
-    { value: 'UPI / GPay', label: 'UPI / Google Pay / PhonePe', icon: <Smartphone className="w-3.5 h-3.5 text-emerald-500" /> },
-    { value: 'HDFC Bank Account', label: 'HDFC Bank Account', icon: <Landmark className="w-3.5 h-3.5 text-blue-500" /> },
-    { value: 'ICICI Bank Account', label: 'ICICI Bank Account', icon: <Landmark className="w-3.5 h-3.5 text-orange-500" /> },
-    { value: 'Credit Card', label: 'Credit Card', icon: <CreditCard className="w-3.5 h-3.5 text-purple-500" /> },
-    { value: 'Cash', label: 'Cash in Hand', icon: <Coins className="w-3.5 h-3.5 text-amber-500" /> },
+    { value: 'UPI / GPay', label: language === 'hi' ? 'UPI / गूगल पे / फोनपे' : 'UPI / Google Pay / PhonePe', icon: <Smartphone className="w-3.5 h-3.5 text-emerald-500" /> },
+    { value: 'HDFC Bank Account', label: language === 'hi' ? 'HDFC बैंक खाता' : 'HDFC Bank Account', icon: <Landmark className="w-3.5 h-3.5 text-blue-500" /> },
+    { value: 'ICICI Bank Account', label: language === 'hi' ? 'ICICI बैंक खाता' : 'ICICI Bank Account', icon: <Landmark className="w-3.5 h-3.5 text-orange-500" /> },
+    { value: 'Credit Card', label: language === 'hi' ? 'क्रेडिट कार्ड' : 'Credit Card', icon: <CreditCard className="w-3.5 h-3.5 text-purple-500" /> },
+    { value: 'Cash', label: language === 'hi' ? 'नकद (Cash in Hand)' : 'Cash in Hand', icon: <Coins className="w-3.5 h-3.5 text-amber-500" /> },
   ];
 
   const invTypeOptions: SelectOption[] = [
@@ -353,44 +534,92 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/65 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-slate-800 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-              Add Financial Record
-            </h2>
+        {/* Header: Focused exclusively on the active type */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-900/50">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 border ${currentMeta.bgClass} ${currentMeta.borderClass} ${currentMeta.colorClass}`}>
+              <CurrentIcon className="w-5 h-5" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
+                  {language === 'hi' ? currentMeta.labelHi : currentMeta.labelEn}
+                </h2>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${currentMeta.bgClass} ${currentMeta.borderClass} ${currentMeta.colorClass}`}>
+                  {language === 'hi' ? currentMeta.badgeHi : currentMeta.badgeEn}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {language === 'hi' ? currentMeta.subHi : currentMeta.subEn}
+              </p>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+            {/* Switch Category Button - only expands when requested, never crowds by default */}
+            <button
+              type="button"
+              onClick={() => setShowTypePicker(!showTypePicker)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-all cursor-pointer border border-slate-200/80 dark:border-slate-700 shadow-2xs"
+              title={language === 'hi' ? 'अन्य श्रेणी चुनें' : 'Change category'}
+            >
+              <span>{language === 'hi' ? 'बदलें' : 'Switch'}</span>
+              <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showTypePicker ? 'rotate-180' : ''}`} />
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* 9 Tab Selection: Responsive grid with full visibility */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 p-2.5 sm:p-3 bg-slate-100/80 dark:bg-[#0B101D] gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-slate-800/80 shrink-0">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeType === tab.id;
-            return (
+        {/* Category Selection Accordion: Only visible if user clicks 'Switch / बदलें' or if no type was pre-selected */}
+        {showTypePicker && (
+          <div className="p-3 bg-slate-100/90 dark:bg-[#0B101D] border-b border-slate-200/80 dark:border-slate-800 animate-in slide-in-from-top-2 duration-200 shrink-0">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                {language === 'hi' ? 'श्रेणी चुनें (Choose Category):' : 'Select Category:'}
+              </span>
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => setActiveType(tab.id)}
-                className={`py-2 px-1 sm:px-2 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 cursor-pointer select-none text-center ${
-                  isActive
-                    ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 font-bold shadow-xs ring-1 ring-emerald-500/40 border border-emerald-500/20'
-                    : 'bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 border border-transparent'
-                }`}
+                onClick={() => setShowTypePicker(false)}
+                className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-500' : 'text-slate-400 dark:text-slate-500'}`} />
-                <span className="text-[10px] sm:text-xs font-bold truncate max-w-full">{tab.label}</span>
+                {language === 'hi' ? 'बंद करें ✕' : 'Close ✕'}
               </button>
-            );
-          })}
-        </div>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeType === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveType(tab.id);
+                      setShowTypePicker(false);
+                    }}
+                    className={`py-2 px-1.5 rounded-xl transition-all flex flex-col items-center justify-center gap-1 cursor-pointer select-none text-center ${
+                      isActive
+                        ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 font-bold shadow-xs ring-1 ring-emerald-500/40 border border-emerald-500/30'
+                        : 'bg-white/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                    <span className="text-[11px] font-bold truncate max-w-full">
+                      {language === 'hi' ? tab.labelHi : tab.labelEn}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
 
         {/* Form Body */}
@@ -1074,21 +1303,20 @@ export const AddFinanceModal: React.FC<AddFinanceModalProps> = ({
           )}
 
           {/* Action Buttons */}
-
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer transition-colors"
             >
-              Cancel
+              {language === 'hi' ? 'रद्द करें' : 'Cancel'}
             </button>
             <StatefulButton
               type="submit"
               state={buttonState}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-xs cursor-pointer"
+              className={`px-5 py-2 text-white font-bold rounded-xl shadow-xs cursor-pointer ${currentMeta.submitBgClass}`}
             >
-              Save Record
+              {getSubmitButtonLabel()}
             </StatefulButton>
           </div>
         </form>

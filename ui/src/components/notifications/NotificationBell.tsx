@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useFinance } from '@/context/FinanceContext';
+import { calculateDaysRemaining } from '@/lib/utils';
 import { BellIcon } from '@/components/icons/CustomIcons';
 import { CheckCircle2, X } from 'lucide-react';
 
@@ -37,7 +38,7 @@ const SEVERITY_STYLES: Record<Severity, { card: string; title: string; text: str
 };
 
 export const NotificationBell: React.FC = () => {
-  const { subscriptions, insurances, goals } = useFinance();
+  const { subscriptions, insurances, goals, netSurplus, totalIncome } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
   // Current timestamp kept in state so render stays pure. Updated when the
@@ -80,31 +81,66 @@ export const NotificationBell: React.FC = () => {
   const notifications = useMemo<Notification[]>(() => {
     const items: Notification[] = [];
 
-    // Subscription renewals due within 10 days
+    // 1. Subscription renewals due within 30 days
     for (const s of subscriptions) {
-      if (!s.is_active || s.days_remaining === undefined || s.days_remaining > 10) continue;
+      if (!s.is_active) continue;
+      const days = s.days_remaining !== undefined ? s.days_remaining : calculateDaysRemaining(s.next_renewal_date, s.billing_cycle);
+      if (days > 30) continue;
+
+      const isUrgent = days <= 3;
+      const isSoon = days <= 10;
+      const severity: Severity = isUrgent ? 'urgent' : isSoon ? 'warning' : 'info';
+      const daysLabel = days <= 0 ? 'Due today' : `${days}d left`;
+
       items.push({
         id: `sub-${s.id}`,
-        title: `${s.name} renewal`,
-        detail: `₹${s.amount.toLocaleString('en-IN')} · ${s.billing_cycle === 'monthly' ? 'Monthly' : 'Yearly'} plan`,
-        daysLabel: s.days_remaining <= 0 ? 'Due today' : `${s.days_remaining}d left`,
-        severity: s.days_remaining <= 3 ? 'urgent' : 'warning',
+        title: `${s.name} renewal${isUrgent ? ' (Auto-Debit)' : ''}`,
+        detail: `₹${s.amount.toLocaleString('en-IN')} · ${s.billing_cycle === 'monthly' ? 'Monthly' : 'Yearly'} · ${s.next_renewal_date || 'Upcoming'}`,
+        daysLabel,
+        severity,
       });
     }
 
-    // Insurance premiums due within 10 days
+    // 2. Insurance premiums due within 45 days
     for (const i of insurances) {
-      if (!i.is_active || i.days_remaining === undefined || i.days_remaining > 10) continue;
+      if (!i.is_active) continue;
+      const days = i.days_remaining !== undefined ? i.days_remaining : calculateDaysRemaining(i.renewal_date, i.premium_frequency);
+      if (days > 45) continue;
+
+      const isUrgent = days <= 7;
+      const isSoon = days <= 20;
+      const severity: Severity = isUrgent ? 'urgent' : isSoon ? 'warning' : 'info';
+      const daysLabel = days <= 0 ? 'Due today' : `${days}d left`;
+
       items.push({
         id: `ins-${i.id}`,
-        title: `${i.policy_name} premium`,
-        detail: `₹${i.premium_amount.toLocaleString('en-IN')} · ${i.premium_frequency} premium`,
-        daysLabel: i.days_remaining <= 0 ? 'Due today' : `${i.days_remaining}d left`,
-        severity: i.days_remaining <= 3 ? 'urgent' : 'warning',
+        title: `${i.policy_name} Premium`,
+        detail: `₹${i.premium_amount.toLocaleString('en-IN')} · ${i.premium_frequency} plan · Due in ${days} days`,
+        daysLabel,
+        severity,
       });
     }
 
-    // Goal deadlines within 30 days (needs a valid clock reading)
+    // 3. Smart Financial Surplus Alerts
+    if (netSurplus < 0) {
+      items.push({
+        id: 'alert-cashflow-deficit',
+        title: 'Monthly Cash Flow Deficit',
+        detail: `Expenses exceed income by ₹${Math.abs(netSurplus).toLocaleString('en-IN')}. Runway at risk.`,
+        daysLabel: 'Urgent',
+        severity: 'urgent',
+      });
+    } else if (netSurplus <= 5000 && totalIncome > 0) {
+      items.push({
+        id: 'alert-tight-buffer',
+        title: 'Tight Cash Buffer Alert',
+        detail: `Only ₹${netSurplus.toLocaleString('en-IN')} surplus remaining this month. Limit discretionary spending.`,
+        daysLabel: 'Notice',
+        severity: 'warning',
+      });
+    }
+
+    // 4. Goal deadlines within 30 days (needs a valid clock reading)
     if (now > 0) {
       for (const g of goals) {
         if (g.is_completed || !g.target_date) continue;
@@ -128,7 +164,7 @@ export const NotificationBell: React.FC = () => {
 
     const severityRank: Record<Severity, number> = { urgent: 0, warning: 1, info: 2 };
     return items.sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);
-  }, [subscriptions, insurances, goals, now]);
+  }, [subscriptions, insurances, goals, netSurplus, totalIncome, now]);
 
   const visibleNotifications = notifications.filter((n) => !dismissed.includes(n.id));
   const hasUrgent = visibleNotifications.some((n) => n.severity === 'urgent');

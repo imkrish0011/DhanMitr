@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface SelectOption {
@@ -29,58 +30,109 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   direction = 'auto',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [computedDirection, setComputedDirection] = useState<'up' | 'down'>('down');
+  const [menuCoords, setMenuCoords] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+    isUp: boolean;
+  } | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
-  const determineDirection = useCallback(() => {
-    if (direction === 'up') return 'up';
-    if (direction === 'down') return 'down';
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - rect.bottom;
-      const spaceAbove = rect.top;
+  const updateCoords = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
 
-      // If space below is less than 230px and there's more space above, open upwards
-      if (spaceBelow < 230 && spaceAbove > 180) {
-        return 'up';
-      }
+    // Dropdown max-height is typically 224px (max-h-56)
+    const shouldOpenUp =
+      direction === 'up' ||
+      (direction === 'auto' && spaceBelow < 240 && spaceAbove > spaceBelow);
+
+    setComputedDirection(shouldOpenUp ? 'up' : 'down');
+
+    // Ensure left does not exceed viewport boundaries
+    const width = rect.width;
+    let left = rect.left;
+    if (left + width > viewportWidth - 8) {
+      left = Math.max(8, viewportWidth - width - 8);
     }
-    return 'down';
+
+    if (shouldOpenUp) {
+      setMenuCoords({
+        bottom: viewportHeight - rect.top + 6,
+        left,
+        width,
+        isUp: true,
+      });
+    } else {
+      setMenuCoords({
+        top: rect.bottom + 6,
+        left,
+        width,
+        isUp: false,
+      });
+    }
   }, [direction]);
 
   const toggleDropdown = () => {
     if (disabled) return;
     if (!isOpen) {
-      setComputedDirection(determineDirection());
+      updateCoords();
     }
-    setIsOpen(!isOpen);
+    setIsOpen((prev) => !prev);
   };
 
   useEffect(() => {
+    if (!isOpen) return;
+
+    updateCoords();
+
+    const handleScrollOrResize = () => {
+      updateCoords();
+    };
+
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsOpen(false);
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
-    }
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
     return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen]);
-
-  const isUp = computedDirection === 'up';
+  }, [isOpen, updateCoords]);
 
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
@@ -106,66 +158,77 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           stroke="currentColor"
           strokeWidth="2.5"
           className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0 ${
-            isOpen ? (isUp ? 'rotate-0 text-emerald-500' : 'rotate-180 text-emerald-500') : (isUp ? 'rotate-180' : '')
+            isOpen ? 'rotate-180 text-emerald-500' : ''
           }`}
         >
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
 
-      {/* Dropdown Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: isUp ? 4 : -4, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: isUp ? 4 : -4, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className={`absolute left-0 right-0 ${
-              isUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-            } z-[999] max-h-56 overflow-y-auto rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/95 dark:border-slate-700 shadow-2xl p-1.5 space-y-0.5`}
-            style={{
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            {options.map((opt) => {
-              const isSelected = opt.value === value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors text-left cursor-pointer ${
-                    isSelected
-                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    {opt.icon && <span className="shrink-0">{opt.icon}</span>}
-                    <span className="truncate">{opt.label}</span>
-                  </div>
-
-                  {isSelected && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      className="w-3.5 h-3.5 text-emerald-500 shrink-0 ml-2"
+      {/* Portaled Dropdown Menu (immune to modal overflow-hidden/overflow-y-auto clipping) */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {isOpen && menuCoords && (
+              <motion.div
+                ref={dropdownRef}
+                initial={{ opacity: 0, y: menuCoords.isUp ? 4 : -4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: menuCoords.isUp ? 4 : -4, scale: 0.98 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200/95 dark:border-slate-700 shadow-2xl p-1.5 space-y-0.5 max-h-56 overflow-y-auto"
+                style={{
+                  position: 'fixed',
+                  left: menuCoords.left,
+                  width: menuCoords.width,
+                  ...(menuCoords.isUp
+                    ? { bottom: menuCoords.bottom }
+                    : { top: menuCoords.top }),
+                  zIndex: 99999,
+                  boxShadow:
+                    '0 20px 35px -8px rgba(0, 0, 0, 0.4), 0 10px 15px -4px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                {options.map((opt) => {
+                  const isSelected = opt.value === value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        onChange(opt.value);
+                        setIsOpen(false);
+                      }}
+                      className={`w-full px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors text-left cursor-pointer ${
+                        isSelected
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
+                      }`}
                     >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </motion.div>
+                      <div className="flex items-center gap-2 truncate">
+                        {opt.icon && <span className="shrink-0">{opt.icon}</span>}
+                        <span className="truncate">{opt.label}</span>
+                      </div>
+
+                      {isSelected && (
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          className="w-3.5 h-3.5 text-emerald-500 shrink-0 ml-2"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useFinance } from '@/context/FinanceContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { SparkleSmallIcon } from '@/components/icons/CustomIcons';
 import { BottomSheetDrawer } from '@/components/ui/BottomSheetDrawer';
 import { Transaction, TransactionCategory, TransactionType } from '@/types';
@@ -39,8 +40,40 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   isMobile = false,
 }) => {
   const { transactions, totalIncome, totalOutflow, netSurplus, updateTransaction, deleteTransaction } = useFinance();
+  const { t } = useLanguage();
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense' | 'investment'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Dynamic Surplus Color & Health Status
+  const isDeficit = netSurplus < 0;
+  const isTight = !isDeficit && (netSurplus <= 5000 || (totalIncome > 0 && (netSurplus / totalIncome) <= 0.15));
+
+  const surplusTheme = isDeficit
+    ? {
+        border: 'border-rose-500/30',
+        bg: 'from-rose-950/40 via-rose-900/10 to-transparent',
+        badgeBg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30',
+        textColor: 'text-rose-600 dark:text-rose-400',
+        dot: 'bg-rose-500',
+        label: t.passbookView.deficit,
+      }
+    : isTight
+    ? {
+        border: 'border-amber-500/30',
+        bg: 'from-amber-950/40 via-amber-900/10 to-transparent',
+        badgeBg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30',
+        textColor: 'text-amber-600 dark:text-amber-400',
+        dot: 'bg-amber-500',
+        label: t.passbookView.tight,
+      }
+    : {
+        border: 'border-emerald-500/30',
+        bg: 'from-emerald-950/40 via-emerald-900/10 to-transparent',
+        badgeBg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30',
+        textColor: 'text-emerald-600 dark:text-emerald-400',
+        dot: 'bg-emerald-500',
+        label: t.passbookView.safe,
+      };
 
   // Edit Drawer State
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -127,24 +160,29 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   return (
     <div className="w-full max-w-5xl mx-auto pb-36 md:pb-12 relative">
-      <div className="px-4 sm:px-6 md:px-8 space-y-4">
-        {/* Mobile Modern Header Banner (No back bar or top plus) */}
+      <div className="px-4 sm:px-6 md:px-8 space-y-2.5 sm:space-y-4">
+        {/* Mobile Modern Header Banner - Ultra Compact Single Row */}
         {isMobile && (
-          <div className="pt-4 pb-1 flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                Passbook & Ledger
-                <SparkleSmallIcon className="w-4 h-4 text-emerald-500 fill-emerald-400" />
+          <div className="pt-2 pb-0 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-base font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 truncate">
+                <span>{t.passbookView.title}</span>
+                <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-400 shrink-0" />
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Zero-leakage UPI & automated debit tracking
-              </p>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
+                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{t.passbookView.entries(filteredTransactions.length)}</span>
+              </span>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{filteredTransactions.length} Entries</span>
-            </div>
+            <button
+              onClick={() => onOpenAddModal('expense')}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-[11px] font-bold shadow-xs cursor-pointer transition-all shrink-0"
+              title={t.passbookView.addTransaction}
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>{t.passbookView.quickAdd}</span>
+            </button>
           </div>
         )}
 
@@ -153,11 +191,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           <div className="flex items-center justify-between pt-6 pb-2">
             <div>
               <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                Passbook & Ledger
+                <span>{t.passbookView.title}</span>
                 <SparkleSmallIcon className="w-5 h-5 text-emerald-500 fill-emerald-400" />
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Live ledger of your banking, UPI and automated debits
+                {t.passbookView.sub}
               </p>
             </div>
             <button
@@ -165,50 +203,155 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Transaction</span>
+              <span>{t.passbookView.addTransaction}</span>
             </button>
           </div>
         )}
 
-        {/* Quick Metric Cards */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-          <div className="p-3.5 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-transparent border border-emerald-500/20 shadow-2xs relative overflow-hidden group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Inflow</span>
-              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded-md">
-                ▲ In
+        {/* ========================================================================= */}
+        {/* MOBILE BENTO CARD (Unified Surplus + Inflow/Outflow Action Pods)          */}
+        {/* ========================================================================= */}
+        <div className="sm:hidden rounded-2xl bg-slate-900/90 dark:bg-[#0A0F1D]/90 border border-slate-800 dark:border-white/10 p-3.5 space-y-2.5 shadow-xs relative overflow-hidden">
+          {/* Ambient Glow */}
+          <div
+            className={`absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl pointer-events-none ${
+              isDeficit ? 'bg-rose-500/20' : isTight ? 'bg-amber-500/20' : 'bg-emerald-500/20'
+            }`}
+          />
+
+          {/* Top Zone: Net Surplus with Health Indicator */}
+          <div className="flex items-start justify-between relative z-10">
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                {t.passbookView.surplus}
+              </span>
+              <p className={`text-xl font-black font-mono tabular-nums tracking-tight mt-0.5 ${surplusTheme.textColor}`}>
+                {netSurplus < 0
+                  ? `-₹${Math.abs(netSurplus).toLocaleString('en-IN')}`
+                  : `₹${netSurplus.toLocaleString('en-IN')}`}
+              </p>
+              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                {t.passbookView.surplusSub}
               </span>
             </div>
-            <p className="text-sm sm:text-xl font-black font-mono tabular-nums text-emerald-600 dark:text-emerald-400 truncate">
+
+            <div className="text-right">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${surplusTheme.badgeBg}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${surplusTheme.dot} ${isDeficit ? 'animate-ping' : ''}`} />
+                <span>{surplusTheme.label}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom Zone: Two Generous Action Pods (50% / 50% split) */}
+          <div className="grid grid-cols-2 gap-2 relative z-10 pt-1 border-t border-white/[0.06]">
+            {/* Inflow Pod */}
+            <button
+              type="button"
+              onClick={() => onOpenAddModal('income')}
+              className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 active:scale-[0.98] border border-emerald-500/25 transition-all text-left group cursor-pointer"
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">
+                    {t.passbookView.inflow}
+                  </span>
+                </div>
+                <Plus className="w-3 h-3 text-emerald-500/60 group-hover:text-emerald-400 transition-colors shrink-0" />
+              </div>
+              <p className="text-sm sm:text-base font-black font-mono tabular-nums text-emerald-600 dark:text-emerald-400 truncate">
+                +₹{totalIncome.toLocaleString('en-IN')}
+              </p>
+              <span className="text-[9px] text-slate-400 block truncate mt-0.5">
+                {t.passbookView.inflowSub}
+              </span>
+            </button>
+
+            {/* Outflow Pod */}
+            <button
+              type="button"
+              onClick={() => onOpenAddModal('expense')}
+              className="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/15 active:scale-[0.98] border border-rose-500/25 transition-all text-left group cursor-pointer"
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ArrowDownRight className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 truncate">
+                    {t.passbookView.outflow}
+                  </span>
+                </div>
+                <Plus className="w-3 h-3 text-rose-500/60 group-hover:text-rose-400 transition-colors shrink-0" />
+              </div>
+              <p className="text-sm sm:text-base font-black font-mono tabular-nums text-rose-600 dark:text-rose-400 truncate">
+                -₹{totalOutflow.toLocaleString('en-IN')}
+              </p>
+              <span className="text-[9px] text-slate-400 block truncate mt-0.5">
+                {t.passbookView.outflowSub}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* DESKTOP METRIC CARDS (Spacious 3-Column Luxury Cards)                     */}
+        {/* ========================================================================= */}
+        <div className="hidden sm:grid grid-cols-3 gap-4">
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-transparent border border-emerald-500/20 shadow-xs relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                {t.passbookView.inflow}
+              </span>
+              <button
+                type="button"
+                onClick={() => onOpenAddModal('income')}
+                className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 px-2 py-0.5 rounded-full border border-emerald-500/20 cursor-pointer transition-colors"
+              >
+                + {t.passbookView.addIncome}
+              </button>
+            </div>
+            <p className="text-xl sm:text-2xl font-black font-mono tabular-nums text-emerald-600 dark:text-emerald-400 truncate">
               +₹{totalIncome.toLocaleString('en-IN')}
             </p>
-            <span className="text-[10px] text-slate-400 hidden sm:block mt-0.5">Monthly credits</span>
+            <p className="text-xs text-slate-400 mt-1">{t.passbookView.inflowSub}</p>
           </div>
 
-          <div className="p-3.5 sm:p-5 rounded-2xl bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent dark:from-rose-950/40 dark:via-rose-950/20 dark:to-transparent border border-rose-500/20 shadow-2xs relative overflow-hidden group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Outflow</span>
-              <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 px-1.5 py-0.5 rounded-md">
-                ▼ Out
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent dark:from-rose-950/40 dark:via-rose-950/20 dark:to-transparent border border-rose-500/20 shadow-xs relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <ArrowDownRight className="w-4 h-4 text-rose-500" />
+                {t.passbookView.outflow}
               </span>
+              <button
+                type="button"
+                onClick={() => onOpenAddModal('expense')}
+                className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 hover:bg-rose-500/25 px-2 py-0.5 rounded-full border border-rose-500/20 cursor-pointer transition-colors"
+              >
+                + {t.passbookView.addExpense}
+              </button>
             </div>
-            <p className="text-sm sm:text-xl font-black font-mono tabular-nums text-rose-600 dark:text-rose-400 truncate">
+            <p className="text-xl sm:text-2xl font-black font-mono tabular-nums text-rose-600 dark:text-rose-400 truncate">
               -₹{totalOutflow.toLocaleString('en-IN')}
             </p>
-            <span className="text-[10px] text-slate-400 hidden sm:block mt-0.5">Debits & expenses</span>
+            <p className="text-xs text-slate-400 mt-1">{t.passbookView.outflowSub}</p>
           </div>
 
-          <div className="p-3.5 sm:p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent dark:from-blue-950/40 dark:via-blue-950/20 dark:to-transparent border border-blue-500/20 shadow-2xs relative overflow-hidden group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Surplus</span>
-              <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded-md">
-                {netSurplus >= 0 ? 'Safe' : 'Deficit'}
+          <div className={`p-5 rounded-2xl bg-gradient-to-br ${surplusTheme.bg} border ${surplusTheme.border} shadow-xs relative overflow-hidden group`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {t.passbookView.surplus}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${surplusTheme.badgeBg}`}>
+                {surplusTheme.label}
               </span>
             </div>
-            <p className={`text-sm sm:text-xl font-black font-mono tabular-nums truncate ${netSurplus >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
-              ₹{netSurplus.toLocaleString('en-IN')}
+            <p className={`text-xl sm:text-2xl font-black font-mono tabular-nums truncate ${surplusTheme.textColor}`}>
+              {netSurplus < 0
+                ? `-₹${Math.abs(netSurplus).toLocaleString('en-IN')}`
+                : `₹${netSurplus.toLocaleString('en-IN')}`}
             </p>
-            <span className="text-[10px] text-slate-400 hidden sm:block mt-0.5">Free balance</span>
+            <p className="text-xs text-slate-400 mt-1">{t.passbookView.surplusSub}</p>
           </div>
         </div>
 
@@ -224,7 +367,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              All ({transactions.length})
+              {t.passbookView.allFilter(transactions.length)}
             </button>
             <button
               onClick={() => setFilterType('expense')}
@@ -234,7 +377,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              Expenses ({expenseCount})
+              {t.passbookView.expensesFilter(expenseCount)}
             </button>
             <button
               onClick={() => setFilterType('income')}
@@ -244,7 +387,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              Income ({incomeCount})
+              {t.passbookView.incomeFilter(incomeCount)}
             </button>
             {investmentCount > 0 && (
               <button
@@ -255,7 +398,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                Investments ({investmentCount})
+                {t.passbookView.investmentsFilter(investmentCount)}
               </button>
             )}
           </div>
@@ -264,7 +407,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           <div className="relative flex-1 sm:max-w-xs">
             <input
               type="text"
-              placeholder="Search title, category, account..."
+              placeholder={t.passbookView.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-8 py-2 text-xs bg-white dark:bg-[#0c1220] border border-slate-200/80 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 shadow-2xs"
@@ -290,12 +433,12 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               </div>
               <div className="space-y-1">
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                  {transactions.length === 0 ? 'Your Ledger is Clean & Ready' : 'No Matching Transactions'}
+                  {transactions.length === 0 ? t.passbookView.cleanTitle : t.passbookView.noMatching}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
                   {transactions.length === 0
-                    ? 'Log your daily UPI expenses, salary credits, or investments to keep a real-time financial overview.'
-                    : 'Try changing your search query or filter category to view matching records.'}
+                    ? t.passbookView.cleanSub
+                    : t.passbookView.noMatchingSub}
                 </p>
               </div>
 
@@ -306,7 +449,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-900/20 transition-all cursor-pointer inline-flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add First Transaction</span>
+                    <span>{t.passbookView.firstAction}</span>
                   </button>
 
                   <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-md mx-auto pt-2">
@@ -412,17 +555,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         </div>
       </div>
 
-      {/* Floating Action Button (FAB) for Quick Add - positioned above mobile bottom nav bar without overlapping */}
-      <div className="fixed bottom-24 right-5 sm:right-8 z-30 pointer-events-auto">
-        <button
-          onClick={() => onOpenAddModal('expense')}
-          className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-slate-950 font-bold shadow-[0_12px_28px_-4px_rgba(16,185,129,0.55)] border border-emerald-300/40 flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all group"
-          aria-label="Add Transaction"
-          title="Add Transaction"
-        >
-          <Plus className="w-6 h-6 text-slate-950 stroke-[2.5] group-hover:rotate-90 transition-transform duration-200" />
-        </button>
-      </div>
+
 
       {/* Edit Transaction Bottom Sheet Drawer */}
       <BottomSheetDrawer

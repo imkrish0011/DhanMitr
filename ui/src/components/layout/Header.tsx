@@ -27,16 +27,16 @@ import {
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { BloomMenu } from '@/components/ui/BloomMenu';
 import { ThemeToggle } from '@/components/motion/theme-toggle';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface HeaderProps {
   onOpenAddModal: (type?: string) => void;
   onNavigateToTab?: (tab: NavTab) => void;
 }
 
-
-
 export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab }) => {
   const { theme, toggleTheme } = useTheme();
+  const { language, toggleLanguage, t } = useLanguage();
   const {
     activeSubTab,
     setActiveSubTab,
@@ -85,12 +85,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
   }, [onNavigateToTab]);
 
   const tabs: { id: FinanceSubTab; label: string; badge?: number | string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'goals', label: 'Goals & Milestones', badge: activeGoalsCount > 0 ? activeGoalsCount : undefined },
-    { id: 'tax_calculator', label: 'Tax Optimizer' },
-    { id: 'subscriptions', label: 'OTT & Subscriptions', badge: activeSubscriptionsCount > 0 ? activeSubscriptionsCount : undefined },
-    { id: 'insurances', label: 'Insurances', badge: activeInsurancesCount > 0 ? activeInsurancesCount : undefined },
-    { id: 'budget', label: 'Budget & Income' },
+    { id: 'overview', label: t.tabs.overview },
+    { id: 'goals', label: t.tabs.goals(activeGoalsCount), badge: activeGoalsCount > 0 ? activeGoalsCount : undefined },
+    { id: 'tax_calculator', label: t.tabs.tax },
+    { id: 'subscriptions', label: t.tabs.subs(activeSubscriptionsCount), badge: activeSubscriptionsCount > 0 ? activeSubscriptionsCount : undefined },
+    { id: 'insurances', label: t.tabs.ins(activeInsurancesCount), badge: activeInsurancesCount > 0 ? activeInsurancesCount : undefined },
+    { id: 'budget', label: t.tabs.budget },
   ];
 
   return (
@@ -101,18 +101,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
         <div className="min-w-0 shrink">
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-              <span>Finance Hub</span>
+              <span>{t.appTitle}</span>
               <SparkleSmallIcon className="w-4 h-4 text-emerald-500 fill-emerald-400" />
             </h1>
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live Telemetry</span>
+              <span>{language === 'hi' ? 'लाइव हिसाब' : 'Live Sync'}</span>
             </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium truncate max-w-sm sm:max-w-md lg:max-w-lg">
             {isAuthenticated
-              ? `Welcome back, ${profile?.name || 'User'} • Institutional personal wealth tracking`
-              : 'Institutional personal finance & wealth intelligence'}
+              ? (language === 'hi'
+                  ? `नमस्ते, ${profile?.name || 'उपयोगकर्ता'} • दैनिक कमाई, खर्च और बचत का पूरा हिसाब`
+                  : `Welcome back, ${profile?.name || 'User'} • Personal cashflow & savings summary`)
+              : t.appSub}
           </p>
         </div>
 
@@ -125,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
             title="Search ledger records (Ctrl+K or ⌘K)"
           >
             <Search className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-500 dark:text-slate-400 text-xs">Search ledger...</span>
+            <span className="text-slate-500 dark:text-slate-400 text-xs">{language === 'hi' ? 'खाता खोजें...' : 'Search ledger...'}</span>
             <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-500 shadow-2xs">⌘K</kbd>
           </button>
 
@@ -133,12 +135,24 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
             <>
               {/* Executive Primary Action: BloomMenu for Add Record */}
               <BloomMenu
-                triggerLabel="Add Record"
+                triggerLabel={language === 'hi' ? 'नया हिसाब' : 'Add Record'}
                 onSelect={(id) => onOpenAddModal(id)}
               />
 
-              {/* Utility Cluster: Sync, Theme Toggle, Notification Bell, User Avatar */}
+              {/* Utility Cluster: Language Switch, Sync, Theme Toggle, Notification Bell, User Avatar */}
               <div className="flex items-center gap-1 h-10 p-1 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10">
+                {/* Language Switcher Pill */}
+                <button
+                  onClick={toggleLanguage}
+                  className="h-8 px-2 rounded-xl flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-white/10 transition-all cursor-pointer"
+                  title={language === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}
+                >
+                  <span className="text-xs">🌐</span>
+                  <span className="font-mono text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                    {language === 'hi' ? 'हि' : 'EN'}
+                  </span>
+                </button>
+
                 {/* Sync Button (Compact Icon) */}
                 <button
                   onClick={syncData}
@@ -186,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
                         className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl font-semibold transition-colors cursor-pointer"
                       >
                         <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out</span>
+                        <span>{language === 'hi' ? 'लॉग आउट' : 'Sign Out'}</span>
                       </button>
                     </div>
                   )}
@@ -195,6 +209,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
             </>
           ) : (
             <div className="flex items-center gap-2">
+              {/* Language Switcher for Guests */}
+              <button
+                onClick={toggleLanguage}
+                className="h-8 px-2 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-all cursor-pointer"
+                title={language === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}
+              >
+                <span className="text-xs">🌐</span>
+                <span className="font-mono text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                  {language === 'hi' ? 'हि' : 'EN'}
+                </span>
+              </button>
+
               {/* Theme Toggle Button for Guests */}
               <ThemeToggle
                 variant="circle"
@@ -208,13 +234,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
                 onClick={() => openAuthModal('login')}
                 className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
               >
-                Sign In
+                {language === 'hi' ? 'साइन इन' : 'Sign In'}
               </button>
               <button
                 onClick={() => openAuthModal('signup', 'Sign up to unlock the complete Finance Hub and sync your data to Supabase.')}
                 className="px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 rounded-xl shadow-md shadow-emerald-950/20 transition-all cursor-pointer"
               >
-                Create Account
+                {language === 'hi' ? 'खाता बनाएं' : 'Create Account'}
               </button>
             </div>
           )}
