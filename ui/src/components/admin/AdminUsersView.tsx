@@ -18,7 +18,13 @@ import {
   Layers,
   Wallet,
   TrendingUp,
-  Receipt
+  Receipt,
+  Tag,
+  Sparkles,
+  Plus,
+  Trash2,
+  Crown,
+  Award,
 } from 'lucide-react';
 
 interface UserRecord {
@@ -40,6 +46,8 @@ interface UserRecord {
   updated_at: string;
   adminRole: 'superadmin' | 'admin' | 'moderator' | 'user';
   isAdminActive: boolean;
+  tags?: string[];
+  custom_tag?: string;
 }
 
 export const AdminUsersView: React.FC = () => {
@@ -64,6 +72,85 @@ export const AdminUsersView: React.FC = () => {
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+
+  // User Tag Management Modal State
+  const [tagModalUser, setTagModalUser] = useState<UserRecord | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customTagInput, setCustomTagInput] = useState<string>('');
+  const [isSavingTags, setIsSavingTags] = useState<boolean>(false);
+
+  const handleOpenTagModal = (user: UserRecord) => {
+    setTagModalUser(user);
+    setSelectedTags(user.tags || []);
+    setCustomTagInput(user.custom_tag || '');
+  };
+
+  const handleTogglePresetTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const handleAddCustomTag = () => {
+    if (!customTagInput.trim()) return;
+    const clean = customTagInput.trim();
+    if (!selectedTags.includes(clean)) {
+      setSelectedTags([...selectedTags, clean]);
+    }
+    setCustomTagInput('');
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setSelectedTags(selectedTags.filter((t) => t !== tagToRemove));
+  };
+
+  const handleSaveTags = async () => {
+    if (!tagModalUser) return;
+    setIsSavingTags(true);
+    try {
+      const customTag = selectedTags.find((t) => !['founder', 'cool', 'clever'].includes(t)) || '';
+      await adminFetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: tagModalUser.id,
+          action: 'UPDATE_TAGS',
+          tags: selectedTags,
+          customTag: customTag,
+        }),
+      });
+
+      if (typeof window !== 'undefined') {
+        const payload = { tags: selectedTags, customTag };
+        localStorage.setItem(`dhanmitr_user_tags_${tagModalUser.id}`, JSON.stringify(payload));
+        if (tagModalUser.email) {
+          localStorage.setItem(`dhanmitr_email_tags_${tagModalUser.email.toLowerCase().trim()}`, JSON.stringify(payload));
+        }
+      }
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === tagModalUser.id
+            ? {
+                ...u,
+                tags: selectedTags,
+                custom_tag: customTag || undefined,
+              }
+            : u
+        )
+      );
+
+      setActionSuccessMessage(`Tags updated for ${tagModalUser.name || tagModalUser.email}!`);
+      setTimeout(() => setActionSuccessMessage(null), 3500);
+      setTagModalUser(null);
+    } catch (err: any) {
+      alert(`Failed to save tags: ${err?.message}`);
+    } finally {
+      setIsSavingTags(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -299,6 +386,7 @@ export const AdminUsersView: React.FC = () => {
                   <th className="px-5 py-3.5">User / Profile</th>
                   <th className="px-4 py-3.5">User ID</th>
                   <th className="px-4 py-3.5">Role</th>
+                  <th className="px-4 py-3.5">Tags & Badges</th>
                   <th className="px-4 py-3.5">Onboarding</th>
                   <th className="px-4 py-3.5 text-right">Income /mo</th>
                   <th className="px-4 py-3.5 text-right">Expenses /mo</th>
@@ -359,6 +447,58 @@ export const AdminUsersView: React.FC = () => {
                         </span>
                       </td>
 
+                      {/* Tags & Badges */}
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-1 max-w-[210px]">
+                          {user.tags && user.tags.length > 0 ? (
+                            user.tags.map((t) => {
+                              if (t === 'founder') {
+                                return (
+                                  <span
+                                    key={t}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs"
+                                  >
+                                    <Crown className="w-3 h-3 text-amber-400" />
+                                    Founder
+                                  </span>
+                                );
+                              }
+                              if (t === 'cool') {
+                                return (
+                                  <span
+                                    key={t}
+                                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                                  >
+                                    😎 Cool
+                                  </span>
+                                );
+                              }
+                              if (t === 'clever') {
+                                return (
+                                  <span
+                                    key={t}
+                                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                                  >
+                                    🧠 Clever
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span
+                                  key={t}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                >
+                                  <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                                  {t}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="text-[11px] text-slate-600 italic">No tags</span>
+                          )}
+                        </div>
+                      </td>
+
                       {/* Onboarding */}
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
@@ -400,22 +540,32 @@ export const AdminUsersView: React.FC = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleInspectUser(user.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px] font-semibold transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px] font-semibold transition-colors cursor-pointer"
                             title="Inspect Profile & Assets"
                           >
                             <Eye className="w-3 h-3" /> Inspect
                           </button>
 
                           {(currentAdminRole === 'superadmin' || currentAdminRole === 'admin') && (
-                            <button
-                              onClick={() => {
-                                setRoleModalUser(user);
-                                setTargetRole(user.adminRole);
-                              }}
-                              className="px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded text-[11px] font-semibold transition-colors"
-                            >
-                              Role
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleOpenTagModal(user)}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[11px] font-semibold transition-colors cursor-pointer"
+                                title="Assign Founder, Cool, Clever or Custom Surprise Tags"
+                              >
+                                <Tag className="w-3 h-3" /> Tag
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setRoleModalUser(user);
+                                  setTargetRole(user.adminRole);
+                                }}
+                                className="px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded text-[11px] font-semibold transition-colors cursor-pointer"
+                              >
+                                Role
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -668,6 +818,186 @@ export const AdminUsersView: React.FC = () => {
               >
                 {isUpdatingRole && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                 Confirm Role Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Tag & Surprise Badge Management Modal */}
+      {tagModalUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5 text-amber-400">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                  <Tag className="w-4 h-4 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Manage User Badges & Tags</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Assign special recognitions for {tagModalUser.name || tagModalUser.email}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setTagModalUser(null)}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* User overview */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+              <div>
+                <p className="font-bold text-white">{tagModalUser.name || 'User'}</p>
+                <p className="text-slate-400 text-[11px]">{tagModalUser.email}</p>
+              </div>
+              <span className="text-[10px] font-mono text-slate-500 uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                {tagModalUser.adminRole}
+              </span>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 block">
+                Quick Preset Badges
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {/* Founder preset */}
+                <button
+                  type="button"
+                  onClick={() => handleTogglePresetTag('founder')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    selectedTags.includes('founder')
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400/40 shadow-xs'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <Crown className="w-4 h-4 text-amber-400" />
+                  <span>✦ Founder</span>
+                </button>
+
+                {/* Cool preset */}
+                <button
+                  type="button"
+                  onClick={() => handleTogglePresetTag('cool')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    selectedTags.includes('cool')
+                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 ring-1 ring-cyan-400/40 shadow-xs'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <span className="text-base">😎</span>
+                  <span>Cool</span>
+                </button>
+
+                {/* Clever preset */}
+                <button
+                  type="button"
+                  onClick={() => handleTogglePresetTag('clever')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    selectedTags.includes('clever')
+                      ? 'bg-purple-500/20 border-purple-400 text-purple-300 ring-1 ring-purple-400/40 shadow-xs'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <span className="text-base">🧠</span>
+                  <span>Clever</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Surprise Tag Input */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                <span>Add Custom Surprise Tag</span>
+                <span className="text-[10px] text-emerald-400 font-normal">Shows on their DhanMITR card!</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customTagInput}
+                  onChange={(e) => setCustomTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomTag();
+                    }
+                  }}
+                  placeholder="e.g. VIP Investor, FinTech Wizard, Elite Angel..."
+                  className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomTag}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Active Assigned Tags */}
+            <div className="space-y-2 pt-1">
+              <label className="text-xs font-bold text-slate-400 block">
+                Active Assigned Tags ({selectedTags.length})
+              </label>
+              <div className="flex flex-wrap gap-1.5 min-h-[40px] p-2.5 bg-slate-950 border border-slate-800 rounded-xl">
+                {selectedTags.length > 0 ? (
+                  selectedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200"
+                    >
+                      <span>{tag === 'founder' ? '✦ Founder' : tag === 'cool' ? '😎 Cool' : tag === 'clever' ? '🧠 Clever' : tag}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-slate-500 italic p-1">No tags assigned yet. Select a preset or type a custom tag above.</span>
+                )}
+              </div>
+            </div>
+
+            {/* Note on how user sees the surprise */}
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 space-y-1">
+              <p className="font-bold flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Immediate Surprise Effect</span>
+              </p>
+              <p className="text-[10.5px] leading-relaxed text-amber-300/90">
+                When this user opens or downloads their DhanMITR card in Settings, their card will proudly display this custom recognition badge!
+              </p>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setTagModalUser(null)}
+                disabled={isSavingTags}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTags}
+                disabled={isSavingTags}
+                className="px-4 py-2 bg-gradient-to-r from-amber-600 to-emerald-600 hover:from-amber-500 hover:to-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingTags ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Save Badges & Surprise User</span>
               </button>
             </div>
           </div>

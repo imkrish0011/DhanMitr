@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { UserFinancialProfile } from '@/types';
+import { resolveUserTags } from '@/lib/userTags';
 
 interface AuthContextType {
   user: User | null;
@@ -63,7 +64,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (savedProfile) {
         const parsed = JSON.parse(savedProfile);
         if (parsed && typeof parsed === 'object') {
-          setProfile(parsed);
+          const inc = Number(parsed.monthly_income || 0);
+          const exp = Number(parsed.monthly_expenses || 0);
+          const sr = inc > 0 ? Math.round(((inc - exp) / inc) * 100) : 0;
+          const { tags, customTag } = resolveUserTags({
+            userId: parsed.user_id,
+            email: parsed.email,
+            savingsRate: sr,
+            monthly_income: inc,
+            total_investments: Number(parsed.total_investments || 0),
+            existingTags: parsed.tags || [],
+            customTag: parsed.custom_tag,
+          });
+          setProfile({
+            ...parsed,
+            tags,
+            custom_tag: customTag,
+          });
         }
       }
     } catch (e) {
@@ -76,6 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isSupabaseConfigured) {
       // Local fallback profile if supabase not configured
       const fallbackName = userMeta?.full_name || userMeta?.name || userEmail?.split('@')[0] || 'User';
+      const { tags, customTag } = resolveUserTags({
+        userId,
+        email: userEmail,
+        monthly_income: 0,
+        total_investments: 0,
+      });
       const fallbackProfile: UserFinancialProfile = {
         user_id: userId,
         name: fallbackName,
@@ -92,6 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         employment_type: 'salaried',
         tax_regime: 'new',
         is_onboarded: false,
+        tags,
+        custom_tag: customTag,
       };
       setProfile(fallbackProfile);
       return;
@@ -122,6 +147,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
 
         if (createdData) {
+          const { tags, customTag } = resolveUserTags({
+            userId: createdData.id,
+            email: createdData.email,
+            savingsRate: 0,
+            monthly_income: Number(createdData.monthly_income || 0),
+            total_investments: Number(createdData.total_investments || 0),
+            existingTags: createdData.tags || [],
+            customTag: createdData.custom_tag,
+          });
           setProfile({
             user_id: createdData.id,
             name: createdData.name,
@@ -138,12 +172,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             employment_type: createdData.employment_type || 'salaried',
             tax_regime: createdData.tax_regime || 'new',
             is_onboarded: createdData.is_onboarded || false,
+            tags,
+            custom_tag: customTag,
           });
           if (!createdData.is_onboarded) {
             setIsOnboardingOpen(true);
           }
         }
       } else if (data) {
+        const inc = Number(data.monthly_income || 0);
+        const exp = Number(data.monthly_expenses || 0);
+        const sr = inc > 0 ? Math.round(((inc - exp) / inc) * 100) : 0;
+        const { tags, customTag } = resolveUserTags({
+          userId: data.id,
+          email: data.email,
+          savingsRate: sr,
+          monthly_income: inc,
+          total_investments: Number(data.total_investments || 0),
+          existingTags: data.tags || [],
+          customTag: data.custom_tag,
+        });
+
         setProfile({
           user_id: data.id,
           name: data.name,
@@ -151,8 +200,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar_initial: data.avatar_initial || (data.name ? data.name.charAt(0).toUpperCase() : 'U'),
           is_premium: false,
           currency: (data.currency as any) || 'INR',
-          monthly_income: Number(data.monthly_income || 0),
-          monthly_expenses: Number(data.monthly_expenses || 0),
+          monthly_income: inc,
+          monthly_expenses: exp,
           emergency_fund_balance: Number(data.emergency_fund_balance || 0),
           total_investments: Number(data.total_investments || 0),
           total_liabilities: Number(data.total_liabilities || 0),
@@ -160,6 +209,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           employment_type: data.employment_type || 'salaried',
           tax_regime: data.tax_regime || 'new',
           is_onboarded: data.is_onboarded || false,
+          tags,
+          custom_tag: customTag,
         });
 
         // If user is not onboarded, prompt onboarding modal
@@ -337,22 +388,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
+    const inc = data.monthly_income ?? (profile?.monthly_income || 0);
+    const exp = data.monthly_expenses ?? (profile?.monthly_expenses || 0);
+    const sr = inc > 0 ? Math.round(((inc - exp) / inc) * 100) : 0;
+    const inv = data.total_investments ?? (profile?.total_investments || 0);
+    const userEmail = user?.email || profile?.email || 'user@dhanmitr.local';
+
+    const { tags, customTag } = resolveUserTags({
+      userId,
+      email: userEmail,
+      savingsRate: sr,
+      monthly_income: inc,
+      total_investments: inv,
+      existingTags: profile?.tags || [],
+      customTag: profile?.custom_tag,
+    });
+
     const updatedProfile: UserFinancialProfile = {
       user_id: userId,
       name: data.name || profile?.name || 'User',
-      email: user?.email || profile?.email || 'user@dhanmitr.local',
+      email: userEmail,
       avatar_initial: (data.name || profile?.name || 'U').charAt(0).toUpperCase(),
       is_premium: false,
       currency: data.currency || profile?.currency || 'INR',
-      monthly_income: data.monthly_income ?? (profile?.monthly_income || 0),
-      monthly_expenses: data.monthly_expenses ?? (profile?.monthly_expenses || 0),
+      monthly_income: inc,
+      monthly_expenses: exp,
       emergency_fund_balance: data.emergency_fund_balance ?? (profile?.emergency_fund_balance || 0),
-      total_investments: data.total_investments ?? (profile?.total_investments || 0),
+      total_investments: inv,
       total_liabilities: data.total_liabilities ?? (profile?.total_liabilities || 0),
       risk_tolerance: data.risk_tolerance || profile?.risk_tolerance || 'moderate',
       employment_type: data.employment_type || profile?.employment_type || 'salaried',
       tax_regime: data.tax_regime || profile?.tax_regime || 'new',
       is_onboarded: true,
+      tags,
+      custom_tag: customTag,
     };
 
     setProfile(updatedProfile);

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyAdminRequest, getAdminSupabase, logAdminAudit } from '@/lib/supabase-admin';
+import { resolveUserTags } from '@/lib/userTags';
 
 export async function GET(request: Request) {
   const auth = await verifyAdminRequest(request);
@@ -41,9 +42,18 @@ export async function GET(request: Request) {
       }
     }
 
-    // Combine profile data with admin role data
+    // Combine profile data with admin role data & compute automatic + custom tags
     let userList = (profiles || []).map(p => {
       const adminInfo = adminMap.get(p.id);
+      const { tags, customTag } = resolveUserTags({
+        userId: p.id,
+        email: p.email,
+        monthly_income: Number(p.monthly_income || 0),
+        total_investments: Number(p.total_investments || 0),
+        existingTags: p.tags || [],
+        customTag: p.custom_tag,
+      });
+
       return {
         id: p.id,
         name: p.name,
@@ -63,6 +73,8 @@ export async function GET(request: Request) {
         updated_at: p.updated_at,
         adminRole: adminInfo?.role || 'user',
         isAdminActive: adminInfo ? adminInfo.is_active : false,
+        tags,
+        custom_tag: customTag || null,
       };
     });
 
@@ -71,7 +83,9 @@ export async function GET(request: Request) {
       userList = userList.filter(u => 
         (u.name && u.name.toLowerCase().includes(query)) ||
         (u.email && u.email.toLowerCase().includes(query)) ||
-        (u.id && u.id.toLowerCase().includes(query))
+        (u.id && u.id.toLowerCase().includes(query)) ||
+        (u.tags && u.tags.some((t: string) => t.toLowerCase().includes(query))) ||
+        (u.custom_tag && u.custom_tag.toLowerCase().includes(query))
       );
     }
 
@@ -111,23 +125,51 @@ export async function PATCH(request: Request) {
     );
   }
 
-  // Only superadmins and admins can modify roles
+  // Only superadmins and admins can modify roles or assign special tags
   if (auth.role !== 'superadmin' && auth.role !== 'admin') {
     return NextResponse.json(
-      { error: 'Forbidden: Insufficient privileges to alter administrative roles' },
+      { error: 'Forbidden: Insufficient privileges to alter user settings' },
       { status: 403 }
     );
   }
 
   try {
     const body = await request.json();
-    const { userId, role, isActive } = body;
+    const { userId, role, isActive, action, tags, customTag } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
     }
 
     const supabase = getAdminSupabase();
+
+    // 1. Tag Assignment Action
+    if (action === 'UPDATE_TAGS' || tags !== undefined) {
+      try {
+        await supabase.from('profiles').update({
+          tags: Array.isArray(tags) ? tags : [],
+          custom_tag: customTag || null,
+        }).eq('id', userId);
+      } catch (err: any) {
+        console.warn('Could not update tags in profiles table:', err?.message);
+      }
+
+      await logAdminAudit({
+        adminId: auth.user.id,
+        adminEmail: auth.user.email,
+        action: 'UPDATE_USER_TAGS',
+        targetResource: 'profiles',
+        targetId: userId,
+        details: { tags, customTag, targetUserId: userId },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'User tags updated successfully',
+        tags,
+        customTag,
+      });
+    }
 
     if (role === 'user') {
       // Remove admin privileges

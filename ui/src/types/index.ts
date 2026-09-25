@@ -57,6 +57,8 @@ export interface UserFinancialProfile {
   employment_type: EmploymentType;
   tax_regime: TaxRegime;
   is_onboarded?: boolean;
+  tags?: string[];
+  custom_tag?: string;
 }
 
 export interface SpendingCategorySummary {
