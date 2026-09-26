@@ -108,17 +108,22 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Initial Auth Listener
   useEffect(() => {
+    let isMounted = true;
+
     if (!isSupabaseConfigured) {
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
       return;
     }
 
     // Get current session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (!isMounted) return;
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       if (currentSession) {
-        verifyWithServer(currentSession).finally(() => setIsLoading(false));
+        verifyWithServer(currentSession).finally(() => {
+          if (isMounted) setIsLoading(false);
+        });
       } else {
         setIsLoading(false);
       }
@@ -126,6 +131,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+      if (!isMounted) return;
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       if (currentSession) {
@@ -134,10 +140,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setIsAdmin(false);
         setAdminRole(null);
       }
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [verifyWithServer]);

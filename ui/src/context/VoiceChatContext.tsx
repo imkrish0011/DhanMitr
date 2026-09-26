@@ -88,6 +88,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Load sessions from localStorage & Supabase
   useEffect(() => {
+    let isMounted = true;
     const userKey = profile?.user_id || (isAuthenticated ? 'auth_user' : 'guest');
     const storageKey = `dhanmitr_chat_sessions_${userKey}`;
     let loadedSessions: ChatSession[] = [];
@@ -117,6 +118,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch {}
     }
 
+    if (!isMounted) return;
     setSessions(loadedSessions);
     setActiveSessionId(loadedSessions[0].id);
     setMessages(loadedSessions[0].messages || initialChatMessages);
@@ -131,6 +133,7 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           .order('updated_at', { ascending: false })
       )
         .then(({ data, error }: any) => {
+          if (!isMounted) return;
           if (!error && data && data.length > 0) {
             const remote: ChatSession[] = data.map((d: any) => ({
               id: d.id,
@@ -149,6 +152,10 @@ export const VoiceChatProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         })
         .catch(() => {});
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [profile?.user_id, isAuthenticated]);
 
   const persistSessionMessages = (

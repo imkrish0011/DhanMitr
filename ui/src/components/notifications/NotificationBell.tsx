@@ -25,19 +25,19 @@ export interface NotificationBellProps {
 
 const SEVERITY_STYLES: Record<Severity, { card: string; title: string; text: string; dot: string }> = {
   urgent: {
-    card: 'bg-red-50/90 dark:bg-red-950/40 border-red-200 dark:border-red-900/50 shadow-red-500/5',
+    card: 'bg-red-50 dark:bg-red-950/70 border-red-200 dark:border-red-900/60 shadow-xs',
     title: 'text-red-900 dark:text-red-300',
     text: 'text-red-700 dark:text-red-400',
     dot: 'bg-red-500',
   },
   warning: {
-    card: 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/50 shadow-amber-500/5',
+    card: 'bg-amber-50 dark:bg-amber-950/70 border-amber-200 dark:border-amber-900/60 shadow-xs',
     title: 'text-amber-900 dark:text-amber-300',
     text: 'text-amber-700 dark:text-amber-400',
     dot: 'bg-amber-500',
   },
   info: {
-    card: 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 shadow-emerald-500/5',
+    card: 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-200 dark:border-emerald-900/60 shadow-xs',
     title: 'text-emerald-900 dark:text-emerald-300',
     text: 'text-emerald-700 dark:text-emerald-400',
     dot: 'bg-emerald-500',
@@ -53,31 +53,44 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   const { subscriptions, insurances, goals, netSurplus, totalIncome } = useFinance();
   const { language, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [dismissed, setDismissed] = useState<string[]>([]);
   const [lastDismissed, setLastDismissed] = useState<string[] | null>(null);
   const [isClearing, setIsClearing] = useState(false);
-  const [now, setNow] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
 
-  // Load persisted dismissed IDs on client mount
-  useEffect(() => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
+  const clearingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize dismissed state safely with lazy initializer to avoid setting state during mount
+  const [dismissed, setDismissed] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const stored = localStorage.getItem(DISMISSED_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setDismissed(parsed);
-        }
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch {
-      // Ignore storage read errors
+      // Ignore read errors
     }
+    return [];
+  });
+
+  // Track mount status and cleanup timeouts
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (clearingTimeoutRef.current) {
+        clearTimeout(clearingTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Sync across tabs
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === DISMISSED_STORAGE_KEY && e.newValue) {
+      if (e.key === DISMISSED_STORAGE_KEY && e.newValue && isMountedRef.current) {
         try {
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed)) {
@@ -92,7 +105,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
   // Save dismissed IDs helper
   const saveDismissed = useCallback((newDismissed: string[]) => {
-    setDismissed(newDismissed);
+    if (isMountedRef.current) {
+      setDismissed(newDismissed);
+    }
     try {
       localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(newDismissed));
     } catch {
@@ -102,7 +117,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
   // Keep goal-deadline calculations fresh while mounted
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    const timer = setInterval(() => {
+      if (isMountedRef.current) {
+        setNow(Date.now());
+      }
+    }, 30_000);
     return () => clearInterval(timer);
   }, []);
 
@@ -265,11 +284,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     try {
       const confetti = (await import('canvas-confetti')).default;
       confetti({
-        particleCount: isMobile ? 30 : 38,
-        spread: 60,
-        origin: isMobile ? { y: 0.16, x: 0.5 } : { y: 0.16, x: 0.85 },
+        particleCount: isMobile ? 26 : 34,
+        spread: 55,
+        origin: isMobile ? { y: 0.16, x: 0.65 } : { y: 0.16, x: 0.85 },
         colors: ['#10B981', '#34D399', '#059669', '#6EE7B7', '#F59E0B'],
-        ticks: 110,
+        ticks: 100,
         gravity: 1.15,
         scalar: 0.75,
         disableForReducedMotion: true,
@@ -282,8 +301,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     saveDismissed([...dismissed, ...idsToClear]);
 
     // Reset clearing state after animation finishes
-    setTimeout(() => {
-      setIsClearing(false);
+    if (clearingTimeoutRef.current) clearTimeout(clearingTimeoutRef.current);
+    clearingTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        setIsClearing(false);
+      }
     }, 450);
   }, [visibleNotifications, isClearing, triggerHaptic, isMobile, saveDismissed, dismissed]);
 
@@ -322,52 +344,52 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         )}
       </button>
 
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Invisible Tap Catcher - No blur, completely unblurred and natural */}
       {isMobile && isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 sm:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-40 sm:hidden"
           aria-hidden="true"
         />
       )}
 
-      {/* Popover Panel */}
+      {/* Popover Panel - Solid, clean, compact dropdown that never touches screen corners */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.94, y: -6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: -6 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className={
               isMobile
-                ? 'fixed inset-x-3.5 top-16 max-w-sm mx-auto fintech-card rounded-2xl shadow-2xl shadow-black/50 z-50 overflow-hidden border border-slate-200/90 dark:border-white/15 backdrop-blur-2xl'
-                : '!absolute right-0 sm:-right-8 top-full mt-2.5 w-[min(92vw,360px)] fintech-card rounded-2xl sm:rounded-3xl shadow-2xl shadow-black/40 z-50 overflow-hidden border border-slate-200/90 dark:border-white/15 backdrop-blur-2xl'
+                ? 'absolute right-0 top-full mt-2 w-[295px] max-w-[calc(100vw-2rem)] bg-white dark:bg-[#0F172A] rounded-2xl shadow-2xl shadow-black/25 dark:shadow-black/70 z-50 overflow-hidden border border-slate-200 dark:border-slate-800'
+                : 'absolute right-0 sm:-right-4 top-full mt-2.5 w-[315px] bg-white dark:bg-[#0F172A] rounded-2xl sm:rounded-3xl shadow-2xl shadow-black/20 dark:shadow-black/60 z-50 overflow-hidden border border-slate-200 dark:border-slate-800'
             }
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02]">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <BellIcon className="w-3.5 h-3.5 text-emerald-500" />
+            <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/60">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <BellIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-800 dark:text-white truncate">
                   {t.alerts.title}
                 </span>
                 {visibleNotifications.length > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="px-1.5 py-0.2 text-[10px] font-mono font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                    className="px-1.5 py-0.2 text-[9px] font-mono font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0"
                   >
                     {visibleNotifications.length}
                   </motion.span>
                 )}
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 shrink-0">
                 {visibleNotifications.length > 0 && (
                   <button
                     onClick={clearAll}
                     disabled={isClearing}
-                    className="group flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-bold text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-95 transition-all cursor-pointer"
+                    className="group flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold text-slate-500 hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-95 transition-all cursor-pointer"
                     title={t.alerts.clearAll}
                   >
                     <Sparkles className="w-3 h-3 group-hover:rotate-12 transition-transform text-emerald-500" />
@@ -376,7 +398,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   aria-label="Close notification panel"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -385,7 +407,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             </div>
 
             {/* List with PopLayout Cascade Physics */}
-            <div className="max-h-80 overflow-y-auto p-3 space-y-2.5">
+            <div className="max-h-72 overflow-y-auto p-2.5 space-y-2">
               <AnimatePresence mode="popLayout">
                 {visibleNotifications.length === 0 ? (
                   <motion.div
@@ -393,11 +415,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                     initial={{ opacity: 0, scale: 0.92, y: 8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.92 }}
-                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="py-6 px-4 flex flex-col items-center text-center"
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="py-5 px-3 flex flex-col items-center text-center"
                   >
                     {/* Animated Ripple Halo & Elastic Checkmark */}
-                    <div className="relative mb-3 flex items-center justify-center">
+                    <div className="relative mb-2.5 flex items-center justify-center">
                       <motion.div
                         initial={{ scale: 0.7, opacity: 0.7 }}
                         animate={{ scale: [0.7, 1.4, 1.7], opacity: [0.7, 0.25, 0] }}
@@ -408,16 +430,16 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                         initial={{ scale: 0, rotate: -25 }}
                         animate={{ scale: [0, 1.25, 0.95, 1], rotate: [-25, 10, -5, 0] }}
                         transition={{ duration: 0.5, times: [0, 0.6, 0.8, 1], ease: 'easeOut' }}
-                        className="relative w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/15"
+                        className="relative w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-md shadow-emerald-500/15"
                       >
-                        <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                       </motion.div>
                     </div>
 
                     <motion.p
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.12 }}
+                      transition={{ delay: 0.1 }}
                       className="text-xs font-bold text-slate-900 dark:text-white"
                     >
                       {t.alerts.allCaughtUp}
@@ -425,8 +447,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                     <motion.p
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.18 }}
-                      className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-[240px] leading-relaxed"
+                      transition={{ delay: 0.15 }}
+                      className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-[230px] leading-relaxed"
                     >
                       {t.alerts.allCaughtUpSub}
                     </motion.p>
@@ -436,8 +458,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                       <motion.div
                         initial={{ opacity: 0, y: 6, scale: 0.92 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ delay: 0.22 }}
-                        className="mt-3.5 flex items-center gap-2"
+                        transition={{ delay: 0.2 }}
+                        className="mt-3 flex items-center gap-2"
                       >
                         <button
                           onClick={handleUndo}
@@ -448,7 +470,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                         </button>
                       </motion.div>
                     ) : (
-                      <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/5 text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400">
+                      <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/5 text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span>{t.alerts.telemetryActive}</span>
                       </div>
@@ -461,39 +483,39 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                       <motion.div
                         key={n.id}
                         layout
-                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{
                           opacity: 0,
-                          x: 80,
+                          x: 70,
                           scale: 0.9,
-                          filter: 'blur(6px)',
+                          filter: 'blur(5px)',
                           transition: {
-                            duration: 0.28,
+                            duration: 0.26,
                             delay: isClearing ? index * 0.04 : 0,
                             ease: [0.32, 0.72, 0, 1],
                           },
                         }}
                         transition={{
-                          layout: { duration: 0.25, ease: 'easeOut' },
+                          layout: { duration: 0.22, ease: 'easeOut' },
                         }}
-                        className={`group relative p-3 pr-8 rounded-2xl border ${styles.card} transition-all shadow-2xs hover:shadow-xs`}
+                        className={`group relative p-2.5 pr-7 rounded-xl border ${styles.card} transition-all shadow-xs`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={`text-xs font-extrabold leading-snug ${styles.title}`}>{n.title}</p>
+                        <div className="flex items-start justify-between gap-1.5">
+                          <p className={`text-xs font-bold leading-snug ${styles.title}`}>{n.title}</p>
                           <span
-                            className={`flex-shrink-0 px-1.5 py-0.5 text-[9px] font-mono font-black uppercase tracking-wider text-white rounded-md ${styles.dot}`}
+                            className={`flex-shrink-0 px-1.5 py-0.5 text-[8.5px] font-mono font-black uppercase tracking-wider text-white rounded-md ${styles.dot}`}
                           >
                             {n.daysLabel}
                           </span>
                         </div>
-                        <p className={`text-[11px] mt-1 font-mono ${styles.text}`}>{n.detail}</p>
+                        <p className={`text-[10.5px] mt-1 font-mono leading-relaxed ${styles.text}`}>{n.detail}</p>
                         <button
                           onClick={() => dismissNotification(n.id)}
                           aria-label="Dismiss notification"
-                          className="absolute top-2.5 right-2.5 w-6 h-6 flex items-center justify-center opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/10 transition-all cursor-pointer"
+                          className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-md hover:bg-slate-200/50 dark:hover:bg-white/10 transition-all cursor-pointer"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-3 h-3" />
                         </button>
                       </motion.div>
                     );

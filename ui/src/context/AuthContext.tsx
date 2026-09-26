@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { UserFinancialProfile } from '@/types';
@@ -49,6 +49,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
   const [authModalReason, setAuthModalReason] = useState<string | null>(null);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  // Mount safety ref
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Free chat counter for guests
   const [freeChatCount, setFreeChatCount] = useState<number>(0);
@@ -156,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             existingTags: createdData.tags || [],
             customTag: createdData.custom_tag,
           });
+          if (!isMountedRef.current) return;
           setProfile({
             user_id: createdData.id,
             name: createdData.name,
@@ -175,7 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             tags,
             custom_tag: customTag,
           });
-          if (!createdData.is_onboarded) {
+          if (!createdData.is_onboarded && isMountedRef.current) {
             setIsOnboardingOpen(true);
           }
         }
@@ -209,6 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // ignore network failure, fallback to resolveUserTags
         }
 
+        if (!isMountedRef.current) return;
         setProfile({
           user_id: data.id,
           name: data.name,
@@ -230,7 +241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         // If user is not onboarded, prompt onboarding modal
-        if (!data.is_onboarded) {
+        if (!data.is_onboarded && isMountedRef.current) {
           setIsOnboardingOpen(true);
         }
       }
@@ -241,13 +252,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize Supabase Auth Listener
   useEffect(() => {
+    let isMounted = true;
+
     if (!isSupabaseConfigured) {
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
       return;
     }
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted || !isMountedRef.current) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -260,6 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted || !isMountedRef.current) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -271,6 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [fetchProfile]);

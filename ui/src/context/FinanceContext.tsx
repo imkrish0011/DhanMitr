@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   UserFinancialProfile,
   SpendingCategorySummary,
@@ -97,6 +97,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [activeSubTab, setActiveSubTab] = useState<FinanceSubTab>('overview');
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // Mount safety ref
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const profile: UserFinancialProfile = useMemo(() => {
     return authProfile || emptyProfile;
   }, [authProfile]);
@@ -105,7 +114,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Load from Supabase when user logs in
   const fetchSupabaseData = useCallback(async (userId: string) => {
     if (!isSupabaseConfigured) return;
-    setIsSyncing(true);
+    if (isMountedRef.current) setIsSyncing(true);
 
     try {
       // 1. Fetch Subscriptions
@@ -259,7 +268,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (err) {
       console.error('Error fetching user data from Supabase:', err);
     } finally {
-      setIsSyncing(false);
+      if (isMountedRef.current) {
+        setIsSyncing(false);
+      }
     }
   }, []);
 
