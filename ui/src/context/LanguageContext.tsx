@@ -82,6 +82,11 @@ export interface Translations {
     title: string;
     active: (n: number) => string;
     empty: string;
+    clearAll: string;
+    undo: string;
+    allCaughtUp: string;
+    allCaughtUpSub: string;
+    telemetryActive: string;
   };
   passbookView: {
     title: string;
@@ -197,6 +202,11 @@ const translations: Record<Language, Translations> = {
       title: 'Alerts & Reminders',
       active: (n) => `${n} Active`,
       empty: 'No pending alerts',
+      clearAll: 'Clear all',
+      undo: 'Undo',
+      allCaughtUp: 'All Caught Up',
+      allCaughtUpSub: 'No overdue renewals, policy expirations, or impending goal deadlines.',
+      telemetryActive: 'Telemetry active',
     },
     passbookView: {
       title: 'Passbook & Ledger',
@@ -307,9 +317,14 @@ const translations: Record<Language, Translations> = {
       voiceAi: 'बोलकर बात करें',
     },
     alerts: {
-      title: 'अलर्ट और याद दिलाएं',
+      title: 'अलर्ट और सूचनाएं',
       active: (n) => `${n} सक्रिय`,
       empty: 'कोई नया अलर्ट नहीं है',
+      clearAll: 'सभी हटाएं',
+      undo: 'वापस लाएं',
+      allCaughtUp: 'सब कुछ व्यवस्थित है',
+      allCaughtUpSub: 'कोई बकाया नवीनीकरण या अंतिम तिथि निकट नहीं है।',
+      telemetryActive: 'सिस्टम सक्रिय है',
     },
     passbookView: {
       title: 'खाता बही (Passbook)',

@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import {
   DhanMitrLogo,
-  BellIcon,
   WalletIcon,
   ArrowDownOutflowIcon,
   ShieldCheckIcon,
@@ -43,6 +42,7 @@ import { TaxRegimeComparator } from '@/components/finance/TaxRegimeComparator';
 import { ProjectLoanSuite } from '@/components/calculator/ProjectLoanSuite';
 import { BloomMenu } from '@/components/ui/BloomMenu';
 import { ThemeToggle } from '@/components/motion/theme-toggle';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface MobileFinanceHubProps {
@@ -77,55 +77,8 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
     insurances,
   } = useFinance();
 
-  const [showNotifications, setShowNotifications] = React.useState(false);
-
   const userName = profile?.name?.trim() || user?.user_metadata?.full_name?.trim() || 'Partner';
   const firstName = userName.split(' ')[0];
-
-  // Dynamic alerts strictly from user's actual database & calculations
-  const activeAlerts = [
-    ...(netSurplus < 0
-      ? [
-          {
-            id: 'alert-deficit',
-            title: language === 'hi' ? 'मासिक घाटा चेतावनी' : 'Monthly Deficit Warning',
-            sub: language === 'hi' ? `खर्च आमदनी से ₹${Math.abs(netSurplus).toLocaleString('en-IN')} अधिक` : `Outflow exceeds Inflow by ₹${Math.abs(netSurplus).toLocaleString('en-IN')}`,
-            type: 'urgent' as const,
-          },
-        ]
-      : netSurplus <= 5000 && totalIncome > 0
-      ? [
-          {
-            id: 'alert-tight',
-            title: language === 'hi' ? 'कम बचत चेतावनी' : 'Tight Buffer Warning',
-            sub: language === 'hi' ? `केवल ₹${netSurplus.toLocaleString('en-IN')} शेष` : `Only ₹${netSurplus.toLocaleString('en-IN')} surplus remaining`,
-            type: 'warning' as const,
-          },
-        ]
-      : []),
-    ...subscriptions
-      .filter((s) => s.is_active && (s.is_urgent || (s.days_remaining !== undefined && s.days_remaining <= 30)))
-      .map((s) => {
-        const days = s.days_remaining !== undefined ? s.days_remaining : 10;
-        return {
-          id: s.id,
-          title: `${s.name} ${language === 'hi' ? 'नवीनीकरण' : 'Renewal'}`,
-          sub: `₹${s.amount.toLocaleString('en-IN')} · ${days <= 0 ? (language === 'hi' ? 'आज देय' : 'Due Today') : `${days}d left`} (${s.next_renewal_date || 'Upcoming'})`,
-          type: days <= 3 ? ('urgent' as const) : ('warning' as const),
-        };
-      }),
-    ...insurances
-      .filter((i) => i.is_active && (i.is_urgent || (i.days_remaining !== undefined && i.days_remaining <= 45)))
-      .map((i) => {
-        const days = i.days_remaining !== undefined ? i.days_remaining : 20;
-        return {
-          id: i.id,
-          title: `${i.policy_name} ${language === 'hi' ? 'पॉलिसी किस्त' : 'Premium'}`,
-          sub: `₹${i.premium_amount.toLocaleString('en-IN')} · ${days <= 0 ? (language === 'hi' ? 'आज देय' : 'Due Today') : `${days}d left`} (${i.renewal_date || 'Upcoming'})`,
-          type: days <= 7 ? ('urgent' as const) : ('warning' as const),
-        };
-      }),
-  ];
 
   const tabs = [
     { id: 'overview' as const, label: t.tabs.overview, shortLabel: t.tabs.overview },
@@ -265,56 +218,8 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
             onSelect={(id) => onOpenAddModal(id)}
           />
 
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer shadow-2xs flex items-center justify-center transition-all active:scale-95"
-              aria-label="Notifications"
-            >
-              <BellIcon className="w-3.5 h-3.5" />
-              {activeAlerts.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#070B14] animate-pulse" />
-              )}
-            </button>
-
-            {/* Mobile Notification Popover */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-2 text-xs">
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
-                  <span className="font-bold text-slate-800 dark:text-white">{t.alerts.title}</span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                    {t.alerts.active(activeAlerts.length)}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {activeAlerts.length === 0 ? (
-                    <p className="text-slate-400 text-center py-2 text-[11px]">{t.alerts.empty}</p>
-                  ) : (
-                    activeAlerts.map((alt) => {
-                      const isUrgent = alt.type === 'urgent';
-                      return (
-                        <div
-                          key={alt.id}
-                          className={`p-2.5 rounded-xl border ${
-                            isUrgent
-                              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50'
-                              : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/50'
-                          }`}
-                        >
-                          <p className={`font-bold text-xs ${isUrgent ? 'text-rose-900 dark:text-rose-300' : 'text-amber-900 dark:text-amber-300'}`}>
-                            {alt.title}
-                          </p>
-                          <p className={`text-[10px] ${isUrgent ? 'text-rose-700 dark:text-rose-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                            {alt.sub}
-                          </p>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Mobile Notification Bell with Clear & Satisfying Cascade Animation */}
+          <NotificationBell isMobile />
         </div>
       </div>
 
