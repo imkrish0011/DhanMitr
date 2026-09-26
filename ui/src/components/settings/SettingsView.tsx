@@ -177,9 +177,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
   };
 
   const tabs = [
-    { id: 'profile' as const, label: 'Financial Identity', shortLabel: 'Identity', icon: User },
-    { id: 'card' as const, label: 'DhanMITR Card', shortLabel: 'Dhan Card', icon: Award },
-    { id: 'sync' as const, label: 'Cloud & Backup', shortLabel: 'Cloud Sync', icon: Database },
+    { id: 'profile' as const, label: 'Financial Identity', shortLabel: 'Profile', icon: User },
+    { id: 'card' as const, label: 'DhanMITR Card', shortLabel: 'Card', icon: Award },
+    { id: 'sync' as const, label: 'Cloud & Backup', shortLabel: 'Sync', icon: Database },
     { id: 'preferences' as const, label: 'Preferences & Security', shortLabel: 'Security', icon: Shield },
   ];
 
@@ -283,21 +283,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
         </div>
 
         {/* DhanMITR Card Promo Banner */}
-        <div className="bg-gradient-to-r from-emerald-50 via-teal-50/50 to-slate-50 dark:from-emerald-950/40 dark:via-slate-900 dark:to-[#0F172A] border border-emerald-500/25 dark:border-emerald-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 transition-colors">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50/40 to-slate-50 dark:from-emerald-950/40 dark:via-slate-900 dark:to-[#0F172A] border border-emerald-500/25 dark:border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 transition-colors space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
               <Award className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
                   Shareable DhanMITR Card
-                </p>
-                <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40">
+                </h3>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 whitespace-nowrap">
                   Light & Dark Mode
                 </span>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate">
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug mt-1">
                 Show off your Dhan Health Score & savings discipline on WhatsApp Status & Instagram Story.
               </p>
             </div>
@@ -305,11 +305,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
 
           <button
             onClick={() => setIsCardModalOpen(true)}
-            className="px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md shadow-emerald-950/10 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
           >
             <Download className="w-3.5 h-3.5 stroke-[2.5]" />
             <span className="hidden sm:inline">Download Card</span>
-            <span className="sm:hidden">Get</span>
+            <span className="sm:hidden">Get Your Card</span>
           </button>
         </div>
       </div>
@@ -331,7 +331,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+              className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer text-center ${
                 isActive
                   ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500/30'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -339,7 +339,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
             >
               <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-500' : 'text-slate-400'}`} />
               <span className="hidden sm:inline truncate">{tab.label}</span>
-              <span className="sm:hidden text-[11px] truncate">{tab.shortLabel}</span>
+              <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">{tab.shortLabel}</span>
             </button>
           );
         })}
