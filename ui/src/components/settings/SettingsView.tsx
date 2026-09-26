@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '@/context/FinanceContext';
 import { useAuth } from '@/context/AuthContext';
 import { CustomSelect } from '@/components/ui/CustomSelect';
@@ -323,7 +324,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
       )}
 
       {/* 4-Column Mobile-Friendly Segmented Menu */}
-      <div className="grid grid-cols-4 p-1 bg-slate-200/80 dark:bg-[#0B101D] rounded-2xl gap-1 border border-slate-200 dark:border-slate-800/80 select-none">
+      <div className="grid grid-cols-4 p-1 bg-slate-200/80 dark:bg-[#0B101D] rounded-2xl gap-1 border border-slate-200 dark:border-slate-800/80 select-none relative">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -331,13 +332,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer text-center ${
+              className={`relative py-2 px-1 rounded-xl text-xs font-bold transition-colors duration-150 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer text-center z-10 ${
                 isActive
-                  ? 'bg-white dark:bg-[#0F172A] text-emerald-600 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500/30'
+                  ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-500' : 'text-slate-400'}`} />
+              {isActive && (
+                <motion.div
+                  layoutId="settingsActiveTabIndicator"
+                  className="absolute inset-0 rounded-xl bg-white dark:bg-[#0F172A] shadow-xs ring-1 ring-emerald-500/30 -z-10"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                />
+              )}
+              <Icon className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isActive ? 'text-emerald-500 scale-110' : 'text-slate-400'}`} />
               <span className="hidden sm:inline truncate">{tab.label}</span>
               <span className="sm:hidden text-[11px] font-bold whitespace-nowrap">{tab.shortLabel}</span>
             </button>
@@ -346,7 +354,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
       </div>
 
       {/* Tab Panels */}
-      <div className="space-y-4 sm:space-y-6">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+          className="space-y-4 sm:space-y-6"
+        >
         {/* ======================= TAB 1: FINANCIAL IDENTITY ======================= */}
         {activeTab === 'profile' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
@@ -906,7 +922,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
+    </AnimatePresence>
 
       {/* Dedicated Edit Profile Modal */}
       <EditProfileModal
