@@ -780,35 +780,36 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
                           />
                         ))}
                       </Pie>
-                      <RechartsTooltip
-                        formatter={(val: unknown) => [`₹${Number(val || 0).toLocaleString('en-IN')}`, 'Amount']}
-                        contentStyle={{
-                          backgroundColor: '#0F172A',
-                          borderRadius: '12px',
-                          border: 'none',
-                          color: '#fff',
-                          fontSize: '11px',
-                        }}
-                      />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
-                {/* Center Dynamic Readout */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  {hoveredCategory ? (
+                {/* Center Dynamic Readout: Primary non-overlapping data display */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none px-1">
+                  {hoveredCategory && hoveredCategory.id !== 'empty' ? (
                     <>
-                      <span className="text-[9px] text-emerald-500 font-mono font-bold uppercase truncate max-w-[70px]">
+                      <span
+                        className="text-[9px] font-mono font-bold uppercase truncate max-w-[76px] tracking-tight leading-none mb-0.5"
+                        style={{ color: hoveredCategory.color }}
+                      >
                         {hoveredCategory.category}
                       </span>
-                      <span className="text-xs font-black font-mono text-slate-900 dark:text-white">
+                      <span className="text-xs sm:text-[13px] font-black font-mono text-slate-900 dark:text-white leading-tight">
+                        ₹{hoveredCategory.amount.toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-[9px] font-mono font-bold text-slate-500 dark:text-slate-400 mt-0.5 leading-none">
                         {hoveredCategory.percentage}%
                       </span>
                     </>
                   ) : (
                     <>
-                      <span className="text-[10px] text-slate-400 font-mono uppercase">Burn</span>
-                      <span className="text-xs font-black font-mono text-slate-900 dark:text-white">
-                        ₹{totalOutflow > 0 ? `${Math.round(totalOutflow / 1000)}k` : '0'}
+                      <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-mono font-bold uppercase tracking-wider leading-none mb-0.5">
+                        Burn
+                      </span>
+                      <span className="text-xs sm:text-[13px] font-black font-mono text-slate-900 dark:text-white leading-tight">
+                        ₹{totalOutflow > 0 ? totalOutflow.toLocaleString('en-IN') : '0'}
+                      </span>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono mt-0.5 leading-none">
+                        Monthly
                       </span>
                     </>
                   )}
