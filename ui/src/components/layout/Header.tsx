@@ -12,7 +12,6 @@ import {
 import {
   Sun,
   Moon,
-  Search,
   Plus,
   ChevronDown,
   CreditCard,
@@ -104,10 +103,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
               <span>{t.appTitle}</span>
               <SparkleSmallIcon className="w-4 h-4 text-emerald-500 fill-emerald-400" />
             </h1>
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{language === 'hi' ? 'लाइव हिसाब' : 'Live Sync'}</span>
-            </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium truncate max-w-sm sm:max-w-md lg:max-w-lg">
             {isAuthenticated
@@ -120,17 +115,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onNavigateToTab 
 
         {/* Right: Actions Tray */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
-          {/* Quick Search Pill */}
-          <button
-            onClick={() => onNavigateToTab?.('transactions')}
-            className="hidden md:flex items-center gap-2 h-10 px-3.5 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-emerald-500/40 transition-all shadow-2xs cursor-pointer"
-            title="Search ledger records (Ctrl+K or ⌘K)"
-          >
-            <Search className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-500 dark:text-slate-400 text-xs">{language === 'hi' ? 'खाता खोजें...' : 'Search ledger...'}</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-500 shadow-2xs">⌘K</kbd>
-          </button>
-
           {isAuthenticated ? (
             <>
               {/* Executive Primary Action: BloomMenu for Add Record */}
