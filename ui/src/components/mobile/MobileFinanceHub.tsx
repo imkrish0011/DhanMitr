@@ -213,44 +213,47 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
   return (
     <div className="w-full bg-transparent pb-2 text-slate-900 dark:text-white transition-colors duration-200">
       {/* Top Mobile App Bar */}
-      <div className="sticky top-0 z-30 px-4 py-3 bg-white/85 dark:bg-[#070B14]/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-2.5">
-          <DhanMitrLogo className="w-8 h-8 shrink-0" />
-          <div>
+      <div className="sticky top-0 z-30 px-4 py-2.5 bg-white/90 dark:bg-[#070B14]/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between shadow-2xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="relative shrink-0">
+            <DhanMitrLogo className="w-8 h-8" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#070B14]" />
+          </div>
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-display font-extrabold tracking-tight text-sm text-slate-900 dark:text-white">
-                धन<span className="text-emerald-500 font-bold">Mitr</span>
+              <span className="font-display font-black tracking-tight text-sm text-slate-900 dark:text-white">
+                धन<span className="text-emerald-500">Mitr</span>
               </span>
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 PRO
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
               {t.greeting(firstName, new Date().getHours())}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Mobile Language Selector Toggle */}
           <button
             onClick={toggleLanguage}
-            className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-emerald-500 cursor-pointer shadow-2xs transition-all flex items-center gap-1 active:scale-95 select-none"
+            className="h-8 px-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs transition-all flex items-center gap-1 active:scale-95 select-none"
             title={language === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}
             aria-label="Toggle language"
           >
             <span className="text-[11px]">🌐</span>
-            <span className={language === 'hi' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-slate-400 font-medium'}>हि</span>
-            <span className="text-slate-300 dark:text-slate-700 text-[10px]">/</span>
-            <span className={language === 'en' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-slate-400 font-medium'}>EN</span>
+            <span className={language === 'hi' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold text-[11px]' : 'text-slate-400 font-medium text-[10px]'}>हि</span>
+            <span className="text-slate-300 dark:text-slate-700 text-[9px]">/</span>
+            <span className={language === 'en' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold text-[11px]' : 'text-slate-400 font-medium text-[10px]'}>EN</span>
           </button>
 
           {/* Mobile Theme Toggle */}
           <ThemeToggle
             variant="rectangle"
             start="bottom-up"
-            className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 cursor-pointer shadow-2xs"
-            iconClassName="w-4 h-4"
+            className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer shadow-2xs flex items-center justify-center p-0 transition-all active:scale-95"
+            iconClassName="w-3.5 h-3.5"
             title="Toggle theme"
           />
 
@@ -258,17 +261,19 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
           <BloomMenu
             compact
             triggerLabel={language === 'hi' ? 'जोड़ें' : 'Add'}
+            triggerClassName="h-8 px-2.5 text-xs rounded-xl shadow-xs"
             onSelect={(id) => onOpenAddModal(id)}
           />
 
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 text-slate-600 dark:text-slate-300 cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 shadow-2xs"
+              className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer shadow-2xs flex items-center justify-center transition-all active:scale-95"
+              aria-label="Notifications"
             >
-              <BellIcon className="w-4 h-4" />
+              <BellIcon className="w-3.5 h-3.5" />
               {activeAlerts.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0B101B] animate-pulse" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#070B14] animate-pulse" />
               )}
             </button>
 
