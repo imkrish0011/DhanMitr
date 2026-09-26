@@ -211,7 +211,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
   }, [surplusStatus, netSurplus, totalIncome, savingsRate, emergencyRunwayMonths, language, t]);
 
   return (
-    <div className="w-full min-h-screen bg-transparent pb-32 text-slate-900 dark:text-white transition-colors duration-200">
+    <div className="w-full bg-transparent pb-2 text-slate-900 dark:text-white transition-colors duration-200">
       {/* Top Mobile App Bar */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white/85 dark:bg-[#070B14]/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2.5">

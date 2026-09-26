@@ -184,7 +184,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ isMobile = false }) 
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-28 md:pb-12 space-y-4 sm:space-y-6">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-2 md:pb-12 space-y-4 sm:space-y-6">
       {/* Top Header Row */}
       <div className="flex items-center justify-between gap-3">
         <div>

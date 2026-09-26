@@ -159,7 +159,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto pb-36 md:pb-12 relative">
+    <div className="w-full max-w-5xl mx-auto pb-2 md:pb-12 relative">
       <div className="px-4 sm:px-6 md:px-8 space-y-2.5 sm:space-y-4">
         {/* Mobile Modern Header Banner - Ultra Compact Single Row */}
         {isMobile && (
