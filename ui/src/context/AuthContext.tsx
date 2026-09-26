@@ -193,6 +193,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           customTag: data.custom_tag,
         });
 
+        let resolvedTags = tags;
+        let resolvedCustomTag = customTag;
+
+        try {
+          const tagRes = await fetch(`/api/user/tags?userId=${encodeURIComponent(data.id)}`);
+          if (tagRes.ok) {
+            const tagJson = await tagRes.json();
+            if (Array.isArray(tagJson.tags) && tagJson.tags.length > 0) {
+              resolvedTags = tagJson.tags;
+              resolvedCustomTag = tagJson.customTag || resolvedCustomTag;
+            }
+          }
+        } catch {
+          // ignore network failure, fallback to resolveUserTags
+        }
+
         setProfile({
           user_id: data.id,
           name: data.name,
@@ -209,8 +225,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           employment_type: data.employment_type || 'salaried',
           tax_regime: data.tax_regime || 'new',
           is_onboarded: data.is_onboarded || false,
-          tags,
-          custom_tag: customTag,
+          tags: resolvedTags,
+          custom_tag: resolvedCustomTag,
         });
 
         // If user is not onboarded, prompt onboarding modal

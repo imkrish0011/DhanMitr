@@ -323,11 +323,12 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
   return (
     <div className="space-y-5 select-none animate-in fade-in duration-300">
       {/* ========================================================================= */}
-      {/* 0. FINANCIAL TELEMETRY TICKER BAR                                        */}
+      {/* 0. FINANCIAL TELEMETRY & COMMAND ACTION BAR                              */}
       {/* ========================================================================= */}
-      <div className="p-3 sm:p-3.5 rounded-2xl bg-white/70 dark:bg-[#0E1526]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-white/70 dark:bg-[#0E1526]/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3.5">
+        {/* Left: Financial Identity */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 shadow-2xs">
             <SparkleSmallIcon className="w-4 h-4 fill-current" />
           </div>
           <div className="flex flex-col">
@@ -347,66 +348,96 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap self-end md:self-center">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/10 text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
-            <span className="text-emerald-500">₹</span>
+        {/* Right: Telemetry Badges + Elevated Quick Action Command Bar */}
+        <div className="flex items-center gap-2 flex-wrap self-stretch lg:self-center justify-start lg:justify-end">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/10 text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+            <span className="text-emerald-500 font-extrabold">₹</span>
             <span>{netSurplus >= 0 ? `+₹${netSurplus.toLocaleString('en-IN')}` : `-₹${Math.abs(netSurplus).toLocaleString('en-IN')}`}/mo</span>
           </div>
-          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-mono font-extrabold ${heroTheme.pillBadge}`}>
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold ${heroTheme.pillBadge}`}>
             <Flame className="w-3.5 h-3.5 fill-current" />
             <span>{savingsRate}% {language === 'hi' ? 'बचत' : 'Saved'}</span>
           </div>
+
+          <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 hidden sm:block mx-1" />
+
+          {/* Quick Action Buttons */}
+          <button
+            onClick={() => onOpenAddModal?.('expense')}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/20 active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>{language === 'hi' ? '+ नया हिसाब' : 'Log Record'}</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab?.('ai_companion')}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200/80 dark:border-white/10 cursor-pointer active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            <span>{language === 'hi' ? 'AI सलाह' : 'AI Advice'}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('tax_calculator')}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200/80 dark:border-white/10 cursor-pointer active:scale-95"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-500" />
+            <span>{language === 'hi' ? 'टैक्स बचत' : 'Tax'}</span>
+          </button>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. TOP BENTO ROW: DYNAMIC HERO CARD & RUNWAY VAULT                       */}
+      {/* 1. TOP BENTO ROW: BALANCED HERO CARD & RUNWAY VAULT                      */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* HERO TILE: Dynamic 3-Color Responsive Wealth Card (8 Cols) */}
-        <div className={`lg:col-span-8 rounded-3xl fintech-card p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between group shadow-sm border ${heroTheme.border} transition-colors duration-300`}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* HERO TILE: Dynamic 3-Color Responsive Wealth Card (7 Cols) */}
+        <div className={`lg:col-span-7 rounded-3xl fintech-card p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between group shadow-sm border ${heroTheme.border} transition-colors duration-300 h-full`}>
           {/* Dynamic Ambient Radial Glow matching Deficit/Tight/Healthy state */}
           <div className={`absolute top-0 right-0 w-96 h-96 bg-gradient-to-br ${heroTheme.glow} rounded-full blur-3xl pointer-events-none -mr-16 -mt-16 transition-all duration-500`} />
           <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent ${heroTheme.accentLine} to-transparent transition-all duration-500`} />
 
-          <div>
-            {/* Header / Subtitle */}
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded-full flex items-center gap-1.5 ${heroTheme.pillBadge}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${heroTheme.dot} ${isDeficit ? 'animate-ping' : 'animate-pulse'}`} />
-                  {language === 'hi' ? 'मासिक बचत स्थिति' : 'Monthly Cash Flow Position'}
-                </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">
-                  • {language === 'hi' ? 'लाइव हिसाब' : 'Real-time Telemetry'}
-                </span>
+          <div className="flex flex-col justify-between h-full space-y-4">
+            {/* Header & Subtitle */}
+            <div>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded-full flex items-center gap-1.5 ${heroTheme.pillBadge}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${heroTheme.dot} ${isDeficit ? 'animate-ping' : 'animate-pulse'}`} />
+                    {language === 'hi' ? 'मासिक बचत स्थिति' : 'Monthly Cash Flow Position'}
+                  </span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">
+                    • {language === 'hi' ? 'लाइव हिसाब' : 'Real-time Telemetry'}
+                  </span>
+                </div>
+
+                {/* Savings Velocity Badge */}
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
+                  <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
+                  <span>{language === 'hi' ? `▲ ${savingsRate}% बचत दर` : `▲ ${savingsRate}% Savings Rate`}</span>
+                </div>
               </div>
 
-              {/* Savings Velocity Badge */}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
-                <SparkleSmallIcon className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
-                <span>{language === 'hi' ? `▲ ${savingsRate}% बचत दर` : `▲ ${savingsRate}% Savings Rate`}</span>
-              </div>
-            </div>
-
-            {/* Giant Net Surplus Display with Live Glow */}
-            <div className="mt-2 mb-4">
-              <span className="text-[11px] font-mono font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-400 block mb-1.5">
-                {language === 'hi' ? 'उपलब्ध मासिक बचत (Surplus)' : 'Net Monthly Surplus (Available Balance)'}
-              </span>
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight font-mono tabular-nums leading-none ${heroTheme.textColor}`}>
-                  {netSurplus < 0 ? `-₹${Math.abs(netSurplus).toLocaleString('en-IN')}` : `₹${netSurplus.toLocaleString('en-IN')}`}
-                </h2>
-                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl shadow-xs ${heroTheme.badgeBg}`}>
-                  {heroTheme.icon}
-                  <span>{heroTheme.badgeText}</span>
+              {/* Giant Net Surplus Display with Live Glow */}
+              <div className="my-2">
+                <span className="text-[11px] font-mono font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-400 block mb-1">
+                  {language === 'hi' ? 'उपलब्ध मासिक बचत (Surplus)' : 'Net Monthly Surplus (Available Balance)'}
                 </span>
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight font-mono tabular-nums leading-none ${heroTheme.textColor}`}>
+                    {netSurplus < 0 ? `-₹${Math.abs(netSurplus).toLocaleString('en-IN')}` : `₹${netSurplus.toLocaleString('en-IN')}`}
+                  </h2>
+                  <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl shadow-xs ${heroTheme.badgeBg}`}>
+                    {heroTheme.icon}
+                    <span>{heroTheme.badgeText}</span>
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Connected Dual Inflow vs Outflow Telemetry Control Deck */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-4 pt-3.5 border-t border-slate-100 dark:border-white/[0.06]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3.5 border-t border-slate-100 dark:border-white/[0.06]">
               {/* Inflow Card */}
               <div
                 onClick={() => setActiveSubTab('budget')}
@@ -440,7 +471,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
                     {language === 'hi' ? 'कुल मासिक खर्च' : 'Operational Outflow'}
                   </span>
-                  <div className="w-6 h-6 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover/outflow:translate-x-0.5 group-hover/outflow:translate-y-0.5 transition-transform">
+                  <div className="w-6 h-6 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover/outflow:translate-x-0.5 group-hover/outflow:-translate-y-0.5 transition-transform">
                     <ArrowDownRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
@@ -455,7 +486,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
             </div>
 
             {/* Split Ratio Conduit Bar */}
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
                 <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -478,37 +509,10 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               </div>
             </div>
           </div>
-
-          {/* Floating Command Action Bar */}
-          <div className="flex items-center gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex-wrap">
-            <button
-              onClick={() => onOpenAddModal?.('expense')}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/20 active:scale-95 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>{language === 'hi' ? '+ नया हिसाब जोड़ें' : 'Log Record'}</span>
-            </button>
-
-            <button
-              onClick={() => onNavigateToTab?.('ai_companion')}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200/80 dark:border-white/10 cursor-pointer active:scale-95"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-              <span>{language === 'hi' ? 'AI बचत सलाह' : 'AI Advice'}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab('tax_calculator')}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200/80 dark:border-white/10 cursor-pointer active:scale-95"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>{language === 'hi' ? 'टैक्स बचत' : 'Tax Optimizer'}</span>
-            </button>
-          </div>
         </div>
 
-        {/* TILE 2: Emergency Runway Vault & Solvency Horizon (4 Cols) */}
-        <div className="lg:col-span-4 rounded-3xl fintech-card p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between shadow-sm border border-slate-200/80 dark:border-white/[0.08]">
+        {/* TILE 2: Emergency Runway Vault & Solvency Horizon (5 Cols) */}
+        <div className="lg:col-span-5 rounded-3xl fintech-card p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between shadow-sm border border-slate-200/80 dark:border-white/[0.08] h-full">
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-radial from-blue-500/10 via-emerald-500/5 to-transparent rounded-full blur-2xl pointer-events-none -mr-10 -mt-10" />
 
@@ -596,9 +600,9 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
       {/* ========================================================================= */}
       {/* 2. MIDDLE BENTO ROW: CASH FLOW HORIZON & CAPITAL ANATOMY                   */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* CASH FLOW TRAJECTORY CHART (7 Cols) */}
-        <div className="lg:col-span-7 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08]">
+        <div className="lg:col-span-7 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08] h-full">
           <div>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
               <div>
@@ -629,10 +633,10 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               </div>
             </div>
 
-            {/* Recharts Area Chart */}
-            <div className="w-full h-56 min-h-[220px] relative">
+            {/* Recharts Area Chart with Enhanced Desktop Height */}
+            <div className="w-full h-64 sm:h-72 min-h-[250px] relative">
               {isMounted && displayTrend.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
                   <ComposedChart
                     data={displayTrend}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
@@ -700,7 +704,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
           </div>
 
           {/* Footer Legend with Telemetry Insights */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/[0.06] text-xs">
+          <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 dark:border-white/[0.06] text-xs">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -723,7 +727,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
         </div>
 
         {/* CAPITAL ALLOCATION BREAKDOWN (5 Cols) */}
-        <div className="lg:col-span-5 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08]">
+        <div className="lg:col-span-5 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08] h-full">
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -742,7 +746,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
             </div>
 
             {/* Donut Chart & Ranked List */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center my-2">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center my-3">
               {/* Donut */}
               <div className="sm:col-span-5 relative flex items-center justify-center min-h-[160px]">
                 {isMounted && (
@@ -812,7 +816,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               </div>
 
               {/* Ranked Categories with Mini Bars */}
-              <div className="sm:col-span-7 space-y-2">
+              <div className="sm:col-span-7 space-y-2.5">
                 {activeCategories.slice(0, 3).map((cat) => (
                   <div
                     key={cat.id}
@@ -860,9 +864,9 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
       {/* ========================================================================= */}
       {/* 3. BOTTOM BENTO ROW: STRATEGIC GOALS & UPCOMING COMMITMENTS                */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* STRATEGIC FINANCIAL GOALS (6 Cols) */}
-        <div className="lg:col-span-6 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08]">
+        <div className="lg:col-span-6 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08] h-full">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
@@ -886,7 +890,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               </button>
             </div>
 
-            {/* Goals List */}
+            {/* Goals Rendered in Compact Responsive Grid */}
             {displayGoals.length === 0 ? (
               <div className="p-6 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
                 <p className="text-xs font-semibold text-slate-500 mb-2">No active goals yet</p>
@@ -898,30 +902,35 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {displayGoals.map((goal) => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {displayGoals.map((goal, idx) => {
                   const pct = Math.min(100, Math.round((goal.current_amount / Math.max(1, goal.target_amount)) * 100));
+                  const isFullSpan = displayGoals.length % 2 !== 0 && idx === displayGoals.length - 1;
                   return (
                     <div
                       key={goal.id}
                       onClick={() => setActiveSubTab('goals')}
-                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/[0.06] hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-500/[0.03] transition-all cursor-pointer group"
+                      className={`p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/[0.06] hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-500/[0.03] transition-all cursor-pointer group flex flex-col justify-between ${
+                        isFullSpan ? 'sm:col-span-2' : ''
+                      }`}
                     >
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
-                          {goal.title}
-                        </span>
-                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                          {pct}%
-                        </span>
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1.5 gap-2">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                            {goal.title}
+                          </span>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                            {pct}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden mb-2">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden mb-1.5">
-                        <div
-                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-100/80 dark:border-white/[0.04]">
                         <span>₹{goal.current_amount.toLocaleString('en-IN')}</span>
                         <span>Target: ₹{goal.target_amount.toLocaleString('en-IN')}</span>
                       </div>
@@ -943,7 +952,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
         </div>
 
         {/* UPCOMING OBLIGATIONS & POLICY RENEWALS (6 Cols) */}
-        <div className="lg:col-span-6 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08]">
+        <div className="lg:col-span-6 rounded-3xl fintech-card p-6 shadow-sm flex flex-col justify-between border border-slate-200/80 dark:border-white/[0.08] h-full">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
@@ -967,7 +976,7 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
               </button>
             </div>
 
-            {/* Priority Obligations Horizon */}
+            {/* Priority Obligations Rendered in Compact 2-Column Grid */}
             {priorityObligations.length === 0 ? (
               <div className="p-6 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
                 <p className="text-xs font-semibold text-slate-500 mb-2">No upcoming renewals logged</p>
@@ -979,46 +988,47 @@ export const ExecutiveOverview: React.FC<ExecutiveOverviewProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {priorityObligations.map((item) => (
                   <div
                     key={item.id}
                     onClick={() =>
                       setActiveSubTab(item.type === 'subscription' ? 'subscriptions' : 'insurances')
                     }
-                    className={`p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border transition-all cursor-pointer flex items-center justify-between group ${
+                    className={`p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border transition-all cursor-pointer flex flex-col justify-between group gap-2 ${
                       item.isUrgent
                         ? 'border-rose-500/40 hover:border-rose-500/60'
                         : 'border-slate-200/70 dark:border-white/[0.06] hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-500/[0.03]'
                     }`}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <ProviderLogo
-                        logoKey={item.logoKey}
-                        className="w-8 h-8 shrink-0 rounded-lg group-hover:scale-105 transition-transform"
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <ProviderLogo
+                          logoKey={item.logoKey}
+                          className="w-7 h-7 shrink-0 rounded-lg group-hover:scale-105 transition-transform"
+                        />
+                        <div className="min-w-0">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate block">
                             {item.title}
                           </span>
-                          {item.isUrgent && (
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400">
-                              URGENT
-                            </span>
-                          )}
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
+                            <Clock className="w-2.5 h-2.5" />
+                            Due {item.dueText}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 font-mono">
-                          <Clock className="w-3 h-3" />
-                          Due {item.dueText} ({item.cycle})
-                        </span>
                       </div>
+                      {item.isUrgent && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0">
+                          URGENT
+                        </span>
+                      )}
                     </div>
 
-                    <div className="text-right shrink-0 ml-3">
-                      <div className="text-xs sm:text-sm font-black font-mono tabular-nums text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
+                    <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-white/[0.04] text-[10px] font-mono text-slate-400">
+                      <span>{item.cycle}</span>
+                      <span className="text-xs sm:text-sm font-black font-mono tabular-nums text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
                         ₹{item.amount.toLocaleString('en-IN')}
-                      </div>
+                      </span>
                     </div>
                   </div>
                 ))}

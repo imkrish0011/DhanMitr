@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     employment_type TEXT DEFAULT 'salaried' CHECK (employment_type IN ('salaried', 'self_employed', 'freelancer', 'student', 'retired')),
     tax_regime TEXT DEFAULT 'new' CHECK (tax_regime IN ('new', 'old', 'not_applicable')),
     is_onboarded BOOLEAN DEFAULT false,
+    tags TEXT[] DEFAULT '{}',
+    custom_tag TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );

@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     }
 
     // 2. Fetch admin users list to merge role info
-    const { data: adminUsers, error: adminErr } = await supabase
+    const { data: adminUsers } = await supabase
       .from('admin_users')
       .select('*');
 
@@ -42,16 +42,42 @@ export async function GET(request: Request) {
       }
     }
 
+    // 3. Fetch latest custom tags from admin audit logs (ensures tags persist across sessions)
+    const { data: auditLogs } = await supabase
+      .from('admin_audit_logs')
+      .select('target_id, details, created_at')
+      .eq('action', 'UPDATE_USER_TAGS')
+      .order('created_at', { ascending: false });
+
+    const auditTagsMap = new Map<string, { tags: string[]; customTag?: string }>();
+    if (auditLogs) {
+      for (const log of auditLogs) {
+        if (log.target_id && !auditTagsMap.has(log.target_id) && log.details) {
+          const t = Array.isArray(log.details.tags) ? log.details.tags : [];
+          auditTagsMap.set(log.target_id, {
+            tags: t,
+            customTag: log.details.customTag,
+          });
+        }
+      }
+    }
+
     // Combine profile data with admin role data & compute automatic + custom tags
     let userList = (profiles || []).map(p => {
       const adminInfo = adminMap.get(p.id);
+      const auditTagInfo = auditTagsMap.get(p.id);
+      const existingTags = (p.tags && Array.isArray(p.tags) && p.tags.length > 0)
+        ? p.tags
+        : (auditTagInfo?.tags || []);
+      const directCustomTag = p.custom_tag || auditTagInfo?.customTag;
+
       const { tags, customTag } = resolveUserTags({
         userId: p.id,
         email: p.email,
         monthly_income: Number(p.monthly_income || 0),
         total_investments: Number(p.total_investments || 0),
-        existingTags: p.tags || [],
-        customTag: p.custom_tag,
+        existingTags,
+        customTag: directCustomTag,
       });
 
       return {
