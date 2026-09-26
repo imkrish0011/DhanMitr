@@ -171,9 +171,9 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
       <div className="p-4 sm:p-6 rounded-3xl bg-white dark:bg-[#0c1220] border border-slate-200/80 dark:border-white/5 shadow-2xs space-y-4">
         {/* Card Header & Budget Slider */}
         <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
                   {language === 'hi' ? '10% मार्जिन व 90% प्रोजेक्ट लोन' : '10% Margin & 90% Project Loan'}
                 </h3>
@@ -189,7 +189,7 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
             </div>
 
             {/* Total Budget Display */}
-            <div className="flex items-baseline sm:flex-col sm:items-end gap-1.5 sm:gap-0 bg-slate-50 dark:bg-white/5 sm:bg-transparent px-3 py-1.5 sm:p-0 rounded-xl">
+            <div className="flex items-center justify-between sm:flex-col sm:items-end gap-1.5 sm:gap-0 bg-slate-50 dark:bg-white/5 sm:bg-transparent px-3 py-1.5 sm:p-0 rounded-xl border border-slate-200/60 dark:border-white/5 sm:border-0">
               <span className="text-[10px] uppercase font-bold text-slate-400 font-mono">
                 {language === 'hi' ? 'कुल प्रोजेक्ट बजट' : 'Total Project Cost'}
               </span>
@@ -293,40 +293,38 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
             </div>
 
             {/* Moratorium Grace Period Pill */}
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/20 flex items-start sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                    {scheme.moratoriumMonths}-{language === 'hi' ? 'माह की छूट (Moratorium):' : 'Month Moratorium:'}
-                  </span>{' '}
-                  {language === 'hi'
-                    ? `शुरुआती ${scheme.moratoriumMonths} महीने ₹0 मूलधन। केवल साधारण ब्याज (₹${schedule.interestOnly.toLocaleString('en-IN')}/तिमाही) दें।`
-                    : `Pay ₹0 principal during setup. Only simple interest of ₹${schedule.interestOnly.toLocaleString('en-IN')}/qtr applies.`}
-                </span>
-              </div>
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/20 flex items-start gap-2">
+              <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+              <span className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {scheme.moratoriumMonths}-{language === 'hi' ? 'माह की छूट (Moratorium):' : 'Month Moratorium:'}
+                </span>{' '}
+                {language === 'hi'
+                  ? `शुरुआती ${scheme.moratoriumMonths} महीने ₹0 मूलधन। केवल साधारण ब्याज (₹${schedule.interestOnly.toLocaleString('en-IN')}/तिमाही) दें।`
+                  : `Pay ₹0 principal during setup. Only simple interest of ₹${schedule.interestOnly.toLocaleString('en-IN')}/qtr applies.`}
+              </span>
             </div>
           </div>
         </div>
 
         {/* 3. Action Strip: Collapsible Schedule Toggle & Export */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-white/5">
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-white/5 flex-wrap">
           <button
             type="button"
             onClick={() => setShowSchedule(!showSchedule)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs"
           >
-            <Calendar className="w-3.5 h-3.5 text-emerald-500" />
+            <Calendar className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span>
               {showSchedule
                 ? language === 'hi'
                   ? 'किश्त सारणी छिपाएं'
-                  : 'Hide Repayment Schedule'
+                  : 'Hide Schedule'
                 : language === 'hi'
-                ? `किश्त सारणी देखें (${scheme.years * 4} तिमाहियां)`
-                : `View Repayment Schedule (${scheme.years * 4} Quarters)`}
+                ? `किश्त सारणी (${scheme.years * 4} तिमाहियां)`
+                : `Repayment Schedule (${scheme.years * 4}Q)`}
             </span>
-            {showSchedule ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
+            {showSchedule ? <ChevronUp className="w-3.5 h-3.5 ml-0.5 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 ml-0.5 shrink-0" />}
           </button>
 
           {showSchedule && (
@@ -335,7 +333,7 @@ export const MarginLoanCalculator: React.FC<MarginLoanCalculatorProps> = ({
               type="button"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold transition-all cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 shrink-0" />
               <span>{language === 'hi' ? 'CSV डाउनलोड' : 'Export CSV'}</span>
             </button>
           )}

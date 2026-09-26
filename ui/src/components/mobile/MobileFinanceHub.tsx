@@ -211,7 +211,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
   }, [surplusStatus, netSurplus, totalIncome, savingsRate, emergencyRunwayMonths, language, t]);
 
   return (
-    <div className="w-full min-h-screen bg-transparent pb-20 text-slate-900 dark:text-white transition-colors duration-200">
+    <div className="w-full min-h-screen bg-transparent pb-32 text-slate-900 dark:text-white transition-colors duration-200">
       {/* Top Mobile App Bar */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white/85 dark:bg-[#070B14]/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2.5">
@@ -314,26 +314,28 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
       </div>
 
       {/* Smooth Horizontally Scrollable Sub-Tabs */}
-      <div className="px-4 pt-2.5 pb-2 select-none">
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 dark:bg-[#0c1220]/90 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-white/5 overflow-x-auto no-scrollbar shadow-inner">
-          {tabs.map((tab) => {
-            const isActive = activeSubTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveSubTab(tab.id)}
-                className={`py-1.5 px-3 rounded-xl text-xs font-semibold transition-all text-center whitespace-nowrap shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-white dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-bold shadow-xs border border-slate-200/50 dark:border-emerald-500/30'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {tab.shortLabel}
-              </button>
-            );
-          })}
+      {activeSubTab !== 'msme_tools' && (
+        <div className="px-4 pt-2.5 pb-2 select-none">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 dark:bg-[#0c1220]/90 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-white/5 overflow-x-auto no-scrollbar shadow-inner">
+            {tabs.map((tab) => {
+              const isActive = activeSubTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveSubTab(tab.id)}
+                  className={`py-1.5 px-3 rounded-xl text-xs font-semibold transition-all text-center whitespace-nowrap shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-white dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-bold shadow-xs border border-slate-200/50 dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {tab.shortLabel}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Tab Contents */}
       {activeSubTab === 'overview' && (
@@ -684,7 +686,7 @@ export const MobileFinanceHub: React.FC<MobileFinanceHubProps> = ({
       )}
 
       {activeSubTab === 'msme_tools' && (
-        <div className="px-3 pt-2">
+        <div className="px-4 pt-3.5 space-y-4">
           <ProjectLoanSuite />
         </div>
       )}
