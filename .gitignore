@@ -69,7 +69,8 @@ audio_cache/
 temp_audio/
 
 # Logs & Runtime Dumps
-logs/
+/logs/
+!ui/src/app/api/admin/logs/
 *.log
 *.pid
 *.seed

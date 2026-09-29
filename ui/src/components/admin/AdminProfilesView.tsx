@@ -9,14 +9,37 @@ import {
   Layers, 
   RefreshCw, 
   DollarSign, 
-  AlertCircle 
+  AlertCircle,
+  Search,
+  UserCheck,
+  UserX,
+  Wallet,
+  Receipt,
+  Shield
 } from 'lucide-react';
+
+interface ProfileRecord {
+  id: string;
+  name: string;
+  email: string;
+  currency: string;
+  monthly_income: number;
+  monthly_expenses: number;
+  total_investments: number;
+  emergency_fund_balance: number;
+  risk_tolerance: string;
+  employment_type: string;
+  tax_regime: string;
+  is_onboarded: boolean;
+  created_at: string;
+}
 
 export const AdminProfilesView: React.FC = () => {
   const { adminFetch } = useAdminAuth();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchProfilesData = async () => {
     setIsLoading(true);
@@ -42,12 +65,17 @@ export const AdminProfilesView: React.FC = () => {
     fetchProfilesData();
   }, []);
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(val || 0);
+  const formatCurrency = (val: number, cur: string = 'INR') => {
+    try {
+      const safeCur = (cur && typeof cur === 'string' && cur.length === 3) ? cur.toUpperCase() : 'INR';
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: safeCur,
+        maximumFractionDigits: 0,
+      }).format(val || 0);
+    } catch {
+      return `₹${Math.round(val || 0).toLocaleString('en-IN')}`;
+    }
   };
 
   if (isLoading && !data) {
@@ -80,6 +108,20 @@ export const AdminProfilesView: React.FC = () => {
   const taxDist = data?.analytics?.taxRegimeDistribution || {};
   const empDist = data?.analytics?.employmentDistribution || {};
   const totalProfiles = data?.analytics?.totalProfiles || 0;
+  const profilesList: ProfileRecord[] = data?.profiles || [];
+
+  const filteredProfiles = profilesList.filter((p) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      p.name?.toLowerCase().includes(q) ||
+      p.email?.toLowerCase().includes(q) ||
+      p.id?.toLowerCase().includes(q) ||
+      p.employment_type?.toLowerCase().includes(q) ||
+      p.tax_regime?.toLowerCase().includes(q) ||
+      p.risk_tolerance?.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -87,7 +129,7 @@ export const AdminProfilesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-800">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Financial Profiles & Demographics</h1>
-          <p className="text-sm text-slate-400">Aggregated insights across registered user wealth profiles</p>
+          <p className="text-sm text-slate-400">Aggregated insights and individual wealth profiles across all users</p>
         </div>
         <button
           onClick={fetchProfilesData}
@@ -203,6 +245,93 @@ export const AdminProfilesView: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* User Wealth Profiles Table */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">Registered User Wealth Directory</h2>
+            <p className="text-xs text-slate-400">Detailed financial balances, regime, and risk preferences for all profiles</p>
+          </div>
+          <div className="relative max-w-xs w-full">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search profiles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+          {filteredProfiles.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <UserX className="w-8 h-8 mx-auto text-slate-600 mb-2" />
+              <p className="text-xs font-medium text-slate-400">No wealth profiles match your search</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950/60 uppercase tracking-wider text-slate-400 border-b border-slate-800 font-semibold">
+                  <tr>
+                    <th className="px-5 py-3">User</th>
+                    <th className="px-4 py-3 text-right">Income /mo</th>
+                    <th className="px-4 py-3 text-right">Expenses /mo</th>
+                    <th className="px-4 py-3 text-right">Investments</th>
+                    <th className="px-4 py-3 text-right">Emergency Cushion</th>
+                    <th className="px-4 py-3">Risk Tolerance</th>
+                    <th className="px-4 py-3">Employment</th>
+                    <th className="px-4 py-3">Tax Regime</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filteredProfiles.map((p) => (
+                    <tr key={p.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="px-5 py-3">
+                        <div className="font-semibold text-white">{p.name || 'User'}</div>
+                        <div className="text-slate-500 text-[11px]">{p.email || p.id.substring(0, 8)}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-emerald-400">
+                        {formatCurrency(p.monthly_income, p.currency)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-rose-400">
+                        {formatCurrency(p.monthly_expenses, p.currency)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-indigo-400">
+                        {formatCurrency(p.total_investments, p.currency)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-blue-400">
+                        {formatCurrency(p.emergency_fund_balance, p.currency)}
+                      </td>
+                      <td className="px-4 py-3 capitalize text-slate-300">
+                        {p.risk_tolerance || 'Moderate'}
+                      </td>
+                      <td className="px-4 py-3 capitalize text-slate-400">
+                        {p.employment_type?.replace('_', ' ') || 'Salaried'}
+                      </td>
+                      <td className="px-4 py-3 uppercase text-slate-400">
+                        {p.tax_regime || 'New'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+                          p.is_onboarded 
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        }`}>
+                          {p.is_onboarded ? 'Onboarded' : 'Pending'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

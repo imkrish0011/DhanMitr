@@ -65,7 +65,7 @@ export const AdminUsersView: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userDetailData, setUserDetailData] = useState<any>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
-  const [inspectionTab, setInspectionTab] = useState<'profile' | 'subscriptions' | 'insurances' | 'transactions'>('profile');
+  const [inspectionTab, setInspectionTab] = useState<'profile' | 'income' | 'subscriptions' | 'insurances' | 'transactions'>('profile');
 
   const [roleModalUser, setRoleModalUser] = useState<UserRecord | null>(null);
   const [targetRole, setTargetRole] = useState<'superadmin' | 'admin' | 'moderator' | 'user'>('user');
@@ -246,11 +246,16 @@ export const AdminUsersView: React.FC = () => {
   };
 
   const formatCurrency = (val: number, cur: string = 'INR') => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: cur || 'INR',
-      maximumFractionDigits: 0,
-    }).format(val || 0);
+    try {
+      const safeCur = (cur && typeof cur === 'string' && cur.length === 3) ? cur.toUpperCase() : 'INR';
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: safeCur,
+        maximumFractionDigits: 0,
+      }).format(val || 0);
+    } catch {
+      return `₹${Math.round(val || 0).toLocaleString('en-IN')}`;
+    }
   };
 
   return (
@@ -344,6 +349,7 @@ export const AdminUsersView: React.FC = () => {
             className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-emerald-500"
           >
             <option value="all">All Roles</option>
+            <option value="admins_all">All Administrators</option>
             <option value="superadmin">Superadmin</option>
             <option value="admin">Admin</option>
             <option value="moderator">Moderator</option>
@@ -609,18 +615,26 @@ export const AdminUsersView: React.FC = () => {
             ) : userDetailData ? (
               <div className="space-y-4">
                 {/* Inspection Sub-Tabs */}
-                <div className="flex items-center gap-2 p-1 bg-slate-950 border border-slate-800 rounded-lg text-xs">
+                <div className="flex items-center gap-1.5 p-1 bg-slate-950 border border-slate-800 rounded-lg text-xs overflow-x-auto">
                   <button
                     onClick={() => setInspectionTab('profile')}
-                    className={`flex-1 py-1.5 rounded-md font-semibold transition-colors ${
+                    className={`flex-1 py-1.5 px-2 rounded-md font-semibold transition-colors whitespace-nowrap ${
                       inspectionTab === 'profile' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     Financial Profile
                   </button>
                   <button
+                    onClick={() => setInspectionTab('income')}
+                    className={`flex-1 py-1.5 px-2 rounded-md font-semibold transition-colors whitespace-nowrap ${
+                      inspectionTab === 'income' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Income ({userDetailData.incomeSources?.length || 0})
+                  </button>
+                  <button
                     onClick={() => setInspectionTab('subscriptions')}
-                    className={`flex-1 py-1.5 rounded-md font-semibold transition-colors ${
+                    className={`flex-1 py-1.5 px-2 rounded-md font-semibold transition-colors whitespace-nowrap ${
                       inspectionTab === 'subscriptions' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -628,7 +642,7 @@ export const AdminUsersView: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setInspectionTab('insurances')}
-                    className={`flex-1 py-1.5 rounded-md font-semibold transition-colors ${
+                    className={`flex-1 py-1.5 px-2 rounded-md font-semibold transition-colors whitespace-nowrap ${
                       inspectionTab === 'insurances' ? 'bg-purple-500/20 text-purple-300' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -636,7 +650,7 @@ export const AdminUsersView: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setInspectionTab('transactions')}
-                    className={`flex-1 py-1.5 rounded-md font-semibold transition-colors ${
+                    className={`flex-1 py-1.5 px-2 rounded-md font-semibold transition-colors whitespace-nowrap ${
                       inspectionTab === 'transactions' ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -688,6 +702,25 @@ export const AdminUsersView: React.FC = () => {
                         <span className="font-mono text-[10px] text-slate-400">{userDetailData.user.id}</span>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Tab: Income Sources */}
+                {inspectionTab === 'income' && (
+                  <div className="space-y-2 text-xs max-h-64 overflow-y-auto">
+                    {!userDetailData.incomeSources || userDetailData.incomeSources.length === 0 ? (
+                      <p className="text-slate-500 py-6 text-center">No distinct income streams registered by this user.</p>
+                    ) : (
+                      userDetailData.incomeSources.map((inc: any) => (
+                        <div key={inc.id} className="p-3 bg-slate-950/60 rounded-lg border border-slate-800 flex justify-between items-center">
+                          <div>
+                            <span className="font-semibold text-white">{inc.title}</span>
+                            <span className="text-slate-500 text-[10px] block capitalize">{inc.frequency || 'Monthly'} · {inc.category || 'Salary'} · {inc.date || 'Regular'}</span>
+                          </div>
+                          <span className="font-bold text-emerald-400">+{formatCurrency(inc.amount, userDetailData.user?.currency)}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
 
@@ -753,7 +786,12 @@ export const AdminUsersView: React.FC = () => {
                   </div>
                 )}
               </div>
-            ) : null}
+            ) : (
+              <div className="py-12 text-center text-slate-500">
+                <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                <p className="text-xs text-slate-400">User details could not be loaded from the database.</p>
+              </div>
+            )}
 
             <div className="flex justify-end pt-2">
               <button

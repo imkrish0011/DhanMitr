@@ -214,26 +214,49 @@ export const HandDrawnScrollIndicator: React.FC<{
 }> = ({ className = '', onClick }) => (
   <motion.div
     onClick={onClick}
-    initial={{ opacity: 0, y: -10 }}
+    initial={{ opacity: 0, y: -12 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 1.6, duration: 0.6 }}
-    className={`flex flex-col items-center gap-1.5 cursor-pointer group select-none ${className}`}
+    transition={{ delay: 1.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+    className={`group flex flex-col items-center gap-2 cursor-pointer select-none ${className}`}
   >
-    <span className="font-handwriting text-sm sm:text-base text-slate-400 group-hover:text-emerald-500 transition-colors">
-      scroll to explore
+    <span className="text-[10px] font-mono tracking-[0.24em] uppercase text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-300">
+      Scroll to explore
     </span>
+
+    {/* Sleek Minimal Glass Capsule */}
+    <div className="relative w-5 h-9 rounded-full border border-slate-300/80 dark:border-white/15 bg-white/50 dark:bg-white/[0.03] backdrop-blur-md group-hover:border-emerald-500/60 dark:group-hover:border-emerald-400/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-all duration-300 flex items-start justify-center p-1 overflow-hidden">
+      {/* Ambient Inner Gradient Glow on Hover */}
+      <div className="absolute inset-0 bg-emerald-500/0 group-hover:bg-emerald-500/10 transition-colors duration-300 rounded-full" />
+
+      {/* Smooth gliding neon dot */}
+      <motion.div
+        className="w-1.5 h-2.5 rounded-full bg-gradient-to-b from-emerald-400 to-teal-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] relative z-10"
+        animate={{
+          y: [0, 14, 0],
+          opacity: [1, 0.25, 1],
+          scaleY: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 2.2,
+          repeat: Infinity,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      />
+    </div>
+
+    {/* Subtle fading chevron arrow */}
     <motion.svg
-      viewBox="0 0 24 36"
+      viewBox="0 0 12 8"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="w-5 h-8 text-slate-400 group-hover:text-emerald-500 transition-colors overflow-visible"
-      animate={{ y: [0, 5, 0] }}
-      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+      className="w-3 h-2 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 transition-colors duration-300"
+      animate={{ y: [0, 3, 0], opacity: [0.4, 0.9, 0.4] }}
+      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
     >
       <path
-        d="M 12 4 C 12 14, 11 22, 12 28 M 7 23 C 9 26, 11 28, 12 29 C 13 28, 15 26, 17 23"
+        d="M 1 1.5 L 6 6.5 L 11 1.5"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -255,7 +278,7 @@ interface AnimatedHandwrittenWordProps {
 }
 
 export const AnimatedHandwrittenWord: React.FC<AnimatedHandwrittenWordProps> = ({
-  words = ['effortless.', 'human.', 'peaceful.', 'personal.'],
+  words = ['effortless.', 'crystal clear.', 'tension-free.', 'bilkul sorted.'],
   intervalMs = 4500,
   className = '',
 }) => {
@@ -277,8 +300,8 @@ export const AnimatedHandwrittenWord: React.FC<AnimatedHandwrittenWordProps> = (
           key={currentWord}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, y: -8, filter: 'blur(4px)' }}
-          transition={{ duration: 0.3 }}
+          exit={{ opacity: 0, y: -8, scale: 0.95 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
           className="relative inline-flex items-baseline font-handwriting tracking-wide font-normal select-none"
         >
           {/* Staggered character write-in animation */}
@@ -302,9 +325,9 @@ export const AnimatedHandwrittenWord: React.FC<AnimatedHandwrittenWordProps> = (
                 delay: 0.08 + charIdx * 0.045,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="inline-block"
+              className={char === ' ' ? 'inline-block whitespace-pre w-[0.35em]' : 'inline-block'}
             >
-              {char}
+              {char === ' ' ? '\u00A0' : char}
             </motion.span>
           ))}
 

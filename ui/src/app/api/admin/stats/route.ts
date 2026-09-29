@@ -126,6 +126,24 @@ export async function GET(request: Request) {
       else if (t.type === 'investment') totalInvestmentRecorded += amt;
     }
 
+    // Incorporate income sources and recurring expenses so dashboard shows real user telemetry
+    const totalIncomeFromSources = incomeSources.reduce((acc: number, inc: any) => {
+      const amt = Number(inc.amount || 0);
+      let monthly = amt;
+      if (inc.frequency === 'yearly') monthly = amt / 12;
+      else if (inc.frequency === 'weekly') monthly = amt * 4.33;
+      return acc + monthly;
+    }, 0);
+    const profileIncomeSum = allProfiles.reduce((acc: number, p: any) => acc + (Number(p.monthly_income) || 0), 0);
+    if (totalIncomeRecorded === 0) {
+      totalIncomeRecorded = totalIncomeFromSources > 0 ? totalIncomeFromSources : profileIncomeSum;
+    }
+
+    const recurringExpenseTotal = Math.round(estimatedMonthlyRecurringTracked + (totalAnnualizedPremiums / 12));
+    if (totalExpenseRecorded === 0) {
+      totalExpenseRecorded = recurringExpenseTotal;
+    }
+
     // Category-wise budget allocation
     const budgetCategoryMap: Record<string, { allocated: number; spent: number }> = {};
     for (const b of budgetItems) {

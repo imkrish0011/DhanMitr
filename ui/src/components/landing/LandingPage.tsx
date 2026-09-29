@@ -134,7 +134,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
       status: 'caution',
       statusBadge: 'Drops Below 6m Safety Line',
       advice: 'Caution: This purchase lowers your emergency buffer from 6.2 months to 4.1 months. धनMitr recommends deferring 35 days until your quarterly bonus arrives.',
-      handwrittenTip: 'Waiting 35 days keeps your peace of mind wall intact.',
+      handwrittenTip: 'Deferring 35 days preserves your target 6-month safety buffer.',
     },
     trip: {
       name: 'Goa Long Weekend',
@@ -142,9 +142,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
       beforeMonths: 6.2,
       afterMonths: 5.8,
       status: 'safe',
-      statusBadge: 'Safe & Guilt-Free',
-      advice: 'Safe to book! Your runway remains comfortably at 5.8 months (well above your 5.5m threshold). Spend with joy, zero anxiety.',
-      handwrittenTip: 'Go enjoy! Your buffer handles this cleanly.',
+      statusBadge: 'Safe & Pre-Approved',
+      advice: 'Safe to book! Your runway remains comfortably at 5.8 months (well above your 5.5m threshold). Spend with confidence and zero anxiety.',
+      handwrittenTip: 'Safe to spend! Your buffer absorbs this comfortably.',
     },
     course: {
       name: 'Executive AI Bootcamp',
@@ -153,8 +153,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
       afterMonths: 5.3,
       status: 'safe',
       statusBadge: 'High ROI Investment',
-      advice: 'Approved. Absorbed cleanly by your liquid surplus. Post-spend runway of 5.3 months preserves financial sovereignty.',
-      handwrittenTip: 'Investments in your skills pay compound interest.',
+      advice: 'Approved. Absorbed cleanly by your liquid surplus. Post-spend runway of 5.3 months preserves financial stability.',
+      handwrittenTip: 'High-value skill investment that fits cleanly into your plan.',
     },
   };
 
@@ -333,7 +333,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-medium shadow-2xs"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Indic Voice AI • Sovereign Wealth</span>
+            <span>AI Financial Intelligence • Aapka Paisa, Aapka Control</span>
           </motion.div>
 
           {/* Master Headline with Live Handwriting Animation */}
@@ -343,11 +343,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-[5.25rem] font-medium tracking-tight text-slate-900 dark:text-white leading-[1.08]"
           >
-            Managing wealth should feel{' '}
+            Smarter personal finance, made{' '}
             <br className="hidden sm:inline" />
             <AnimatedHandwrittenWord
-              words={['effortless.', 'human.', 'peaceful.', 'personal.']}
-              intervalMs={4200}
+              words={['effortless.', 'crystal clear.', 'tension-free.', 'bilkul sorted.']}
+              intervalMs={4000}
               className="text-emerald-500 text-5xl sm:text-7xl md:text-8xl lg:text-[5.75rem]"
             />
           </motion.h1>
@@ -359,7 +359,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             transition={{ duration: 0.6, delay: 0.25 }}
             className="text-base sm:text-xl text-slate-600 dark:text-slate-400 font-normal max-w-xl mx-auto leading-relaxed pt-1"
           >
-            No cluttered spreadsheets. No financial jargon to decode. Just speak naturally in Hindi, Hinglish, or English — धनMitr takes care of the rest.
+            From daily chai-pani to monthly rent, track your kharche with quick voice notes in Hindi, Hinglish, or English. Clear runway forecasts and tax savings, with zero jargon.
           </motion.p>
 
           {/* Clean Action Buttons + Handwritten Doodle Arrow */}
@@ -391,7 +391,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             {/* Handwritten Doodle Arrow pointing to Voice Button */}
             <div className="hidden lg:flex absolute -right-48 -top-7 flex-col items-start pointer-events-none select-none">
               <span className="font-handwriting text-lg text-emerald-500 -rotate-6">
-                talk in your mother tongue!
+                Bas bolo aur hisaab sorted!
               </span>
               <HandDrawnArrow className="w-16 h-10 text-emerald-500 -rotate-12 mt-0.5" delay={0.8} />
             </div>
@@ -445,31 +445,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
       {/* STORY PROLOGUE: PHILOSOPHY */}
       <section id="how-it-works" className="py-24 px-6 max-w-6xl mx-auto relative z-10 border-t border-slate-200/60 dark:border-white/5 scroll-mt-20 sm:scroll-mt-24">
         <motion.div
-          initial={{ opacity: 0, y: 25 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
           className="text-center max-w-3xl mx-auto mb-20 space-y-4"
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[11px] font-mono font-bold tracking-widest text-emerald-600 dark:text-emerald-400 uppercase">
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-            <span>THE धनMitr JOURNEY</span>
+            <span>FINANCIAL INTELLIGENCE IN ACTION</span>
           </div>
 
           <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-slate-900 dark:text-white leading-[1.18]">
-            Money isn’t just numbers on a screen. <br className="hidden sm:inline" />
-            It’s how you <span className="italic font-serif text-emerald-600 dark:text-emerald-400">sleep at night.</span>
+            Your wealth deserves clarity, <br className="hidden sm:inline" />
+            not <span className="italic font-serif text-emerald-600 dark:text-emerald-400">guesswork and complexity.</span>
           </h2>
 
           <div className="relative inline-block max-w-2xl mx-auto pt-1">
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              Most finance apps treat you like an unpaid accountant. We built धनMitr for real Indian lives—where money flows through evening chai, impromptu dinners with college friends, and quiet dreams for family security.
+              Traditional finance tools demand tedious manual bookkeeping. धनMitr replaces complex spreadsheets with instant voice logging, proactive runway simulations, and smart hisaab designed for how India actually lives.
             </p>
             <div className="pt-2">
               <span className="font-handwriting text-xl sm:text-2xl text-emerald-600 dark:text-emerald-400">
-                “No guilt trips. No dropdown menus. Just peace of mind.”
+                “Bina kisi jhanjhat ke—smart intelligence, total financial control.”
               </span>
-              <HandDrawnUnderline className="w-64 max-w-full mx-auto -mt-1" delay={0.2} color="text-emerald-500" />
+              <HandDrawnUnderline className="w-72 max-w-full mx-auto -mt-1" delay={0.2} color="text-emerald-500" />
             </div>
           </div>
         </motion.div>
@@ -480,10 +480,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-32">
           {/* Narrative Column */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6 space-y-6"
           >
             <div className="flex items-center gap-2">
@@ -491,26 +491,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
                 CHAPTER 01
               </span>
               <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                Real-Life Voice Capture
+                Instant Voice Capture
               </span>
             </div>
 
             <h3 className="font-serif text-2xl sm:text-4xl text-slate-900 dark:text-white font-normal leading-snug">
-              Speak naturally. <br />
+              Log expenses in seconds, <br />
               <span className="italic text-emerald-600 dark:text-emerald-400 font-serif">
-                Done before your cab arrives.
+                just by speaking naturally.
               </span>
             </h3>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              You just finished dinner with your friends or bought groceries at the local mandi.
-              Who wants to unlock their phone, open an app, navigate three nested menus, and categorize &apos;Food &amp; Dining &gt; Social&apos;?
-              Nobody. That&apos;s why 92% of people abandon traditional expense apps within a week.
+              Whether you grabbed dinner with friends, paid for groceries, or booked a cab—tracking expenses shouldn&apos;t feel like a chore. No navigating nested menus or selecting tedious subcategories.
             </p>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              With धनMitr, you simply hold the mic for four seconds and speak like you&apos;re sending a voice note to your best friend.
-              Hindi, Hinglish, English, or Marathi—our Indic acoustic engine parses amounts, merchant tags, and weekly buffers instantly.
+              With धनMitr, simply tap the mic and speak naturally. Our high-speed Indic voice engine accurately parses amounts, categories, and payment tags in Hindi, Hinglish, English, or Marathi in real time.
             </p>
 
             {/* Language Selector Chips */}
@@ -538,7 +535,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             {/* Handwritten Margin Note with Doodle Arrow */}
             <div className="relative pt-3 pl-4 border-l-2 border-emerald-500/40 hidden sm:block">
               <span className="font-handwriting text-lg text-emerald-600 dark:text-emerald-400 block">
-                “No dropdowns. No category tags. It just understands.”
+                “Daily chai se lekar weekend dining tak—bas bolo aur hisaab ready.”
               </span>
               <span className="text-[11px] font-mono text-slate-400">
                 // Sub-180ms streaming STT with zero cloud audio storage
@@ -548,13 +545,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
 
           {/* Interactive Voice Journal Card */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.85, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6"
           >
             <div className="p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#070B16] border border-slate-200/80 dark:border-white/10 shadow-xl space-y-6 relative overflow-hidden backdrop-blur-xl">
+              {/* Luminous Sweep Sheen on Entrance */}
+              <motion.div
+                initial={{ x: '-100%' }}
+                whileInView={{ x: '120%' }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, delay: 0.25, ease: 'easeInOut' }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/10 to-transparent pointer-events-none z-10"
+              />
               {/* Soft ambient ink glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl pointer-events-none rounded-full" />
 
@@ -671,10 +676,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
         <div id="runway" className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-32 pt-12 border-t border-slate-200/60 dark:border-white/5 scroll-mt-20 sm:scroll-mt-24">
           {/* Interactive Runway Visual Column (Left on Desktop) */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6 order-2 lg:order-1"
           >
             <div className="p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#070B16] border border-slate-200/80 dark:border-white/10 shadow-xl space-y-6 relative overflow-hidden backdrop-blur-xl">
@@ -688,10 +693,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
                   </div>
                   <div>
                     <span className="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider block">
-                      Peace of Mind Defense
+                      Safety Reserve Shield
                     </span>
                     <span className="font-serif text-base font-bold text-slate-900 dark:text-white">
-                      Liquid Survival Runway
+                      Liquid Emergency Runway
                     </span>
                   </div>
                 </div>
@@ -761,14 +766,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
                 {/* Progress bar with 6-month safety marker */}
                 <div className="relative w-full h-3.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                   <motion.div
-                    className={`h-full rounded-full ${
+                    className={`h-full rounded-full relative overflow-hidden ${
                       runwayScenarios[runwayKey].status === 'caution'
                         ? 'bg-gradient-to-r from-amber-500 to-emerald-500'
                         : 'bg-gradient-to-r from-emerald-500 to-teal-400'
                     }`}
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${(runwayScenarios[runwayKey].afterMonths / 8) * 100}%` }}
+                    viewport={{ once: true }}
                     animate={{ width: `${(runwayScenarios[runwayKey].afterMonths / 8) * 100}%` }}
-                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                  />
+                    transition={{ duration: 1.1, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    {/* Living Fluid Light Current */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: 'linear' }}
+                    />
+                  </motion.div>
                   {/* 6.0 month safety guideline */}
                   <div
                     className="absolute top-0 bottom-0 w-0.5 bg-slate-900 dark:bg-white/60 z-10"
@@ -808,10 +823,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
 
           {/* Narrative Column (Right on Desktop) */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.75, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6 space-y-6 order-1 lg:order-2"
           >
             <div className="flex items-center gap-2">
@@ -824,33 +839,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             </div>
 
             <h3 className="font-serif text-2xl sm:text-4xl text-slate-900 dark:text-white font-normal leading-snug">
-              Never ask <span className="italic font-serif text-teal-600 dark:text-teal-400">“Can I afford this?”</span> <br />
-              with a knot in your stomach.
+              Know what you can afford, <br />
+              <span className="italic font-serif text-teal-600 dark:text-teal-400">
+                with real-time runway clarity.
+              </span>
             </h3>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              Looking at your bank balance never tells you the truth. That ₹3,00,000 sitting in your savings account might already be promised to next month&apos;s term insurance, rent, SIPs, and credit card bill.
+              A raw bank balance never tells the complete picture. Funds in your account are often already earmarked for rent, mutual fund SIPs, term insurance, and credit card payments.
             </p>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              Instead of showing confusing pie charts, धनMitr translates your liquidity into something deeply human: <strong className="font-semibold text-slate-900 dark:text-white">Survival Runway</strong>.
-              If all income ceased tomorrow, exactly how many months could you and your family live with dignity?
+              धनMitr transforms raw balances into an actionable metric: <strong className="font-semibold text-slate-900 dark:text-white">Emergency Runway</strong>.
+              Before making large purchases, simulate their real impact and know precisely how many months of expenses your reserves cover.
             </p>
 
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 space-y-2">
               <span className="font-serif text-sm font-bold text-slate-900 dark:text-white block">
-                The 6-Month Peace of Mind Standard:
+                The 6-Month Emergency Cushion Rule:
               </span>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
-                When your runway is above 6.0 months, every dinner, flight ticket, or gadget is 100% guilt-free. When a purchase threatens your runway, धनMitr kindly suggests deferring until your next bonus.
+                Maintain a resilient 6-month buffer while spending with confidence. If a planned purchase dips below your safety threshold, धनMitr suggests practical timeline adjustments.
               </p>
             </div>
 
             <div className="relative pt-2">
               <span className="font-handwriting text-xl text-emerald-600 dark:text-emerald-400 block">
-                “Spend joyfully on what matters, without the lingering guilt.”
+                “Spend confidently on what matters—aapka emergency buffer bilkul safe hai.”
               </span>
-              <HandDrawnUnderline className="w-72 max-w-full -bottom-1" delay={0.3} color="text-teal-500" />
+              <HandDrawnUnderline className="w-80 max-w-full -bottom-1" delay={0.3} color="text-teal-500" />
             </div>
           </motion.div>
         </div>
@@ -861,10 +878,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
         <div id="radar" className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-32 pt-12 border-t border-slate-200/60 dark:border-white/5">
           {/* Narrative Column */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6 space-y-6"
           >
             <div className="flex items-center gap-2">
@@ -877,47 +894,57 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             </div>
 
             <h3 className="font-serif text-2xl sm:text-4xl text-slate-900 dark:text-white font-normal leading-snug">
-              Your money shouldn’t <br />
+              Stop hidden recurring charges <br />
               <span className="italic font-serif text-rose-500">
-                quietly bleed away
-              </span> in the dark.
+                before they chip away at your savings.
+              </span>
             </h3>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              Wealth rarely disappears from one massive mistake. It leaks through quiet ₹499s and ₹1,499s—the streaming service you watched for one weekend four months ago, the annual gym auto-debit you forgot about, the duplicate cloud storage tier.
+              Unused streaming memberships, dormant fitness plans, and redundant cloud storage subscriptions quietly accumulate over time.
             </p>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              Alone, they look too small to care. Together, they quietly drain over <span className="font-mono font-bold text-rose-500">₹31,580 every single year</span>.
-              धनMitr’s autonomous radar monitors these silent recurring charges and lets you halt them before they debit.
+              Individually small, together they drain over <span className="font-mono font-bold text-rose-500">₹31,580 every single year</span>.
+              धनMitr&apos;s intelligent subscription radar flags inactive auto-debits so you can cancel or pause them before the next billing cycle.
             </p>
 
             <div className="relative pt-2 pl-4 border-l-2 border-rose-500/40">
               <span className="font-handwriting text-lg text-rose-500 dark:text-rose-400 block">
-                “Money you worked hard to earn, saved back automatically.”
+                “Reclaim thousands every year by cutting dormant auto-debits.”
               </span>
               <span className="text-[11px] font-mono text-slate-400">
-                // 1-tap pause scripts generated for UPI autopay and card mandates
+                // Instant cancellation guides for UPI autopay and card mandates
               </span>
             </div>
           </motion.div>
 
           {/* Interactive Radar Card */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.85, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6"
           >
             <div className="p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#070B16] border border-slate-200/80 dark:border-white/10 shadow-xl space-y-6 relative overflow-hidden backdrop-blur-xl">
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 blur-3xl pointer-events-none rounded-full" />
 
+              {/* Holographic Laser Radar Scanning Beam */}
+              <motion.div
+                initial={{ top: '-5%', opacity: 0 }}
+                whileInView={{ top: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.5, delay: 0.3, ease: 'easeInOut' }}
+                className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent shadow-[0_0_15px_rgba(244,63,94,0.9)] pointer-events-none z-20"
+              />
+
               {/* Radar Top Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-200/70 dark:border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500">
-                    <Zap className="w-5 h-5" />
+                  <div className="relative w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500">
+                    <span className="absolute inset-0 rounded-2xl bg-rose-500/20 animate-ping opacity-30 pointer-events-none" />
+                    <Zap className="w-5 h-5 relative z-10" />
                   </div>
                   <div>
                     <span className="text-[10px] font-mono font-bold text-rose-500 uppercase tracking-wider block">
@@ -940,8 +967,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
               {/* List of 4 Dormant Zombie Subscriptions */}
               <div className="space-y-2.5">
                 {zombieDebits.map((item, idx) => (
-                  <div
+                  <motion.div
                     key={idx}
+                    initial={{ opacity: 0, y: 14 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.45, delay: 0.18 + idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
                     className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                       radarPaused
                         ? 'bg-emerald-500/5 border-emerald-500/20 text-slate-400'
@@ -972,7 +1003,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
                         {radarPaused ? '' : item.period}
                       </span>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
 
@@ -1006,7 +1037,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
                     className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center"
                   >
                     <span className="font-handwriting text-lg text-emerald-600 dark:text-emerald-400">
-                      “₹31,580 added straight back into your 6-month safety wall! 🎉”
+                      “₹31,580 saved and redirected straight to your emergency fund! Bilkul paisa vasool. 🚀”
                     </span>
                   </motion.div>
                 )}
@@ -1021,14 +1052,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
         <div id="taxes" className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-24 pt-12 border-t border-slate-200/60 dark:border-white/5">
           {/* Interactive Tax Ledger Card (Left on Desktop) */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6 order-2 lg:order-1"
           >
             <div className="p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#070B16] border border-slate-200/80 dark:border-white/10 shadow-xl space-y-6 relative overflow-hidden backdrop-blur-xl">
               <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 blur-3xl pointer-events-none rounded-full" />
+
+              {/* Precision Calculation Calibration Sheen */}
+              <motion.div
+                initial={{ x: '-100%' }}
+                whileInView={{ x: '120%' }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.3, delay: 0.2, ease: 'easeInOut' }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent -skew-x-12 pointer-events-none z-10"
+              />
 
               {/* Tax Ledger Top Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-200/70 dark:border-white/10">
@@ -1132,10 +1172,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
 
           {/* Narrative Column (Right on Desktop) */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.75, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6 space-y-6 order-1 lg:order-2"
           >
             <div className="flex items-center gap-2">
@@ -1148,23 +1188,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
             </div>
 
             <h3 className="font-serif text-2xl sm:text-4xl text-slate-900 dark:text-white font-normal leading-snug">
-              No March tax panic. <br />
+              Intelligent tax planning, <br />
               <span className="italic font-serif text-emerald-600 dark:text-emerald-400">
-                Just clear, exact rupee savings.
+                calibrated for FY 2025-26.
               </span>
             </h3>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              Every year, millions of Indian professionals scramble during the last two weeks of March, drowning in HR declarations, Section 80C, 80D health insurance caps, and HRA slips.
+              Avoid the year-end scramble over investment proofs, 80C caps, and declaration deadlines.
             </p>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-              धनMitr continuously benchmarks your numbers against the latest Union Budget provisions—including the enhanced ₹75,000 standard deduction under Section 115BAC and Section 87A rebate. You know your exact optimal regime 365 days a year, with zero last-minute rush.
+              धनMitr actively compares the New vs Old Tax Regimes under the latest Union Budget rules—factoring in the ₹75,000 standard deduction, Section 87A rebate, and Chapter VI-A deductions so you always know your optimal choice.
             </p>
 
             <div className="relative pt-2">
               <span className="font-handwriting text-xl text-emerald-600 dark:text-emerald-400 block">
-                “Keep ₹18,200 in your pocket without locking money into 3-year ELSS lock-ins.”
+                “March aane se pehle hi tax planning sorted—no last-minute bhaag-daud.”
               </span>
               <HandDrawnUnderline className="w-80 max-w-full -bottom-1" delay={0.3} color="text-emerald-500" />
             </div>
@@ -1356,11 +1396,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAi, onLaunchHub 
 
           <div className="space-y-3">
             <h2 className="font-display text-4xl sm:text-5xl font-black text-white tracking-tight max-w-xl mx-auto">
-              Your Financial Friend is Ready.
+              Take Charge of Your Wealth Today.
             </h2>
             <div className="relative inline-block">
               <span className="font-handwriting text-2xl sm:text-3xl text-emerald-400 italic">
-                Aapka Sachha धनMitr
+                Aapka personal financial saathi — धनMitr
               </span>
               <HandDrawnUnderline className="w-full -bottom-2" delay={0.2} color="text-emerald-400" />
             </div>

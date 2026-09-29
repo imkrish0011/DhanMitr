@@ -20,38 +20,77 @@ export async function GET(request: Request) {
   const supabase = getAdminSupabase();
 
   try {
-    // 1. Fetch profiles
-    const { data: profiles, error: profError } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // 1. Fetch profiles, auth users, and all user financial records in parallel
+    const [
+      profilesRes,
+      authUsersRes,
+      adminUsersRes,
+      auditLogsRes,
+      incomeRes,
+      subsRes,
+      insRes,
+      txRes,
+    ] = await Promise.all([
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+      supabase.auth.admin.listUsers().catch(() => ({ data: { users: [] }, error: null })),
+      supabase.from('admin_users').select('*'),
+      supabase.from('admin_audit_logs').select('target_id, details, created_at').eq('action', 'UPDATE_USER_TAGS').order('created_at', { ascending: false }),
+      supabase.from('income_sources').select('*'),
+      supabase.from('subscriptions').select('*'),
+      supabase.from('insurances').select('*'),
+      supabase.from('transactions').select('*'),
+    ]);
 
-    if (profError) {
-      throw profError;
+    if (profilesRes.error) {
+      throw profilesRes.error;
     }
 
-    // 2. Fetch admin users list to merge role info
-    const { data: adminUsers } = await supabase
-      .from('admin_users')
-      .select('*');
+    const profiles = profilesRes.data || [];
+    const authUsers = (authUsersRes.data as any)?.users || [];
 
+    // Reconcile: If any auth user exists that is missing from profiles, synthesize a profile entry
+    const existingProfileIds = new Set(profiles.map(p => p.id));
+    for (const au of authUsers) {
+      if (!existingProfileIds.has(au.id)) {
+        const meta = au.user_metadata || {};
+        const fallbackName = meta.full_name || meta.name || (au.email ? au.email.split('@')[0] : 'User');
+        const fallbackInitial = fallbackName.charAt(0).toUpperCase();
+
+        profiles.push({
+          id: au.id,
+          name: fallbackName,
+          email: au.email || '',
+          avatar_initial: fallbackInitial,
+          currency: 'INR',
+          monthly_income: 0,
+          monthly_expenses: 0,
+          emergency_fund_balance: 0,
+          total_investments: 0,
+          total_liabilities: 0,
+          risk_tolerance: 'moderate',
+          employment_type: 'salaried',
+          tax_regime: 'new',
+          is_onboarded: false,
+          created_at: au.created_at || new Date().toISOString(),
+          updated_at: au.updated_at || new Date().toISOString(),
+          tags: [],
+          custom_tag: null,
+        });
+        existingProfileIds.add(au.id);
+      }
+    }
+
+    // 2. Build lookup maps for roles and audit tags
     const adminMap = new Map<string, { role: string; is_active: boolean }>();
-    if (adminUsers) {
-      for (const a of adminUsers) {
+    if (adminUsersRes.data) {
+      for (const a of adminUsersRes.data) {
         adminMap.set(a.user_id, { role: a.role, is_active: a.is_active });
       }
     }
 
-    // 3. Fetch latest custom tags from admin audit logs (ensures tags persist across sessions)
-    const { data: auditLogs } = await supabase
-      .from('admin_audit_logs')
-      .select('target_id, details, created_at')
-      .eq('action', 'UPDATE_USER_TAGS')
-      .order('created_at', { ascending: false });
-
     const auditTagsMap = new Map<string, { tags: string[]; customTag?: string }>();
-    if (auditLogs) {
-      for (const log of auditLogs) {
+    if (auditLogsRes.data) {
+      for (const log of auditLogsRes.data) {
         if (log.target_id && !auditTagsMap.has(log.target_id) && log.details) {
           const t = Array.isArray(log.details.tags) ? log.details.tags : [];
           auditTagsMap.set(log.target_id, {
@@ -62,8 +101,57 @@ export async function GET(request: Request) {
       }
     }
 
+    // 3. Compute real monthly income from income_sources
+    const incomeMap = new Map<string, number>();
+    const incomeCountMap = new Map<string, number>();
+    for (const inc of incomeRes.data || []) {
+      const amt = Number(inc.amount || 0);
+      let monthlyAmt = amt;
+      if (inc.frequency === 'yearly') monthlyAmt = amt / 12;
+      else if (inc.frequency === 'weekly') monthlyAmt = amt * 4.33;
+      incomeMap.set(inc.user_id, (incomeMap.get(inc.user_id) || 0) + monthlyAmt);
+      incomeCountMap.set(inc.user_id, (incomeCountMap.get(inc.user_id) || 0) + 1);
+    }
+
+    // 4. Compute monthly recurring expenses from subscriptions & insurances
+    const expensesMap = new Map<string, number>();
+    const subsCountMap = new Map<string, number>();
+    for (const sub of subsRes.data || []) {
+      subsCountMap.set(sub.user_id, (subsCountMap.get(sub.user_id) || 0) + 1);
+      if (sub.is_active !== false) {
+        const amt = Number(sub.amount || 0);
+        let monthly = amt;
+        if (sub.billing_cycle === 'yearly') monthly = amt / 12;
+        else if (sub.billing_cycle === 'quarterly') monthly = amt / 3;
+        else if (sub.billing_cycle === 'weekly') monthly = amt * 4.33;
+        expensesMap.set(sub.user_id, (expensesMap.get(sub.user_id) || 0) + monthly);
+      }
+    }
+
+    const insCountMap = new Map<string, number>();
+    for (const ins of insRes.data || []) {
+      insCountMap.set(ins.user_id, (insCountMap.get(ins.user_id) || 0) + 1);
+      if (ins.is_active !== false) {
+        const prem = Number(ins.premium_amount || 0);
+        let monthly = prem / 12;
+        if (ins.premium_frequency === 'monthly') monthly = prem;
+        else if (ins.premium_frequency === 'quarterly') monthly = prem / 3;
+        expensesMap.set(ins.user_id, (expensesMap.get(ins.user_id) || 0) + monthly);
+      }
+    }
+
+    // 5. Compute investments from transactions
+    const investmentsMap = new Map<string, number>();
+    const txCountMap = new Map<string, number>();
+    for (const t of txRes.data || []) {
+      txCountMap.set(t.user_id, (txCountMap.get(t.user_id) || 0) + 1);
+      if (t.type === 'investment' || t.category === 'investments') {
+        investmentsMap.set(t.user_id, (investmentsMap.get(t.user_id) || 0) + Number(t.amount || 0));
+      }
+    }
+
     // Combine profile data with admin role data & compute automatic + custom tags
-    let userList = (profiles || []).map(p => {
+    let userList = profiles.map(p => {
       const adminInfo = adminMap.get(p.id);
       const auditTagInfo = auditTagsMap.get(p.id);
       const existingTags = (p.tags && Array.isArray(p.tags) && p.tags.length > 0)
@@ -71,29 +159,39 @@ export async function GET(request: Request) {
         : (auditTagInfo?.tags || []);
       const directCustomTag = p.custom_tag || auditTagInfo?.customTag;
 
+      // Real calculated financial metrics
+      const computedIncome = incomeMap.get(p.id) || 0;
+      const finalMonthlyIncome = computedIncome > 0 ? Math.round(computedIncome) : Number(p.monthly_income || 0);
+
+      const computedExpenses = expensesMap.get(p.id) || 0;
+      const finalMonthlyExpenses = Math.max(Number(p.monthly_expenses || 0), Math.round(computedExpenses));
+
+      const computedInvestments = investmentsMap.get(p.id) || 0;
+      const finalInvestments = Math.max(Number(p.total_investments || 0), Math.round(computedInvestments));
+
       const { tags, customTag } = resolveUserTags({
         userId: p.id,
         email: p.email,
-        monthly_income: Number(p.monthly_income || 0),
-        total_investments: Number(p.total_investments || 0),
+        monthly_income: finalMonthlyIncome,
+        total_investments: finalInvestments,
         existingTags,
         customTag: directCustomTag,
       });
 
       return {
         id: p.id,
-        name: p.name,
-        email: p.email,
-        avatar_initial: p.avatar_initial,
-        currency: p.currency,
-        monthly_income: Number(p.monthly_income || 0),
-        monthly_expenses: Number(p.monthly_expenses || 0),
+        name: p.name || 'User',
+        email: p.email || '',
+        avatar_initial: p.avatar_initial || (p.name ? p.name.charAt(0).toUpperCase() : 'U'),
+        currency: p.currency || 'INR',
+        monthly_income: finalMonthlyIncome,
+        monthly_expenses: finalMonthlyExpenses,
         emergency_fund_balance: Number(p.emergency_fund_balance || 0),
-        total_investments: Number(p.total_investments || 0),
+        total_investments: finalInvestments,
         total_liabilities: Number(p.total_liabilities || 0),
-        risk_tolerance: p.risk_tolerance,
-        employment_type: p.employment_type,
-        tax_regime: p.tax_regime,
+        risk_tolerance: p.risk_tolerance || 'moderate',
+        employment_type: p.employment_type || 'salaried',
+        tax_regime: p.tax_regime || 'new',
         is_onboarded: Boolean(p.is_onboarded),
         created_at: p.created_at,
         updated_at: p.updated_at,
@@ -101,6 +199,10 @@ export async function GET(request: Request) {
         isAdminActive: adminInfo ? adminInfo.is_active : false,
         tags,
         custom_tag: customTag || null,
+        income_sources_count: incomeCountMap.get(p.id) || 0,
+        subscriptions_count: subsCountMap.get(p.id) || 0,
+        insurances_count: insCountMap.get(p.id) || 0,
+        transactions_count: txCountMap.get(p.id) || 0,
       };
     });
 
@@ -110,14 +212,21 @@ export async function GET(request: Request) {
         (u.name && u.name.toLowerCase().includes(query)) ||
         (u.email && u.email.toLowerCase().includes(query)) ||
         (u.id && u.id.toLowerCase().includes(query)) ||
-        (u.tags && u.tags.some((t: string) => t.toLowerCase().includes(query))) ||
+        (u.tags && Array.isArray(u.tags) && u.tags.some((t: any) => typeof t === 'string' && t.toLowerCase().includes(query))) ||
         (u.custom_tag && u.custom_tag.toLowerCase().includes(query))
       );
     }
 
     // Apply role filter
     if (roleFilter && roleFilter !== 'all') {
-      userList = userList.filter(u => u.adminRole === roleFilter);
+      if (roleFilter === 'admins_all') {
+        userList = userList.filter(u => ['superadmin', 'admin', 'moderator'].includes(u.adminRole));
+      } else if (roleFilter === 'admin') {
+        // Match both admin and superadmin to ensure all admin staff is discoverable
+        userList = userList.filter(u => u.adminRole === 'admin' || u.adminRole === 'superadmin');
+      } else {
+        userList = userList.filter(u => u.adminRole === roleFilter);
+      }
     }
 
     // Apply onboarding status filter
